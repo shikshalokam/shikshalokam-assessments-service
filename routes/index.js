@@ -2,7 +2,7 @@ let authenticator = require("../generics/middleware/authenticator");
 let slackClient = require("../generics/helpers/slackCommunications");
 
 module.exports = function(app) {
-  app.use("/assessment/api", authenticator);
+  if(process.env.NODE_ENV != 'testing') app.use("/assessment/api", authenticator);
 
   var router = function(req, res, next) {
 
