@@ -541,6 +541,7 @@ module.exports = class Reports extends Abstract {
   async programsSubmissionStatus(req) {
     return new Promise(async (resolve, reject) => {
       try {
+        let currentDate = new Date()
         let evidenceQueryObject = "evidences." + req.query.evidenceId + ".isSubmitted";
         let submissionQuery = {
           ["programInformation.externalId"]: req.params._id,
@@ -561,9 +562,9 @@ module.exports = class Reports extends Abstract {
             _id: 1
           }
         )
-        var currentDate = new Date()
-        var pathFile =
-          "./public/csv/" +
+
+        let pathFile =
+          "./public/csvFileBackup/" +
           "ecmWiseReport_evidenceId_" +
           req.query.evidenceId +
           "_" +
@@ -599,7 +600,7 @@ module.exports = class Reports extends Abstract {
           ).exec().then(data => {
 
             let csvReportOutput = new Array()
-
+            let assessorElement = {};
 
             const imageBaseUrl =
               "https://storage.cloud.google.com/sl-" +
@@ -612,7 +613,6 @@ module.exports = class Reports extends Abstract {
               submissionInstance++
             ) {
 
-              let assessorElement = {};
               data[submissionInstance].assessors.forEach(assessor => {
                 assessorElement[assessor.userId] = {
                   externalId: assessor.externalId
@@ -623,7 +623,6 @@ module.exports = class Reports extends Abstract {
               data[submissionInstance]["evidences"][
                 req.query.evidenceId
               ].submissions.forEach(submission => {
-
 
                 if (assessorElement[submission.submittedBy.toString()]) {
                   Object.values(submission.answers).forEach(singleAnswer => {
