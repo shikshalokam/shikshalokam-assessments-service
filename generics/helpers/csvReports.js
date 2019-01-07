@@ -23,7 +23,12 @@ const getCSVData = async function (id, evidenceId) {
   let evidenceQueryObject = "evidences." + evidenceId + ".isSubmitted";
   let submissionQuery = {
     ["programInformation.externalId"]: id,
-    [evidenceQueryObject]: true
+    [evidenceQueryObject]: true,
+    status: {
+      $in:
+        ["inprogress", "blocked"]
+    }
+
   };
 
   let queryObject = "evidences." + evidenceId + ".submissions.answers";
@@ -64,134 +69,134 @@ const getCSVData = async function (id, evidenceId) {
     });
 
 
-    if (
-      // (submissionDocument[submissionInstance].evidences[evidenceId]) &&
-      (submissionDocument[submissionInstance].status == "inprogress" ||
-        submissionDocument[submissionInstance].status == "blocked")
-    ) {
-      submissionDocument[submissionInstance]["evidences"][
-        evidenceId
-      ].submissions.forEach(submission => {
+    // if (
+    //   (submissionDocument[submissionInstance].evidences[evidenceId]) &&
+    //   (submissionDocument[submissionInstance].status == "inprogress" ||
+    //     submissionDocument[submissionInstance].status == "blocked")
+    // ) {
+    submissionDocument[submissionInstance]["evidences"][
+      evidenceId
+    ].submissions.forEach(submission => {
 
-        if (assessorElement[submission.submittedBy.toString()]) {
-          Object.values(submission.answers).forEach(singleAnswer => {
-            if (singleAnswer.payload) {
-              let singleAnswerRecord = {
-                schoolName:
-                  submissionDocument[submissionInstance].schoolInformation.name,
-                schoolId:
-                  submissionDocument[submissionInstance].schoolInformation
-                    .externalId,
-                question: singleAnswer.payload.question[0],
-                answer: singleAnswer.notApplicable ? "Not Applicable" : "",
-                assessorId:
-                  assessorElement[submission.submittedBy.toString()].externalId,
-                files: "",
-                startTime: gmtToIst(singleAnswer.startTime),
-                endTime: gmtToIst(singleAnswer.endTime)
+      if (assessorElement[submission.submittedBy.toString()]) {
+        Object.values(submission.answers).forEach(singleAnswer => {
+          if (singleAnswer.payload) {
+            let singleAnswerRecord = {
+              schoolName:
+                submissionDocument[submissionInstance].schoolInformation.name,
+              schoolId:
+                submissionDocument[submissionInstance].schoolInformation
+                  .externalId,
+              question: singleAnswer.payload.question[0],
+              answer: singleAnswer.notApplicable ? "Not Applicable" : "",
+              assessorId:
+                assessorElement[submission.submittedBy.toString()].externalId,
+              files: "",
+              startTime: gmtToIst(singleAnswer.startTime),
+              endTime: gmtToIst(singleAnswer.endTime)
+            }
+
+            if (singleAnswer.fileName.length > 0) {
+              singleAnswer.fileName.forEach(file => {
+                singleAnswerRecord.files +=
+                  imageBaseUrl + file.sourcePath + ",";
+              });
+              singleAnswerRecord.files = singleAnswerRecord.files.replace(
+                /,\s*$/,
+                ""
+              );
+            }
+            // console.log(singleAnswerRecord.files)
+
+            if (!singleAnswer.notApplicable) {
+              if (singleAnswer.responseType != "matrix") {
+                singleAnswerRecord.answer = singleAnswer.payload[
+                  "labels"
+                ].toString();
               }
+              // }
+              else {
+                singleAnswerRecord.answer = "Instance Question";
 
-              if (singleAnswer.fileName.length > 0) {
-                singleAnswer.fileName.forEach(file => {
-                  singleAnswerRecord.files +=
-                    imageBaseUrl + file.sourcePath + ",";
-                });
-                singleAnswerRecord.files = singleAnswerRecord.files.replace(
-                  /,\s*$/,
-                  ""
-                );
-              }
-              // console.log(singleAnswerRecord.files)
+                if (singleAnswer.payload.labels[0]) {
+                  for (
+                    let instance = 0;
+                    instance < singleAnswer.payload.labels[0].length;
+                    instance++
+                  ) {
+                    singleAnswer.payload.labels[0][instance].forEach(
+                      eachInstanceChildQuestion => {
+                        let eachInstanceChildRecord = {
+                          question: eachInstanceChildQuestion.question[0],
+                          answer: "",
+                          startTime: gmtToIst(eachInstanceChildQuestion.startTime),
+                          endTime: gmtToIst(eachInstanceChildQuestion.endTime),
+                        };
 
-              if (!singleAnswer.notApplicable) {
-                if (singleAnswer.responseType != "matrix") {
-                  singleAnswerRecord.answer = singleAnswer.payload[
-                    "labels"
-                  ].toString();
-                }
-                // }
-                else {
-                  singleAnswerRecord.answer = "Instance Question";
-
-                  if (singleAnswer.payload.labels[0]) {
-                    for (
-                      let instance = 0;
-                      instance < singleAnswer.payload.labels[0].length;
-                      instance++
-                    ) {
-                      singleAnswer.payload.labels[0][instance].forEach(
-                        eachInstanceChildQuestion => {
-                          let eachInstanceChildRecord = {
-                            question: eachInstanceChildQuestion.question[0],
-                            // answer:
-                            startTime: gmtToIst(eachInstanceChildQuestion.startTime),
-                            endTime: gmtToIst(eachInstanceChildQuestion.endTime),
-                          };
-
-                          if (eachInstanceChildQuestion.fileName.length > 0) {
-                            eachInstanceChildQuestion.fileName.forEach(
-                              file => {
-                                eachInstanceChildRecord.files +=
-                                  imageBaseUrl + file + ",";
-                              }
-                            );
-                            eachInstanceChildRecord.files = eachInstanceChildRecord.files.replace(
-                              /,\s*$/,
-                              ""
-                            );
-                          }
-
-                          let radioResponse = {};
-                          let multiSelectResponse = {};
-                          let multiSelectResponseArray = [];
-
-                          if (
-                            eachInstanceChildQuestion.responseType == "radio"
-                          ) {
-                            eachInstanceChildQuestion.options.forEach(
-                              option => {
-                                radioResponse[option.value] = option.label;
-                              }
-                            );
-                            eachInstanceChildRecord.answer =
-                              radioResponse[eachInstanceChildQuestion.value];
-                          } else if (
-                            eachInstanceChildQuestion.responseType ==
-                            "multiselect"
-                          ) {
-                            eachInstanceChildQuestion.options.forEach(
-                              option => {
-                                multiSelectResponse[option.value] =
-                                  option.label;
-                              }
-                            );
-
-                            eachInstanceChildQuestion.value.forEach(value => {
-                              multiSelectResponseArray.push(
-                                multiSelectResponse[value]
-                              );
-                            });
-
-                            eachInstanceChildRecord.answer = multiSelectResponseArray.toString();
-                          }
-                          else {
-                            eachInstanceChildRecord.answer = eachInstanceChildQuestion.value;
-                          }
-
-                          csvReportOutput.push(eachInstanceChildRecord);
+                        if (eachInstanceChildQuestion.fileName.length > 0) {
+                          eachInstanceChildQuestion.fileName.forEach(
+                            file => {
+                              eachInstanceChildRecord.files +=
+                                imageBaseUrl + file + ",";
+                            }
+                          );
+                          eachInstanceChildRecord.files = eachInstanceChildRecord.files.replace(
+                            /,\s*$/,
+                            ""
+                          );
                         }
-                      );
-                    }
+
+                        let radioResponse = {};
+                        let multiSelectResponse = {};
+                        let multiSelectResponseArray = [];
+
+                        if (
+                          eachInstanceChildQuestion.responseType == "radio"
+                        ) {
+                          eachInstanceChildQuestion.options.forEach(
+                            option => {
+                              radioResponse[option.value] = option.label;
+                            }
+                          );
+                          eachInstanceChildRecord.answer =
+                            radioResponse[eachInstanceChildQuestion.value];
+                        } else if (
+                          eachInstanceChildQuestion.responseType ==
+                          "multiselect"
+                        ) {
+                          eachInstanceChildQuestion.options.forEach(
+                            option => {
+                              multiSelectResponse[option.value] =
+                                option.label;
+                            }
+                          );
+
+                          eachInstanceChildQuestion.value.forEach(value => {
+                            multiSelectResponseArray.push(
+                              multiSelectResponse[value]
+                            );
+                          });
+
+                          eachInstanceChildRecord.answer = multiSelectResponseArray.toString();
+                        }
+                        else {
+                          eachInstanceChildRecord.answer = eachInstanceChildQuestion.value;
+                        }
+
+                        csvReportOutput.push(eachInstanceChildRecord);
+                      }
+                    );
                   }
                 }
-
-                csvReportOutput.push(singleAnswerRecord);
               }
+
+              csvReportOutput.push(singleAnswerRecord);
             }
-          })
-        }
-      });
-    }
+          }
+        })
+      }
+    });
+    // }
   }
 
   let fields = [
