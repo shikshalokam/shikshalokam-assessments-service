@@ -27,7 +27,7 @@ app.get("/ping", (req, res) => {
 global.models = requireAll({
   dirname: __dirname + "/models",
   filter: /(.+)\.js$/,
-  resolve: function(Model) {
+  resolve: function (Model) {
     return Model;
   }
 });
@@ -36,14 +36,14 @@ global.models = requireAll({
 global.controllers = requireAll({
   dirname: __dirname + "/controllers",
   filter: /(.+Controller)\.js$/,
-  resolve: function(Controller) {
+  resolve: function (Controller) {
     if (Controller.name) return new Controller(models[Controller.name]);
     else return new Controller();
   }
 });
 
 app.use(fileUpload());
-app.use(bodyParser.json({limit: '50MB'}));
+app.use(bodyParser.json({ limit: '50MB' }));
 app.use(bodyParser.urlencoded({ limit: '50MB', extended: false }));
 app.use(express.static("public"));
 
@@ -77,10 +77,10 @@ const swagger = require("./swagger");
 const swaggerMW = new swagger();
 app.use("/assessment/api/v1/swagger", swaggerMW.sendFile);
 
-app.get("/assessment/web/*", function(req, res) {
+app.get("/assessment/web/*", function (req, res) {
   res.sendFile(path.join(__dirname, "/public/assessment/web/index.html"));
 });
-app.get("/assessment/web2/*", function(req, res) {
+app.get("/assessment/web2/*", function (req, res) {
   res.sendFile(path.join(__dirname, "/public/assessment/web2/index.html"));
 });
 
@@ -158,35 +158,35 @@ router(app);
 app.listen(config.port, () => {
   log.info(
     "Environment: " +
-      (process.env.NODE_ENV ? process.env.NODE_ENV : "development")
+    (process.env.NODE_ENV ? process.env.NODE_ENV : "development")
   );
   log.info("Application is running on the port:" + config.port);
 
 
 
 
-  const schedule = require("node-schedule");
+  // const schedule = require("node-schedule");
 
-  var schedule_string =
-    process.env.NODE_ENV == "production" ? "0 0 * * * *" : "0 * * * * *";
+  // var schedule_string =
+  //   process.env.NODE_ENV == "production" ? "0 0 * * * *" : "0 * * * * *";
 
-  var csvData = schedule.scheduleJob(schedule_string, () => {
-    var date = new Date();
-    var hour = date.getMinutes();
+  // var csvData = schedule.scheduleJob(schedule_string, () => {
+  //   var date = new Date();
+  //   var hour = date.getMinutes();
 
-    if (process.env.NODE_ENV == "production") {
-      var hour = date.getHours();
-    }
+  //   if (process.env.NODE_ENV == "production") {
+  //     var hour = date.getHours();
+  //   }
 
-    let csvReports = require("./generics/helpers/csvReports");
+  //   let csvReports = require("./generics/helpers/csvReports");
 
-    if ((hour % 2 == 0) && (hour >= 8) && (hour <= 20)) {
-      let csvReports = require("./generics/helpers/csvReports");
-      ["BL", "LW", "SI", "AC3", "PI", "AC8", "PAI", "TI", "AC5"].map(item =>
-        csvReports.getCSVData(process.env.PROGRAM_NAME_FOR_SCHEDULE, item)
-      );
-    }
-  });
+  //   if ((hour % 2 == 0) && (hour >= 8) && (hour <= 20)) {
+  //     let csvReports = require("./generics/helpers/csvReports");
+  //     ["BL", "LW", "SI", "AC3", "PI", "AC8", "PAI", "TI", "AC5"].map(item =>
+  //       csvReports.getCSVData(process.env.PROGRAM_NAME_FOR_SCHEDULE, item)
+  //     );
+  //   }
+  // });
 });
 
 module.exports = app;
