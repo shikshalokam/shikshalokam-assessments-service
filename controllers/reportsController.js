@@ -1,4 +1,5 @@
 const json2csv = require("json2csv").Parser;
+const fs = require("fs");
 const _ = require("lodash");
 const moment = require("moment-timezone");
 // let csvReports = require("../generics/helpers/csvReports");
@@ -550,27 +551,299 @@ module.exports = class Reports extends Abstract {
           }
 
         };
-
         let queryObject = "evidences." + req.query.evidenceId + ".submissions.answers";
         let queryObject1 = "evidences." + req.query.evidenceId + ".submissions.submittedBy";
 
-        let submissionDocument = await database.models.submissions.find(
+
+        let submissionQueryDocument = await database.models.submissions.find(
           submissionQuery,
           {
-            "assessors.userId": 1,
-            "assessors.externalId": 1,
-            "schoolInformation.name": 1,
-            "schoolInformation.externalId": 1,
-            status: 1,
-            [queryObject]: 1,
-            [queryObject1]: 1
+            _id: 1
           }
         )
+        var currentDate = new Date()
+        var pathFile =
+          "./public/csv/" +
+          "ecmWiseReport_evidenceId_" +
+          req.query.evidenceId +
+          "_" +
+          moment(currentDate)
+            .tz("Asia/Kolkata")
+            .format("YYYY_MM_DD_HH_mm") +
+          ".csv";
 
 
-        // let max_created_date_from_last_result = submissionDocument[submissionDocument.length - 1].createdAt;
+        let chunkOfArray = _.chunk(submissionQueryDocument, 10)
 
-        // let s1 = await database.models.submissions.find(submissionQuery,
+
+        async.forEach(chunkOfArray, (eachChunk, callback) => {
+          // console.log(eachChunk)
+
+
+          let submissionQueryId = {
+            _id: {
+              $in: eachChunk.map(singleChunck => { return singleChunck._id })
+            }
+          }
+          database.models.submissions.find(
+            submissionQueryId,
+            {
+              "assessors.userId": 1,
+              "assessors.externalId": 1,
+              "schoolInformation.name": 1,
+              "schoolInformation.externalId": 1,
+              status: 1,
+              [queryObject]: 1,
+              [queryObject1]: 1
+            }
+          ).exec().then(data => {
+
+            let csvReportOutput = new Array()
+
+
+            const imageBaseUrl =
+              "https://storage.cloud.google.com/sl-" +
+              (process.env.NODE_ENV == "production" ? "prod" : "dev") +
+              "-storage/";
+
+            for (
+              let submissionInstance = 0;
+              submissionInstance < data.length;
+              submissionInstance++
+            ) {
+
+              let assessorElement = {};
+              data[submissionInstance].assessors.forEach(assessor => {
+                assessorElement[assessor.userId] = {
+                  externalId: assessor.externalId
+                };
+              });
+
+
+              data[submissionInstance]["evidences"][
+                req.query.evidenceId
+              ].submissions.forEach(submission => {
+
+
+                if (assessorElement[submission.submittedBy.toString()]) {
+                  Object.values(submission.answers).forEach(singleAnswer => {
+                    if (singleAnswer.payload) {
+                      let singleAnswerRecord = {
+                        schoolName:
+                          data[submissionInstance].schoolInformation.name,
+                        schoolId:
+                          data[submissionInstance].schoolInformation
+                            .externalId,
+                        question: singleAnswer.payload.question[0],
+                        answer: singleAnswer.notApplicable ? "Not Applicable" : "",
+                        assessorId:
+                          assessorElement[submission.submittedBy.toString()].externalId,
+                        files: "",
+                        startTime: this.gmtToIst(singleAnswer.startTime),
+                        endTime: this.gmtToIst(singleAnswer.endTime)
+                      }
+
+                      if (singleAnswer.fileName.length > 0) {
+                        singleAnswer.fileName.forEach(file => {
+                          singleAnswerRecord.files +=
+                            imageBaseUrl + file.sourcePath + ",";
+                        });
+                        singleAnswerRecord.files = singleAnswerRecord.files.replace(
+                          /,\s*$/,
+                          ""
+                        );
+                      }
+
+
+                      if (!singleAnswer.notApplicable) {
+                        if (singleAnswer.responseType != "matrix") {
+                          singleAnswerRecord.answer = singleAnswer.payload[
+                            "labels"
+                          ].toString();
+                        }
+                        // }
+                        else {
+                          singleAnswerRecord.answer = "Instance Question";
+
+                          if (singleAnswer.payload.labels[0]) {
+                            for (
+                              let instance = 0;
+                              instance < singleAnswer.payload.labels[0].length;
+                              instance++
+                            ) {
+
+                              singleAnswer.payload.labels[0][instance].forEach(
+                                eachInstanceChildQuestion => {
+                                  let eachInstanceChildRecord = {
+                                    schoolName:
+                                      data[submissionInstance].schoolInformation.name,
+                                    schoolId:
+                                      data[submissionInstance].schoolInformation
+                                        .externalId,
+                                    question: eachInstanceChildQuestion.question[0],
+                                    answer: "",
+                                    assessorId:
+                                      assessorElement[submission.submittedBy.toString()].externalId,
+                                    startTime: this.gmtToIst(eachInstanceChildQuestion.startTime),
+                                    endTime: this.gmtToIst(eachInstanceChildQuestion.endTime),
+                                  };
+
+                                  if (eachInstanceChildQuestion.fileName.length > 0) {
+                                    eachInstanceChildQuestion.fileName.forEach(
+                                      file => {
+                                        eachInstanceChildRecord.files +=
+                                          imageBaseUrl + file + ",";
+                                      }
+                                    );
+                                    eachInstanceChildRecord.files = eachInstanceChildRecord.files.replace(
+                                      /,\s*$/,
+                                      ""
+                                    );
+                                  }
+
+                                  let radioResponse = {};
+                                  let multiSelectResponse = {};
+                                  let multiSelectResponseArray = [];
+
+                                  if (
+                                    eachInstanceChildQuestion.responseType == "radio"
+                                  ) {
+                                    eachInstanceChildQuestion.options.forEach(
+                                      option => {
+                                        radioResponse[option.value] = option.label;
+                                      }
+                                    );
+                                    eachInstanceChildRecord.answer =
+                                      radioResponse[eachInstanceChildQuestion.value];
+                                  } else if (
+                                    eachInstanceChildQuestion.responseType ==
+                                    "multiselect"
+                                  ) {
+                                    eachInstanceChildQuestion.options.forEach(
+                                      option => {
+                                        multiSelectResponse[option.value] =
+                                          option.label;
+                                      }
+                                    );
+
+                                    eachInstanceChildQuestion.value.forEach(value => {
+                                      multiSelectResponseArray.push(
+                                        multiSelectResponse[value]
+                                      );
+                                    });
+
+                                    eachInstanceChildRecord.answer = multiSelectResponseArray.toString();
+                                  }
+                                  else {
+                                    eachInstanceChildRecord.answer = eachInstanceChildQuestion.value;
+                                  }
+
+                                  csvReportOutput.push(eachInstanceChildRecord);
+                                }
+                              );
+                            }
+                          }
+                        }
+
+                        csvReportOutput.push(singleAnswerRecord);
+                      }
+                    }
+                  })
+                }
+              });
+              // }
+            }
+
+
+            let fields = [
+              {
+                label: "School Name",
+                value: "schoolName"
+              },
+              {
+                label: "School Id",
+                value: "schoolId"
+              },
+              {
+                label: "Assessor Id",
+                value: "assessorId"
+              },
+              {
+                label: "Question",
+                value: "question"
+              },
+              {
+                label: "Answers",
+                value: "answer"
+              },
+              {
+                label: "Start Time",
+                value: "startTime"
+              },
+              {
+                label: "End Time",
+                value: "endTime"
+              },
+              {
+                label: "Image",
+                value: "files"
+              }
+            ];
+
+            const json2csvParser = new json2csv({ fields });
+            const csv = json2csvParser.parse(csvReportOutput);
+            fs.writeFile(pathFile, csv, function (err, data) {
+              if (err) {
+                throw err;
+              }
+
+            });
+            callback();
+
+
+            //
+            //append csv
+
+          }).catch(err => {
+            console.log(err)
+          })
+
+
+        }, function (err) {
+
+          console.log('iterating done');
+        });
+
+        // chunkOfArray.forEach(async eachChunk => {
+        //   let submissionQueryId = {
+        //     _id: {
+        //       $in: [
+        //         ...eachChunk.map(singleChunck => { return singleChunck._id })
+        //       ]
+        //     }
+        //   }
+        //   let submissionDocument = await database.models.submissions.find(
+        //     submissionQueryId,
+        //     {
+        //       "assessors.userId": 1,
+        //       "assessors.externalId": 1,
+        //       "schoolInformation.name": 1,
+        //       "schoolInformation.externalId": 1,
+        //       status: 1,
+        //       [queryObject]: 1,
+        //       [queryObject1]: 1
+        //     }
+        //   ).catch(err => {
+        //     console.log(err)
+        //   })
+        //   console.log(submissionDocument)
+        // }).catch(error => {
+        //   console.log(error)
+        // })
+
+
+        // let submissionDocument = await database.models.submissions.find(
+        //   submissionQuery,
         //   {
         //     "assessors.userId": 1,
         //     "assessors.externalId": 1,
@@ -578,215 +851,181 @@ module.exports = class Reports extends Abstract {
         //     "schoolInformation.externalId": 1,
         //     status: 1,
         //     [queryObject]: 1,
-        //     [queryObject1]: 1,
-        //     createdAt: 1
-        //   },
-        //   { createdAt: { $gt: max_created_date_from_last_result } }).limit(10).sort({ createdAt: 1 });
-
-        let assessorElement = {};
-
-        let csvReportOutput = new Array()
-        const imageBaseUrl =
-          "https://storage.cloud.google.com/sl-" +
-          (process.env.NODE_ENV == "production" ? "prod" : "dev") +
-          "-storage/";
-        let count = 0;
-        let countInstance = 0;
-        for (
-          let submissionInstance = 0;
-          submissionInstance < submissionDocument.length;
-          submissionInstance++
-        ) {
-
-          submissionDocument[submissionInstance].assessors.forEach(assessor => {
-            assessorElement[assessor.userId] = {
-              externalId: assessor.externalId
-            };
-          });
+        //     [queryObject1]: 1
+        //   }
+        // )
 
 
-          // if (
-          //   (submissionDocument[submissionInstance].evidences[req.query.evidenceId]) &&
-          //   (submissionDocument[submissionInstance].status == "inprogress" ||
-          //     submissionDocument[submissionInstance].status == "blocked")
-          // ) {
-          submissionDocument[submissionInstance]["evidences"][
-            req.query.evidenceId
-          ].submissions.forEach(submission => {
-
-            if (assessorElement[submission.submittedBy.toString()]) {
-              Object.values(submission.answers).forEach(singleAnswer => {
-                if (singleAnswer.payload) {
-                  let singleAnswerRecord = {
-                    schoolName:
-                      submissionDocument[submissionInstance].schoolInformation.name,
-                    schoolId:
-                      submissionDocument[submissionInstance].schoolInformation
-                        .externalId,
-                    question: singleAnswer.payload.question[0],
-                    answer: singleAnswer.notApplicable ? "Not Applicable" : "",
-                    assessorId:
-                      assessorElement[submission.submittedBy.toString()].externalId,
-                    files: "",
-                    startTime: this.gmtToIst(singleAnswer.startTime),
-                    endTime: this.gmtToIst(singleAnswer.endTime)
-                  }
-
-                  if (singleAnswer.fileName.length > 0) {
-                    singleAnswer.fileName.forEach(file => {
-                      singleAnswerRecord.files +=
-                        imageBaseUrl + file.sourcePath + ",";
-                    });
-                    singleAnswerRecord.files = singleAnswerRecord.files.replace(
-                      /,\s*$/,
-                      ""
-                    );
-                  }
 
 
-                  if (!singleAnswer.notApplicable) {
-                    if (singleAnswer.responseType != "matrix") {
+        // let assessorElement = {};
 
-                      count++;
-                      console.log("-------------------------------");
-                      console.log("Processing record1", count)
-                      singleAnswerRecord.answer = singleAnswer.payload[
-                        "labels"
-                      ].toString();
-                    }
-                    // }
-                    else {
+        // let csvReportOutput = new Array()
+        // const imageBaseUrl =
+        //   "https://storage.cloud.google.com/sl-" +
+        //   (process.env.NODE_ENV == "production" ? "prod" : "dev") +
+        //   "-storage/";
+        // let count = 0;
+        // let countInstance = 0;
+        // for (
+        //   let submissionInstance = 0;
+        //   submissionInstance < submissionDocument.length;
+        //   submissionInstance++
+        // ) {
 
-                      countInstance++;
-                      console.log("Processing instance record", countInstance)
-                      singleAnswerRecord.answer = "Instance Question";
+        //   submissionDocument[submissionInstance].assessors.forEach(assessor => {
+        //     assessorElement[assessor.userId] = {
+        //       externalId: assessor.externalId
+        //     };
+        //   });
 
-                      if (singleAnswer.payload.labels[0]) {
-                        for (
-                          let instance = 0;
-                          instance < singleAnswer.payload.labels[0].length;
-                          instance++
-                        ) {
 
-                          singleAnswer.payload.labels[0][instance].forEach(
-                            eachInstanceChildQuestion => {
-                              let eachInstanceChildRecord = {
-                                schoolName:
-                                  submissionDocument[submissionInstance].schoolInformation.name,
-                                schoolId:
-                                  submissionDocument[submissionInstance].schoolInformation
-                                    .externalId,
-                                question: eachInstanceChildQuestion.question[0],
-                                // answer: "",
-                                assessorId:
-                                  assessorElement[submission.submittedBy.toString()].externalId,
-                                startTime: this.gmtToIst(eachInstanceChildQuestion.startTime),
-                                endTime: this.gmtToIst(eachInstanceChildQuestion.endTime),
-                              };
+        //   // if (
+        //   //   (submissionDocument[submissionInstance].evidences[req.query.evidenceId]) &&
+        //   //   (submissionDocument[submissionInstance].status == "inprogress" ||
+        //   //     submissionDocument[submissionInstance].status == "blocked")
+        //   // ) {
+        //   submissionDocument[submissionInstance]["evidences"][
+        //     req.query.evidenceId
+        //   ].submissions.forEach(submission => {
 
-                              if (eachInstanceChildQuestion.fileName.length > 0) {
-                                eachInstanceChildQuestion.fileName.forEach(
-                                  file => {
-                                    eachInstanceChildRecord.files +=
-                                      imageBaseUrl + file + ",";
-                                  }
-                                );
-                                eachInstanceChildRecord.files = eachInstanceChildRecord.files.replace(
-                                  /,\s*$/,
-                                  ""
-                                );
-                              }
+        //     if (assessorElement[submission.submittedBy.toString()]) {
+        //       Object.values(submission.answers).forEach(singleAnswer => {
+        //         if (singleAnswer.payload) {
+        //           let singleAnswerRecord = {
+        //             schoolName:
+        //               submissionDocument[submissionInstance].schoolInformation.name,
+        //             schoolId:
+        //               submissionDocument[submissionInstance].schoolInformation
+        //                 .externalId,
+        //             question: singleAnswer.payload.question[0],
+        //             answer: singleAnswer.notApplicable ? "Not Applicable" : "",
+        //             assessorId:
+        //               assessorElement[submission.submittedBy.toString()].externalId,
+        //             files: "",
+        //             startTime: this.gmtToIst(singleAnswer.startTime),
+        //             endTime: this.gmtToIst(singleAnswer.endTime)
+        //           }
 
-                              let radioResponse = {};
-                              let multiSelectResponse = {};
-                              let multiSelectResponseArray = [];
+        //           if (singleAnswer.fileName.length > 0) {
+        //             singleAnswer.fileName.forEach(file => {
+        //               singleAnswerRecord.files +=
+        //                 imageBaseUrl + file.sourcePath + ",";
+        //             });
+        //             singleAnswerRecord.files = singleAnswerRecord.files.replace(
+        //               /,\s*$/,
+        //               ""
+        //             );
+        //           }
 
-                              if (
-                                eachInstanceChildQuestion.responseType == "radio"
-                              ) {
-                                eachInstanceChildQuestion.options.forEach(
-                                  option => {
-                                    radioResponse[option.value] = option.label;
-                                  }
-                                );
-                                eachInstanceChildRecord.answer =
-                                  radioResponse[eachInstanceChildQuestion.value];
-                              } else if (
-                                eachInstanceChildQuestion.responseType ==
-                                "multiselect"
-                              ) {
-                                eachInstanceChildQuestion.options.forEach(
-                                  option => {
-                                    multiSelectResponse[option.value] =
-                                      option.label;
-                                  }
-                                );
 
-                                eachInstanceChildQuestion.value.forEach(value => {
-                                  multiSelectResponseArray.push(
-                                    multiSelectResponse[value]
-                                  );
-                                });
+        //           if (!singleAnswer.notApplicable) {
+        //             if (singleAnswer.responseType != "matrix") {
 
-                                eachInstanceChildRecord.answer = multiSelectResponseArray.toString();
-                              }
-                              else {
-                                eachInstanceChildRecord.answer = eachInstanceChildQuestion.value;
-                              }
+        //               count++;
+        //               console.log("-------------------------------");
+        //               console.log("Processing record1", count)
+        //               singleAnswerRecord.answer = singleAnswer.payload[
+        //                 "labels"
+        //               ].toString();
+        //             }
+        //             // }
+        //             else {
 
-                              csvReportOutput.push(eachInstanceChildRecord);
-                            }
-                          );
-                        }
-                      }
-                    }
+        //               countInstance++;
+        //               console.log("Processing instance record", countInstance)
+        //               singleAnswerRecord.answer = "Instance Question";
 
-                    csvReportOutput.push(singleAnswerRecord);
-                  }
-                }
-              })
-            }
-          });
-          // }
-        }
+        //               if (singleAnswer.payload.labels[0]) {
+        //                 for (
+        //                   let instance = 0;
+        //                   instance < singleAnswer.payload.labels[0].length;
+        //                   instance++
+        //                 ) {
 
-        let fields = [
-          {
-            label: "School Name",
-            value: "schoolName"
-          },
-          {
-            label: "School Id",
-            value: "schoolId"
-          },
-          {
-            label: "Assessor Id",
-            value: "assessorId"
-          },
-          {
-            label: "Question",
-            value: "question"
-          },
-          {
-            label: "Answers",
-            value: "answer"
-          },
-          {
-            label: "Start Time",
-            value: "startTime"
-          },
-          {
-            label: "End Time",
-            value: "endTime"
-          },
-          {
-            label: "Image",
-            value: "files"
-          }
-        ];
+        //                   singleAnswer.payload.labels[0][instance].forEach(
+        //                     eachInstanceChildQuestion => {
+        //                       let eachInstanceChildRecord = {
+        //                         schoolName:
+        //                           submissionDocument[submissionInstance].schoolInformation.name,
+        //                         schoolId:
+        //                           submissionDocument[submissionInstance].schoolInformation
+        //                             .externalId,
+        //                         question: eachInstanceChildQuestion.question[0],
+        //                         answer: "",
+        //                         assessorId:
+        //                           assessorElement[submission.submittedBy.toString()].externalId,
+        //                         startTime: this.gmtToIst(eachInstanceChildQuestion.startTime),
+        //                         endTime: this.gmtToIst(eachInstanceChildQuestion.endTime),
+        //                       };
 
-        const json2csvParser = new json2csv({ fields });
-        const csv = json2csvParser.parse(csvReportOutput);
+        //                       if (eachInstanceChildQuestion.fileName.length > 0) {
+        //                         eachInstanceChildQuestion.fileName.forEach(
+        //                           file => {
+        //                             eachInstanceChildRecord.files +=
+        //                               imageBaseUrl + file + ",";
+        //                           }
+        //                         );
+        //                         eachInstanceChildRecord.files = eachInstanceChildRecord.files.replace(
+        //                           /,\s*$/,
+        //                           ""
+        //                         );
+        //                       }
+
+        //                       let radioResponse = {};
+        //                       let multiSelectResponse = {};
+        //                       let multiSelectResponseArray = [];
+
+        //                       if (
+        //                         eachInstanceChildQuestion.responseType == "radio"
+        //                       ) {
+        //                         eachInstanceChildQuestion.options.forEach(
+        //                           option => {
+        //                             radioResponse[option.value] = option.label;
+        //                           }
+        //                         );
+        //                         eachInstanceChildRecord.answer =
+        //                           radioResponse[eachInstanceChildQuestion.value];
+        //                       } else if (
+        //                         eachInstanceChildQuestion.responseType ==
+        //                         "multiselect"
+        //                       ) {
+        //                         eachInstanceChildQuestion.options.forEach(
+        //                           option => {
+        //                             multiSelectResponse[option.value] =
+        //                               option.label;
+        //                           }
+        //                         );
+
+        //                         eachInstanceChildQuestion.value.forEach(value => {
+        //                           multiSelectResponseArray.push(
+        //                             multiSelectResponse[value]
+        //                           );
+        //                         });
+
+        //                         eachInstanceChildRecord.answer = multiSelectResponseArray.toString();
+        //                       }
+        //                       else {
+        //                         eachInstanceChildRecord.answer = eachInstanceChildQuestion.value;
+        //                       }
+
+        //                       csvReportOutput.push(eachInstanceChildRecord);
+        //                     }
+        //                   );
+        //                 }
+        //               }
+        //             }
+
+        //             csvReportOutput.push(singleAnswerRecord);
+        //           }
+        //         }
+        //       })
+        //     }
+        //   });
+        //   // }
+        // }
+
+
 
         // let currentDate = new Date();
 
@@ -803,7 +1042,7 @@ module.exports = class Reports extends Abstract {
         //     .format("YYYY_MM_DD_HH_mm") +
         //   ".csv";
 
-        let currentDate = new Date();
+        // let currentDate = new Date();
         return resolve({
           data: csv,
           csvResponse: true,
