@@ -72,3 +72,10 @@ NODE_ENV=qa node app.js
 ```
 NODE_ENV=development node app.js
 ```
+
+### Migration
+
+```
+migrate create --template-file <template-file> <migration-name> - create migration
+migrate up <version> - execute migration
+```
