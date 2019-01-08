@@ -36,6 +36,7 @@
     "keycloak-auth-utils": "^3.3.0",
     "log": "^1.4.0",
     "mathjs": "^5.2.3",
+    "migrate": "^1.6.2",
     "mkdir": "0.0.2",
     "mocha": "^5.2.0",
     "moment-timezone": "^0.5.23",
