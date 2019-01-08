@@ -1,8 +1,9 @@
 require("dotenv").config();
-//config and routes
-global.config = require("./config");
-require("./config/globalVariable")();
 
+//load all models ,controllers and configurations
+require("./config/loadModelsAndControllers")
+
+// routes
 let router = require("./routes");
 
 //express
@@ -11,7 +12,6 @@ const fileUpload = require("express-fileupload");
 let app = express();
 
 //required modules
-const requireAll = require("require-all");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
@@ -21,25 +21,6 @@ app.use(cors());
 //check server connectivity
 app.get("/ping", (req, res) => {
   res.send("pong!");
-});
-
-// boostrap all models
-global.models = requireAll({
-  dirname: __dirname + "/models",
-  filter: /(.+)\.js$/,
-  resolve: function(Model) {
-    return Model;
-  }
-});
-
-// boostrap all controllers
-global.controllers = requireAll({
-  dirname: __dirname + "/controllers",
-  filter: /(.+Controller)\.js$/,
-  resolve: function(Controller) {
-    if (Controller.name) return new Controller(models[Controller.name]);
-    else return new Controller();
-  }
 });
 
 app.use(fileUpload());
@@ -188,3 +169,5 @@ app.listen(config.port, () => {
     }
   });
 });
+
+module.exports = app;

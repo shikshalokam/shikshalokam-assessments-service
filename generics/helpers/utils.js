@@ -29,7 +29,18 @@ function checkIfStringIsUrl(str) {
   return pattern.test(str);
 }
 
+function createMigrationStatus(migrationData) {
+  return new Promise((resolve, reject) => {
+    database.models["migration-status"].create(migrationData).then(data => {
+      return resolve(data)
+    }).catch(err => {
+      return reject(err)
+    })
+  })
+}
+
 module.exports = {
   camelCaseToTitleCase: camelCaseToTitleCase,
-  checkIfStringIsUrl: checkIfStringIsUrl
+  checkIfStringIsUrl: checkIfStringIsUrl,
+  createMigrationStatus: createMigrationStatus
 };
