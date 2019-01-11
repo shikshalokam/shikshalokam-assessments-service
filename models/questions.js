@@ -34,6 +34,7 @@ module.exports = {
     canBeNotApplicable: "String",
     instanceQuestionsString: "String",
     instanceQuestions: Array,
-    isAGeneralQuestion: Boolean
+    isAGeneralQuestion: Boolean,
+    dataVersion: Number
   }
 };

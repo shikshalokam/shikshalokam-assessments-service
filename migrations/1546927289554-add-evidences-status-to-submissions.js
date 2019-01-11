@@ -42,23 +42,22 @@ module.exports.up = function (next) {
                     console.log(err)
                 })
             } else {
-                migrationStatusData.migrationEndTime = new Date;
                 migrationStatusData.endTime = new Date;
                 migrationStatusData.migrationName = 'add-evidences-status-to-submissions';
                 migrationStatusData.timeTaken = Math.abs(migrationStatusData.endTime - migrationStatusData.startTime);
                 gen.utils.createMigrationStatus(migrationStatusData).then(() => {
-                    console.log('migration status created')
+                    console.log('migration status created');
                     next();
                 }).catch(err => {
-                    console.log(err)
+                    console.log(err);
                 })
             }
         }
     }).catch(err => {
-        console.log(err)
+        console.log(err);
     });
 }
 
 module.exports.down = function (next) {
-    next()
+    next();
 }
