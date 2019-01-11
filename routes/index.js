@@ -1,10 +1,12 @@
 let authenticator = require("../generics/middleware/authenticator");
 let slackClient = require("../generics/helpers/slackCommunications");
+const fs = require("fs");
 
-module.exports = function(app) {
-  if(process.env.NODE_ENV != 'testing') app.use("/assessment/api", authenticator);
+module.exports = function (app) {
 
-  var router = function(req, res, next) {
+  app.use("/assessment/api", authenticator);
+
+  var router = function (req, res, next) {
 
     //req.params.controller = (req.params.controller).toLowerCase();
 
@@ -21,10 +23,23 @@ module.exports = function(app) {
         }
       })
         .then(result => {
-          if(result.csvResponse && result.csvResponse == true) {
-            res.setHeader('Content-disposition', 'attachment; filename='+result.fileName);
-            res.set('Content-Type', 'text/csv');
-            res.status(result.status ? result.status : 200).send(result.data);
+          if (result.isResponseAStream == true) {
+            // Check if file specified by the filePath exists 
+            fs.exists(result.fileNameWithPath, function (exists) {
+              if (exists) {
+
+                res.setHeader('Content-disposition', 'attachment; filename=' + result.fileNameWithPath.split('/').pop());
+                res.set('Content-Type', 'application/octet-stream');
+                fs.createReadStream(result.fileNameWithPath).pipe(res);
+
+              } else {
+                res.status(500).send({
+                  status: 500,
+                  message: "Oops! Something went wrong!"
+                });
+              }
+            });
+
           } else {
             res.status(result.status ? result.status : 200).json({
               message: result.message,
@@ -39,7 +54,7 @@ module.exports = function(app) {
               failed: result.failed
             });
           }
-          loggerObj.info({ resp: result});
+          loggerObj.info({ resp: result });
           console.log('-------------------Response log starts here-------------------');
           console.log(result);
           console.log('-------------------Response log ends here-------------------');
@@ -51,13 +66,13 @@ module.exports = function(app) {
           });
 
           let customFields = {
-            appDetails : '',
+            appDetails: '',
             userDetails: 'NON_LOGGED_IN_USER'
           }
 
-          if(req.userDetails){
+          if (req.userDetails) {
             customFields = {
-              appDetails : req.headers["user-agent"],
+              appDetails: req.headers["user-agent"],
               userDetails: req.userDetails.firstName + " - " + req.userDetails.lastName + " - " + req.userDetails.email
             }
           }
@@ -65,7 +80,7 @@ module.exports = function(app) {
           const toLogObject = { method: req.method, url: req.url, headers: req.headers, body: req.body, errorMsg: error.errorObject.message, errorStack: error.errorObject.stack, customFields: customFields }
           slackClient.sendExceptionLogMessage(toLogObject)
           loggerExceptionObj.info(toLogObject);
-          loggerObj.info({ resp: error});
+          loggerObj.info({ resp: error });
           console.log('-------------------Response log starts here-------------------');
           console.log(error);
           console.log('-------------------Response log ends here-------------------');
