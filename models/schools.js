@@ -50,5 +50,6 @@ module.exports = {
     "totalHistoryTeachers": Number,
     "totalGeographyTeachers": Number,
     "streamOffered": "String",
+    "emailId": "String"
   }
 };
