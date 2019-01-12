@@ -58,6 +58,16 @@ module.exports = class Reports extends Abstract {
           });
         }());
 
+        if(!submissions.length){
+          input.push({
+            "School Id":null,
+            "School Name":null,
+            "School Id":null,
+            "Program Id":null,
+            "Program Name":null,
+            "Status":null
+          });
+        }
         submissions.forEach(submission => {
           let result = {};
 
@@ -121,7 +131,19 @@ module.exports = class Reports extends Abstract {
             fileNameWithPath: fileStream.fileNameWithPath()
           });
         }());
-
+        if(!assessorsWithSchoolDetails.result.length){
+          input.push({
+            "Assessor Id": null,
+            "Assessor UserId": null,
+            "Parent Id": null,
+            "Assessor Name": null,
+            "Assessor Email": null,
+            "Assessor Role": null,
+            "Program Id": null,
+            "School Id": null,
+            "School Name": null
+          });
+        }
         assessorsWithSchoolDetails.result.forEach(assessor => {
           assessor.schools.forEach(assessorSchool => {
             input.push({
@@ -171,7 +193,19 @@ module.exports = class Reports extends Abstract {
             fileNameWithPath: fileStream.fileNameWithPath()
           });
         }());
-
+        if(!assessorsWithSchoolDetails.result.length){
+          input.push({
+            "Assessor School Id": null,
+            "Assessor School Name": null,
+            "Assessor User Id": null,
+            "Assessor Id": null,
+            "Assessor Name": null,
+            "Assessor Email": null,
+            "Parent Id": null,
+            "Assessor Role": null,
+            "Program Id": null
+          });
+        }
         assessorsWithSchoolDetails.result.forEach(assessor => {
           assessor.schools.forEach(assessorSchool => {
             input.push({
@@ -291,7 +325,22 @@ module.exports = class Reports extends Abstract {
               submissionCount: evidencesStatus.submissionCount
             };
           });
-
+          if(!schoolDocument.length){
+            input.push({
+              "Program Id": null,
+              "School Name": null,
+              "School Id": null,
+              "Status":null,
+              "Created At":null,
+              "Completed Date":null,
+              "Submission Count":null,
+              "Status":null,
+              "Created At":null,
+              "Created At":null,  
+              "Completed Date":null, 
+              "Submission Count":null
+            })
+          }
           schoolDocument.forEach(school => {
             let programSchoolStatusObject = {
               "Program Id": programQueryObject.externalId,
@@ -365,7 +414,19 @@ module.exports = class Reports extends Abstract {
           });
         }());
 
-        if (submissionDocumentIdsToProcess.length > 0) {
+        if(!submissionDocumentIdsToProcess.length){
+          input.push({
+            "School Name": null,
+            "School Id": null,
+            "Question": null,
+            "Answer": null,
+            "Assessor Id": null,
+            "Remarks": null,
+            "Start Time": null,
+            "End Time": null,
+            "Files": null
+          })
+        }else{
 
           const chunkSize = 10
           const chunkOfSubmissionIds = _.chunk(submissionDocumentIdsToProcess, chunkSize)
@@ -411,7 +472,7 @@ module.exports = class Reports extends Abstract {
                   externalId: assessor.externalId
                 };
               });
-
+              
               submission.evidences[evidenceIdFromRequestParam].submissions.forEach(evidenceSubmission => {
 
                 if (assessors[evidenceSubmission.submittedBy.toString()] && evidenceSubmission.isValid === true) {
@@ -541,9 +602,9 @@ module.exports = class Reports extends Abstract {
               });
             }));
           }
-          input.push(null)
-
+          
         }
+        input.push(null)
 
 
       } catch (error) {
@@ -592,7 +653,6 @@ module.exports = class Reports extends Abstract {
           let evaluationFrameworksDocuments = submissionAndEvaluationFrameworksDocuments[1];
 
           let evaluationNameObject = {};
-
           evaluationFrameworksDocuments.forEach(singleDocument => {
             singleDocument.themes.forEach(singleTheme => {
               singleTheme.aoi.forEach(singleAoi => {
@@ -608,6 +668,18 @@ module.exports = class Reports extends Abstract {
               });
             });
           });
+
+          if(!submissionDocument[0].criterias.length){
+            input.push({
+              "Theme Name": null,
+              "AoI Name": null,
+              "Level 1": null,
+              "Level 2": null,
+              "Level 3": null,
+              "Level 4": null,
+              "Score": null
+            })
+          }
           submissionDocument[0].criterias.forEach(submissionCriterias => {
             let levels = Object.values(submissionCriterias.rubric.levels);
 
@@ -723,6 +795,17 @@ module.exports = class Reports extends Abstract {
                 score: singleCriteria.score
               };
             });
+            if(!Object.values(singleSchoolSubmission.answers).length){
+              input.push({
+                "Criteria Name":"",
+                "Question":"",
+                "Answer":"",
+                "Options":"",
+                "Score":"",
+                "Remarks":"",
+                "Files": ""
+              })
+            }
             Object.values(singleSchoolSubmission.answers).forEach(
               singleAnswer => {
                 if (singleAnswer.payload) {
@@ -860,6 +943,183 @@ module.exports = class Reports extends Abstract {
 
         })
 
+      } catch (error) {
+        return reject({
+          status: 500,
+          message: "Oops! Something went wrong!",
+          errorObject: error
+        });
+      }
+    });
+  }
+
+    async parentRegistry(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const programQueryParams = {
+          externalId: req.params._id
+        };
+        const programsDocument = await database.models.programs.findOne(programQueryParams,{ _id:1})
+        
+        let parentRegistryDocuments = [];
+        if(programsDocument) {
+          const parentRegistryQueryParams = {programId:programsDocument._id};
+          parentRegistryDocuments = await database.models['parent-registry'].find(parentRegistryQueryParams,
+            {
+              _id:0,
+              createdAt:0,
+              updatedAt:0,
+              __v:0,
+              deleted:0
+            })
+        };
+
+        const fileName = `parentRegistry`;
+        let fileStream = new FileStream(fileName);
+        let input = fileStream.initStream();
+        
+        (async function () {
+          await fileStream.getProcessorPromise();
+          return resolve({
+            isResponseAStream: true,
+            fileNameWithPath: fileStream.fileNameWithPath()
+          });
+        }());
+
+        if(!parentRegistryDocuments.length){
+          input.push({
+            "School Id" : null,
+            "Program Id" : null,
+            "Student Name" : null,
+            "Grade" : null,
+            "Parent Name" : null,
+            "Gender" : null,
+            "Type" : null,
+            "Type Label" : null,
+            "Phone 1" : null,
+            "Phone 2" : null,
+            "Address" : null,
+            "School Name" : null,
+            "Call Response" : null
+          });
+        }
+        parentRegistryDocuments.forEach(parentRegistry => {
+          input.push({
+            "School Id" : parentRegistry.schoolId,
+            "Program Id" : parentRegistry.programId,
+            "Student Name" : parentRegistry.studentName,
+            "Grade" : parentRegistry.grade,
+            "Parent Name" : parentRegistry.name,
+            "Gender" : parentRegistry.gender,
+            "Type" : parentRegistry.type,
+            "Type Label" : parentRegistry.typeLabel,
+            "Phone 1" : parentRegistry.phone1,
+            "Phone 2" : parentRegistry.phone2,
+            "Address" : parentRegistry.address,
+            "School Name" : parentRegistry.schoolName,
+            "Call Response" : parentRegistry.callResponse,
+          });
+        });
+        input.push(null);
+      } catch (error) {
+        return reject({
+          status: 500,
+          message: "Oops! Something went wrong!",
+          errorObject: error
+        });
+      }
+    });
+  }
+ 
+  async schoolProfileInformation(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let queryParams = {
+          programExternalId: req.params._id
+        };
+        const schoolProfileSubmissionDocuments = await database.models.submissions.find(queryParams, { 
+          "schoolProfile": 1 ,
+          "_id": 1,
+          "programExternalId": 1,
+          "schoolExternalId":1
+        });
+
+        const fileName = `schoolProfileInformation`;
+        let fileStream = new FileStream(fileName);
+        let input = fileStream.initStream();
+
+        (async function () {
+          await fileStream.getProcessorPromise();
+          return resolve({
+            isResponseAStream: true,
+            fileNameWithPath: fileStream.fileNameWithPath()
+          });
+        }());
+
+        if(!schoolProfileSubmissionDocuments.length){
+          input.push({
+            "Submission Id": null,
+            "School External Id": null,
+            "program External Id": null,
+            "School Types": null,
+            "Address Line 1": null,
+            "Address Line 2": null,
+            "Administration": null,
+            "City": null,
+            "Country": null,
+            "Created By": null,
+            "District Id": null,
+            "District Name": null,
+            "Gender": null,
+            "GpsLocation": null,
+            "Highest Grade": null,
+            "Lowest Grade": null,
+            "Name": null,
+            "Phone": null,
+            "Pincode": null,
+            "Principal Name": null,
+            "Shift": null,
+            "State": null,
+            "Total Boys": null,
+            "Total Girls": null,
+            "Total Students": null,
+            "Update dBy": null,
+            "Zone Id": null
+          });
+        }
+        schoolProfileSubmissionDocuments.forEach(submissionDocument => {
+          let schoolProfile = submissionDocument.schoolProfile;
+          input.push({
+            "Submission Id": submissionDocument._id,
+            "School External Id": submissionDocument.schoolExternalId,
+            "program External Id": submissionDocument.programExternalId,
+            "School Types": schoolProfile ? schoolProfile.schoolTypes : "",
+            "Address Line 1": schoolProfile ? schoolProfile.addressLine1 : "",
+            "Address Line 2": schoolProfile ? schoolProfile.addressLine2 : "",
+            "Administration": schoolProfile ? schoolProfile.administration : "",
+            "City": schoolProfile ? schoolProfile.city : "",
+            "Country": schoolProfile ? schoolProfile.country : "",
+            "Created By": schoolProfile ? schoolProfile.createdBy : "",
+            "District Id": schoolProfile ? schoolProfile.districtId : "",
+            "District Name": schoolProfile ? schoolProfile.districtName : "",
+            "Gender": schoolProfile ? schoolProfile.gender : "",
+            "GpsLocation": schoolProfile ? schoolProfile.gpsLocation : "",
+            "Highest Grade": schoolProfile ? schoolProfile.highestGrade : "",
+            "Lowest Grade": schoolProfile ? schoolProfile.lowestGrade : "",
+            "Name": schoolProfile ? schoolProfile.name : "",
+            "Phone": schoolProfile ? schoolProfile.phone : "",
+            "Pincode": schoolProfile ? schoolProfile.pincode : "",
+            "Principal Name": schoolProfile ? schoolProfile.principalName : "",
+            "Shift": schoolProfile ? schoolProfile.shift : "",
+            "State": schoolProfile ? schoolProfile.state : "",
+            "Total Boys": schoolProfile ? schoolProfile.totalBoys : "",
+            "Total Girls": schoolProfile ? schoolProfile.totalGirls : "",
+            "Total Students": schoolProfile ? schoolProfile.totalStudents : "",
+            "Update dBy": schoolProfile ? schoolProfile.updatedBy : "",
+            "Zone Id": schoolProfile ? schoolProfile.zoneId : ""
+          });
+        });
+        input.push(null);
       } catch (error) {
         return reject({
           status: 500,
