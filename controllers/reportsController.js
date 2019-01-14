@@ -425,14 +425,12 @@ module.exports = class Reports extends Abstract {
 
           const chunkSize = 10
           const chunkOfSubmissionIds = _.chunk(submissionDocumentIdsToProcess, chunkSize)
-
           const pathToSubmissionAnswers = "evidences." + evidenceIdFromRequestParam + ".submissions.answers";
           const pathToSubmissionSubmittedBy = "evidences." + evidenceIdFromRequestParam + ".submissions.submittedBy";
           const pathToSubmissionisValid = "evidences." + evidenceIdFromRequestParam + ".submissions.isValid";
 
           let submissionIds
           let submissionDocuments
-
           for (let pointerToSubmissionIdChunkArray = 0; pointerToSubmissionIdChunkArray < chunkOfSubmissionIds.length; pointerToSubmissionIdChunkArray++) {
 
             submissionIds = chunkOfSubmissionIds[pointerToSubmissionIdChunkArray].map(submissionModel => {
@@ -456,7 +454,6 @@ module.exports = class Reports extends Abstract {
                 [pathToSubmissionisValid]: 1
               }
             )
-
 
             await Promise.all(submissionDocuments.map(async (submission) => {
 
@@ -953,21 +950,7 @@ module.exports = class Reports extends Abstract {
         const programQueryParams = {
           externalId: req.params._id
         };
-        const programsDocument = await database.models.programs.findOne(programQueryParams, { _id: 1 })
-
-        let parentRegistryDocuments = [];
-        if (programsDocument) {
-          const parentRegistryQueryParams = { programId: programsDocument._id };
-          parentRegistryDocuments = await database.models['parent-registry'].find(parentRegistryQueryParams,
-            {
-              _id: 0,
-              createdAt: 0,
-              updatedAt: 0,
-              __v: 0,
-              deleted: 0
-            })
-        };
-
+        const programsDocumentIds = await database.models.programs.find(programQueryParams, { _id: 1 })
         const fileName = `parentRegistry`;
         let fileStream = new FileStream(fileName);
         let input = fileStream.initStream();
@@ -980,7 +963,7 @@ module.exports = class Reports extends Abstract {
           });
         }());
 
-        if (!parentRegistryDocuments.length) {
+        if (!programsDocumentIds.length) {
           input.push({
             "School Id": null,
             "Program Id": null,
@@ -997,15 +980,43 @@ module.exports = class Reports extends Abstract {
             "Call Response": null
           });
         }
+        let schoolDocumentObject = {}
+        const schoolDocumentArray = await database.models.schools.find({}, { "externalId": 1 })
 
+        schoolDocumentArray.forEach(eachSchoolDocument => {
+          schoolDocumentObject[eachSchoolDocument._id.toString()] =
+            {
+              "externalId": eachSchoolDocument.externalId
+            }
+        })
         const chunkSize = 10;
-        let chunkOfParentRegistryDocument = _.chunk(parentRegistryDocuments, chunkSize)
+        let chunkOfProgramDocumentId = _.chunk(programsDocumentIds, chunkSize)
+        let programIds
+        let parentRegistryDocuments
 
-        for (let pointerToParentRegistryArray = 0; pointerToParentRegistryArray < chunkOfParentRegistryDocument.length; pointerToParentRegistryArray++) {
-          await Promise.all(chunkOfParentRegistryDocument[pointerToParentRegistryArray].map(async (parentRegistry) => {
+        for (let pointerToProgramDocumentIdArray = 0; pointerToProgramDocumentIdArray < chunkOfProgramDocumentId.length; pointerToProgramDocumentIdArray++) {
+          programIds = chunkOfProgramDocumentId[pointerToProgramDocumentIdArray].map(programModel => {
+            return programModel._id
+          });
+
+          parentRegistryDocuments = await database.models['parent-registry'].find({
+            programId: {
+              $in: programIds
+            }
+          },
+            {
+              _id: 0,
+              createdAt: 0,
+              updatedAt: 0,
+              __v: 0,
+              deleted: 0
+            })
+
+
+          await Promise.all(parentRegistryDocuments.map(async (parentRegistry) => {
 
             input.push({
-              "School Id": parentRegistry.schoolId,
+              "School Id": schoolDocumentObject[parentRegistry.schoolId.toString()].externalId,
               "Program Id": parentRegistry.programId,
               "Student Name": parentRegistry.studentName,
               "Grade": parentRegistry.grade,
@@ -1020,6 +1031,7 @@ module.exports = class Reports extends Abstract {
               "Call Response": parentRegistry.callResponse,
             });
           }))
+
         }
 
         input.push(null);
@@ -1039,12 +1051,10 @@ module.exports = class Reports extends Abstract {
         let queryParams = {
           programExternalId: req.params._id
         };
-        const schoolProfileSubmissionDocuments = await database.models.submissions.find(queryParams, {
-          "schoolProfile": 1,
-          "_id": 1,
-          "programExternalId": 1,
-          "schoolExternalId": 1
-        });
+
+        const submissionIds = await database.models.submissions.find(queryParams, {
+          _id: 1
+        })
 
         const fileName = `schoolProfileInformation`;
         let fileStream = new FileStream(fileName);
@@ -1059,7 +1069,7 @@ module.exports = class Reports extends Abstract {
         }());
 
 
-        if (!schoolProfileSubmissionDocuments.length) {
+        if (!submissionIds.length) {
           input.push({
             "Submission Id": null,
             "School External Id": null,
@@ -1092,11 +1102,28 @@ module.exports = class Reports extends Abstract {
         }
 
         const chunkSize = 10;
-        let chunkOfSchoolProfileSubmissionDocument = _.chunk(schoolProfileSubmissionDocuments, chunkSize)
+        let chunkOfSubmissionIds = _.chunk(submissionIds, chunkSize)
+        let submissionId
+        let schoolProfileSubmissionDocuments
 
-        for (let pointerToSchoolProfileSubmissionArray = 0; pointerToSchoolProfileSubmissionArray < chunkOfSchoolProfileSubmissionDocument.length; pointerToSchoolProfileSubmissionArray++) {
+        for (let pointerToSchoolProfileSubmissionArray = 0; pointerToSchoolProfileSubmissionArray < chunkOfSubmissionIds.length; pointerToSchoolProfileSubmissionArray++) {
+          submissionId = chunkOfSubmissionIds[pointerToSchoolProfileSubmissionArray].map(eachSubmissionId => {
+            return eachSubmissionId._id
+          })
 
-          await Promise.all(chunkOfSchoolProfileSubmissionDocument[pointerToSchoolProfileSubmissionArray].map(async (eachSchoolProfileSubmissionDocument) => {
+          schoolProfileSubmissionDocuments = await database.models.submissions.find(
+            {
+              _id: {
+                $in: submissionId
+              }
+            }, {
+              "schoolProfile": 1,
+              "_id": 1,
+              "programExternalId": 1,
+              "schoolExternalId": 1
+            })
+
+          await Promise.all(schoolProfileSubmissionDocuments.map(async (eachSchoolProfileSubmissionDocument) => {
             let schoolProfile = eachSchoolProfileSubmissionDocument.schoolProfile;
 
             input.push({
