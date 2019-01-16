@@ -205,6 +205,7 @@ module.exports = class Reports extends Abstract {
           ];
 
           assessorsDocuments = await database.models["school-assessors"].aggregate(assessorQueryObject)
+          console.log(assessorDocuments)
 
           await Promise.all(assessorsDocuments.map(async (assessor) => {
             assessor.schoolDocument.forEach(eachAssessorSchool => {
