@@ -1,5 +1,5 @@
 'use strict'
-require('../loaders')
+require('./config/loadModelsAndControllers')
 const version = parseFloat(process.argv[2]);
 if(!version) throw "Please provide version";
 module.exports.up = function (next) {
