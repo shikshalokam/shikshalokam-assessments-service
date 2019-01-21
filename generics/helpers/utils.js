@@ -41,7 +41,7 @@ function createMigrationStatus(migrationData) {
 
 function generateRandomCharacters(numberOfChar) {
   var text = "";
-  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnpqrstuvwxyz123456789!@#%&*";
+  var possible = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz123456789!@#%&*";
   for (var i = 0; i < numberOfChar; i++)
     text += possible.charAt(Math.floor(Math.random() * possible.length));
 
