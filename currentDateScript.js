@@ -9,7 +9,7 @@ MongoClient.connect(url, { useNewUrlParser: true }, function (err, db) {
 
     submissionsCollection.find({}).project({ _id: 1 }).toArray((err, submissionData) => {
         let chunkOfSubmissionData = _.chunk(submissionData, 10)
-        let evidenceCount = 1;
+        let evidenceCount = 0;
         for (let pointerToChunkData = 0; pointerToChunkData < chunkOfSubmissionData.length; pointerToChunkData++) {
             let submissionIds = chunkOfSubmissionData[pointerToChunkData].map(submissionId => {
                 return submissionId._id
@@ -32,6 +32,9 @@ MongoClient.connect(url, { useNewUrlParser: true }, function (err, db) {
                     let updateQuery = { $set: { evidencesStatus: eachSubmission.evidenceStatus } }
                     submissionsCollection.update(findQuery, updateQuery).then(() => {
                         console.log(`updating evidence ${evidenceCount++}`)
+                        if (submissionData.length == evidenceCount) {
+                            console.log("Done")
+                        }
                     })
                 })
             })
