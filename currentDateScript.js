@@ -32,7 +32,6 @@ MongoClient.connect(url, { useNewUrlParser: true }, function (err, db) {
                     let updateQuery = { $set: { evidencesStatus: eachSubmission.evidenceStatus } }
                     submissionsCollection.update(findQuery, updateQuery).then(() => {
                         console.log(`updating evidence ${evidenceCount++}`)
-                        console.log(`Nothing`)
                     })
                 })
             })
