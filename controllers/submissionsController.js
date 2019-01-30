@@ -242,6 +242,7 @@ module.exports = class Submission extends Abstract {
             evidencesStatusToBeChanged['startTime'] = req.body.evidence.startTime;
             evidencesStatusToBeChanged['endTime'] = req.body.evidence.endTime;
             evidencesStatusToBeChanged['hasConflicts'] = false;
+            evidencesStatusToBeChanged['submissions'].push(_.omit(req.body.evidence,"answers"));
 
             updateObject.$push = { 
               ["evidences."+req.body.evidence.externalId+".submissions"]: req.body.evidence
@@ -282,6 +283,7 @@ module.exports = class Submission extends Abstract {
             }
 
             evidencesStatusToBeChanged['hasConflicts']=true;
+            evidencesStatusToBeChanged['submissions'].push(_.omit(req.body.evidence,"answers"));
 
             updateObject.$set = {
               evidencesStatus:submissionDocument.evidencesStatus,
@@ -465,6 +467,7 @@ module.exports = class Submission extends Abstract {
           evidencesStatusToBeChanged['startTime'] = "";
           evidencesStatusToBeChanged['endTime'] = new Date;
           evidencesStatusToBeChanged['hasConflicts'] = false;
+          evidencesStatusToBeChanged['submissions'].push(_.omit(evidenceSubmission,"answers"));
 
           updateObject.$push = { 
             ["evidences."+parentInterviewEvidenceMethod+".submissions"]: evidenceSubmission
@@ -1019,6 +1022,60 @@ module.exports = class Submission extends Abstract {
             queryObject,
             updateObject
           );
+        }
+        
+        let response = {
+          message: message,
+          result: result
+        };
+
+        return resolve(response);
+
+      } catch (error) {
+        return reject({
+          status:500,
+          message:error,
+          errorObject: error
+        });
+      }
+      
+    })
+  }
+
+
+  async isAllowed(req) {
+    return new Promise(async (resolve, reject) => {
+
+      try {
+        
+        let result = {
+          allowed : true
+        }
+        req.body = req.body || {};
+        let message = "Submission check completed successfully"
+
+        let queryObject = {
+          "_id": req.params._id
+        }
+
+        let submissionDocument = await database.models.submissions.findOne(
+          queryObject,
+          {
+            ["evidences."+req.query.evidenceId+".isSubmitted"] : 1,
+            ["evidences."+req.query.evidenceId+".submissions"] : 1
+          }
+        );
+
+        if(!submissionDocument|| !submissionDocument._id) {
+          throw "Couldn't find the submission document"
+        } else {
+          if(submissionDocument.evidences[req.query.evidenceId].isSubmitted && submissionDocument.evidences[req.query.evidenceId].isSubmitted == true) {
+            submissionDocument.evidences[req.query.evidenceId].submissions.forEach(submission => {
+              if(submission.submittedBy == req.userDetails.userId) {
+                result.allowed = false
+              }
+            })
+          }
         }
         
         let response = {
