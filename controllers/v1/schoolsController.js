@@ -1,8 +1,7 @@
 const csv = require("csvtojson");
-
 module.exports = class Schools extends Abstract {
-  constructor(schema) {
-    super(schema);
+  constructor() {
+    super(schoolsSchema);
     this.roles = {
       ASSESSOR: "assessors",
       LEAD_ASSESSOR: "leadAssessors",
@@ -191,6 +190,12 @@ module.exports = class Schools extends Abstract {
         let schoolDocument = await database.models.schools.findOne(
           schoolQueryObject
         );
+
+        if(!schoolDocument){
+          let responseMessage = 'No schools found.';
+          return resolve({ status: 400, message: responseMessage })
+        }
+
         schoolDocument = await schoolDocument.toObject();
         let programQueryObject = {
           status: "active",
@@ -219,6 +224,11 @@ module.exports = class Schools extends Abstract {
         let programDocument = await database.models.programs.findOne(
           programQueryObject
         );
+
+        if(!programDocument){
+          let responseMessage = 'No program found.';
+          return resolve({ status: 400, message: responseMessage })
+        }
 
         let accessability =
           programDocument.components[0].roles[
@@ -372,7 +382,7 @@ module.exports = class Schools extends Abstract {
             })
           });
 
-          let criteriaQuestionDocument = await database.models["criteria-questions"].find({ _id: { $in: criteriasIdArray } })
+          let criteriaQuestionDocument = await database.models["criteriaQuestions"].find({ _id: { $in: criteriasIdArray } })
 
           let evidenceMethodArray = {};
           let submissionDocumentEvidences = {};
@@ -447,7 +457,8 @@ module.exports = class Schools extends Abstract {
           submissionDocument.evidences = submissionDocumentEvidences;
           submissionDocument.evidencesStatus = Object.values(submissionDocumentEvidences);
           submissionDocument.criterias = submissionDocumentCriterias;
-          let submissionDoc = await controllers.submissionsController.findSubmissionBySchoolProgram(
+          let submissionsController = new submissionsBaseController();
+          let submissionDoc = await submissionsController.findSubmissionBySchoolProgram(
             submissionDocument,
             req
           );
