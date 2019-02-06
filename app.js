@@ -11,10 +11,7 @@ const express = require("express");
 let app = express();
 
 //required modules
-<<<<<<< HEAD
-=======
 const fileUpload = require("express-fileupload");
->>>>>>> development
 const bodyParser = require("body-parser");
 const cors = require("cors");
 var fs = require("fs");
