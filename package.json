@@ -8,6 +8,9 @@
     "start": "node app.js",
     "dev": "nodemon app.js"
   },
+  "bin": {
+    "mig": "./cli/migrations/index.js"
+  },
   "keywords": [
     "shikshalokam",
     "Learning Management System"
