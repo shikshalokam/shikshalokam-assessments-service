@@ -1,7 +1,9 @@
 const moment = require("moment-timezone");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
 const imageBaseUrl = "https://storage.cloud.google.com/sl-" + (process.env.NODE_ENV == "production" ? "prod" : "dev") + "-storage/";
-
+const fs = require('fs');
+const ECM = ['BL', 'LW', 'SI', 'AC3', 'PI', 'AC8', 'PAI', 'TI', 'CO', 'AC5'];
+const Json2csvParser = require('json2csv').Parser;
 module.exports = class Reports {
   constructor() {
   }
@@ -1539,7 +1541,7 @@ module.exports = class Reports {
         }
 
         let fetchRequiredSubmissionDocumentIdQueryObj = {};
-        fetchRequiredSubmissionDocumentIdQueryObj["programInformation.externalId"] = req.params._id
+        fetchRequiredSubmissionDocumentIdQueryObj["programExternalId"] = req.params._id
         fetchRequiredSubmissionDocumentIdQueryObj["evidencesStatus.submissions.submissionDate"] = {}
         fetchRequiredSubmissionDocumentIdQueryObj["evidencesStatus.submissions.submissionDate"]["$gte"] = fromDate
         fetchRequiredSubmissionDocumentIdQueryObj["evidencesStatus.submissions.submissionDate"]["$lte"] = toDate
@@ -1563,20 +1565,12 @@ module.exports = class Reports {
           }
         })
 
-        let fileName = `EcmReport`;
-        (fromDate) ? fileName += "from date _" + fromDate : "";
-        (toDate) ? fileName += "to date _" + toDate : new Date();
+        let fileName = `EcmReport_`;
+        (fromDate) ? fileName += "from_date_" + moment(fromDate).format('DD-MM-YYYY') : "";
+        (toDate) ? fileName += "to_date_" + moment(toDate).format('DD-MM-YYYY') : moment().format('DD-MM-YYYY');
 
         let fileStream = new FileStream(fileName);
-        let input = fileStream.initStream();
-
-        (async function () {
-          await fileStream.getProcessorPromise();
-          return resolve({
-            isResponseAStream: true,
-            fileNameWithPath: fileStream.fileNameWithPath()
-          });
-        }());
+        let fileNameWithPath = fileStream.fileNameWithPath();
 
         if (!submissionDocumentIdsToProcess.length) {
           return resolve({
@@ -1585,10 +1579,26 @@ module.exports = class Reports {
           });
         } else {
 
+          function createValues(object) {
+            const json2csvParser = new Json2csvParser(Object.values(object));
+            const csv = json2csvParser.parse(object);
+            fs.appendFile(fileNameWithPath, csv, function (err) {
+              if (err) throw err;
+            });
+          }
+
           const chunkOfSubmissionIds = _.chunk(submissionDocumentIdsToProcess, 10)
 
           let submissionIds
           let submissionDocuments
+          let evidencesProjectObj = {};
+          ECM.forEach(ecm => {
+            evidencesProjectObj[`evidences.${ecm}.submissions.submissionDate`] = 1;
+            evidencesProjectObj[`evidences.${ecm}.submissions.submittedBy`] = 1;
+            evidencesProjectObj[`evidences.${ecm}.submissions.isValid`] = 1;
+            evidencesProjectObj[`evidences.${ecm}.submissions.isValid`] = 1;
+            evidencesProjectObj[`evidences.${ecm}.submissions.answers`] = 1;
+          })
 
           for (let pointerToSubmissionIdChunkArray = 0; pointerToSubmissionIdChunkArray < chunkOfSubmissionIds.length; pointerToSubmissionIdChunkArray++) {
 
@@ -1596,21 +1606,22 @@ module.exports = class Reports {
               return submissionModel._id
             });
 
+            let projectObj = {
+              "assessors.userId": 1,
+              "assessors.externalId": 1,
+              "schoolInformation.name": 1,
+              "schoolInformation.externalId": 1,
+              status: 1,
+            }
+            let submissionProjectObj = _.merge({}, projectObj, evidencesProjectObj)
             submissionDocuments = await database.models.submissions.find(
               {
                 _id: {
                   $in: submissionIds
                 },
               },
-              {
-                "assessors.userId": 1,
-                "assessors.externalId": 1,
-                "schoolInformation.name": 1,
-                "schoolInformation.externalId": 1,
-                "evidences": 1,
-                status: 1,
-              }
-            )
+              submissionProjectObj
+            );
 
 
             await Promise.all(submissionDocuments.map(async (submission) => {
@@ -1669,11 +1680,13 @@ module.exports = class Reports {
                               singleAnswerRecord.Answer = singleAnswer.payload[
                                 "labels"
                               ].toString();
-                              input.push(singleAnswerRecord)
+                              // input.push(singleAnswerRecord)
+                              createValues(singleAnswerRecord);
                             } else {
 
                               singleAnswerRecord.Answer = "Instance Question";
-                              input.push(singleAnswerRecord)
+                              // input.push(singleAnswerRecord)
+                              createValues(singleAnswerRecord);
 
                               if (singleAnswer.payload.labels[0]) {
                                 for (
@@ -1689,14 +1702,14 @@ module.exports = class Reports {
                                         "School Id": submission.schoolInformation.externalId,
                                         "Question": eachInstanceChildQuestion.question[0],
                                         "Question Id": (questionIdObject[eachInstanceChildQuestion._id]) ? questionIdObject[eachInstanceChildQuestion._id].questionExternalId : "",
-                                        "Submission Date": this.gmtToIst(evidenceSubmission.submissionDate),
                                         "Answer": "",
                                         "Assessor Id": assessors[evidenceSubmission.submittedBy.toString()].externalId,
                                         "Remarks": eachInstanceChildQuestion.remarks || "",
                                         "Start Time": this.gmtToIst(eachInstanceChildQuestion.startTime),
                                         "End Time": this.gmtToIst(eachInstanceChildQuestion.endTime),
                                         "Files": "",
-                                        "ECM": evidenceSubmission.externalId
+                                        "ECM": evidenceSubmission.externalId,
+                                        "Submission Date": this.gmtToIst(evidenceSubmission.submissionDate)
                                       };
 
                                       if (eachInstanceChildQuestion.fileName.length > 0) {
@@ -1751,8 +1764,8 @@ module.exports = class Reports {
                                       else {
                                         eachInstanceChildRecord.Answer = eachInstanceChildQuestion.value;
                                       }
-
-                                      input.push(eachInstanceChildRecord)
+                                      // input.push(eachInstanceChildRecord)
+                                      createValues(eachInstanceChildRecord);
                                     }
                                   );
                                 }
@@ -1770,8 +1783,11 @@ module.exports = class Reports {
           }
 
         }
-        input.push(null)
-
+        console.log('done')
+        return resolve({
+          isResponseAStream: true,
+          fileNameWithPath: fileStream.fileNameWithPath()
+        });
 
       } catch (error) {
         return reject({
