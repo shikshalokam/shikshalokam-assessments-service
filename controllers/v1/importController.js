@@ -16,7 +16,7 @@ module.exports = class Import {
                     _id: ObjectId(programDocument._id)
                 };
                 let updateObject = programDocument;
-    
+
                 await database.models.programs.findOneAndUpdate(
                     queryObject,
                     updateObject,
@@ -61,7 +61,7 @@ module.exports = class Import {
                     _id: ObjectId(evaluationFrameworkDocument._id)
                 };
                 let updateObject = evaluationFrameworkDocument;
-    
+
                 await database.models.evaluationFrameworks.findOneAndUpdate(
                     queryObject,
                     updateObject,
