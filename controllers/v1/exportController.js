@@ -1,4 +1,5 @@
 var fs = require('fs');
+var _ = require("lodash")
 const moment = require("moment-timezone");
 module.exports = class Export {
     constructor() {
@@ -25,9 +26,9 @@ module.exports = class Export {
                         component.roles[role]['users'] = [];
                     })
                 })
-    
+
                 let filePath = this.getFileName('Program');
-    
+
                 fs.writeFile(filePath, JSON.stringify(programDocument), 'utf8', function (error) {
                     if (error) {
                         return reject({
@@ -62,9 +63,9 @@ module.exports = class Export {
                         message: "No evaluationFramework found for given params."
                     });
                 }
-    
+
                 let filePath = this.getFileName('EvaluationFramework');
-    
+
                 fs.writeFile(filePath, JSON.stringify(evaluationFrameworkIdDocument), 'utf8', function (error) {
                     if (error) {
                         return reject({
@@ -92,7 +93,8 @@ module.exports = class Export {
         return new Promise(async (resolve, reject) => {
             try {
                 let evaluationFrameworkId = req.params._id;
-                let evaluationFrameworkDocument = await database.models.evaluationFrameworks.findOne({ _id: ObjectId(evaluationFrameworkId) });
+                let evaluationFrameworkDocument = await database.models.evaluationFrameworks.findOne({ _id: ObjectId(evaluationFrameworkId) }, { themes: 1 });
+
                 if (!evaluationFrameworkDocument) {
                     return resolve({
                         status: 400,
@@ -103,9 +105,9 @@ module.exports = class Export {
                 let filePath = this.getFileName('Criteria');
                 let criteriaIds = schoolsController.getCriteriaIds(evaluationFrameworkDocument.themes);
                 let allCriteriaDocument = await Promise.all(criteriaIds.map(async (singleCriteria) => {
-                    return database.models.criterias.findOne({ _id: singleCriteria }).exec();
+                    return database.models.criterias.findOne({ _id: singleCriteria }, { _id: singleCriteria }).exec();
                 }))
-    
+
                 fs.writeFile(filePath, JSON.stringify(allCriteriaDocument), 'utf8', function (error) {
                     if (error) {
                         return reject({
@@ -128,31 +130,31 @@ module.exports = class Export {
             }
         })
     }
-    
+
     questionsByEvaluationFrameworkId(req) {
         return new Promise(async (resolve, reject) => {
             try {
                 let evaluationFrameworkId = req.params._id;
-                let evaluationFrameworkDocument = await database.models.evaluationFrameworks.findOne({ _id: ObjectId(evaluationFrameworkId) });
+                let evaluationFrameworkDocument = await database.models.evaluationFrameworks.findOne({ _id: ObjectId(evaluationFrameworkId) }, { themes: 1 });
                 if (!evaluationFrameworkDocument) {
                     return resolve({
                         status: 400,
                         message: "No evaluationFramework found for given params."
                     });
                 }
-                
+
                 let schoolsController = new schoolsBaseController;
                 let filePath = this.getFileName('Question');
                 let criteriaIds = schoolsController.getCriteriaIds(evaluationFrameworkDocument.themes);
-    
+
                 let allCriteriaDocument = await Promise.all(criteriaIds.map(async (singleCriteria) => {
                     return database.models.criterias.findOne({ _id: singleCriteria }).exec();
                 }))
-    
+
                 let questionIds = [];
-                allCriteriaDocument.forEach(singleCriteria=>{
-                    singleCriteria.evidences.forEach(singleEvidence=>{
-                        singleEvidence.sections.forEach(section=>{
+                allCriteriaDocument.forEach(singleCriteria => {
+                    singleCriteria.evidences.forEach(singleEvidence => {
+                        singleEvidence.sections.forEach(section => {
                             questionIds.push(section.questions)
                         })
                     })
@@ -160,7 +162,7 @@ module.exports = class Export {
                 let allQuestionsDocument = await Promise.all(questionIds.map(async (questionId) => {
                     return database.models.questions.findOne({ _id: questionId }).exec();
                 }))
-    
+
                 fs.writeFile(filePath, JSON.stringify(allQuestionsDocument), 'utf8', function (error) {
                     if (error) {
                         return reject({
@@ -189,6 +191,5 @@ module.exports = class Export {
         let fileExtensionWithTime = moment(currentDate).tz("Asia/Kolkata").format("YYYY_MM_DD_HH_mm") + ".json";
         return ROOT_PATH + '/public/reports/' + name + '_' + fileExtensionWithTime;
     }
-
 
 };
