@@ -1708,10 +1708,10 @@ module.exports = class Reports {
           let submissionIds
           let submissionDocuments
           let evidencesProjectObj = {};
+
           ECM.forEach(ecm => {
             evidencesProjectObj[`evidences.${ecm}.submissions.submissionDate`] = 1;
             evidencesProjectObj[`evidences.${ecm}.submissions.submittedBy`] = 1;
-            evidencesProjectObj[`evidences.${ecm}.submissions.isValid`] = 1;
             evidencesProjectObj[`evidences.${ecm}.submissions.isValid`] = 1;
             evidencesProjectObj[`evidences.${ecm}.submissions.answers`] = 1;
           })
@@ -1755,7 +1755,7 @@ module.exports = class Reports {
                   singleEvidence.submissions.forEach(evidenceSubmission => {
 
                     if ((evidenceSubmission.isValid === true) && (evidenceSubmission.submissionDate >= fromDate && evidenceSubmission.submissionDate < toDate)) {
-
+                      let assessorId = assessors[evidenceSubmission.submittedBy.toString()] ? assessors[evidenceSubmission.submittedBy.toString()].externalId : "";
                       Object.values(evidenceSubmission.answers).forEach(singleAnswer => {
 
                         if (singleAnswer.payload) {
@@ -1766,7 +1766,7 @@ module.exports = class Reports {
                             "Question": singleAnswer.payload.question[0],
                             "Question Id": (questionIdObject[singleAnswer.qid]) ? questionIdObject[singleAnswer.qid].questionExternalId : "",
                             "Answer": singleAnswer.notApplicable ? "Not Applicable" : "",
-                            "Assessor Id": assessors[evidenceSubmission.submittedBy.toString()].externalId,
+                            "Assessor Id": assessorId,
                             "Remarks": singleAnswer.remarks || "",
                             "Start Time": this.gmtToIst(singleAnswer.startTime),
                             "End Time": this.gmtToIst(singleAnswer.endTime),
@@ -1790,7 +1790,6 @@ module.exports = class Reports {
                           if (!singleAnswer.notApplicable) {
 
                             if (singleAnswer.responseType != "matrix") {
-
                               singleAnswerRecord.Answer = singleAnswer.payload[
                                 "labels"
                               ].toString();
@@ -1815,7 +1814,7 @@ module.exports = class Reports {
                                         "Question": eachInstanceChildQuestion.question[0],
                                         "Question Id": (questionIdObject[eachInstanceChildQuestion._id]) ? questionIdObject[eachInstanceChildQuestion._id].questionExternalId : "",
                                         "Answer": "",
-                                        "Assessor Id": assessors[evidenceSubmission.submittedBy.toString()].externalId,
+                                        "Assessor Id": assessorId,
                                         "Remarks": eachInstanceChildQuestion.remarks || "",
                                         "Start Time": this.gmtToIst(eachInstanceChildQuestion.startTime),
                                         "End Time": this.gmtToIst(eachInstanceChildQuestion.endTime),
