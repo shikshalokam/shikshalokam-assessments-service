@@ -1712,6 +1712,7 @@ module.exports = class Reports {
           ECM.forEach(ecm => {
             evidencesProjectObj[`evidences.${ecm}.submissions.submissionDate`] = 1;
             evidencesProjectObj[`evidences.${ecm}.submissions.submittedBy`] = 1;
+            evidencesProjectObj[`evidences.${ecm}.submissions.externalId`] = 1;
             evidencesProjectObj[`evidences.${ecm}.submissions.isValid`] = 1;
             evidencesProjectObj[`evidences.${ecm}.submissions.answers`] = 1;
           })
@@ -1729,6 +1730,7 @@ module.exports = class Reports {
               "schoolInformation.externalId": 1,
               status: 1,
             }
+
             let submissionProjectObj = _.merge({}, projectObj, evidencesProjectObj)
             submissionDocuments = await database.models.submissions.find(
               {
