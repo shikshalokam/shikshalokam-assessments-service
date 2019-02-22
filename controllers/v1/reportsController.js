@@ -1,7 +1,9 @@
 const moment = require("moment-timezone");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
 const imageBaseUrl = "https://storage.cloud.google.com/sl-" + (process.env.NODE_ENV == "production" ? "prod" : "dev") + "-storage/";
-
+const fs = require('fs');
+const ECM = ['BL', 'LW', 'SI', 'AC3', 'PI', 'AC8', 'PAI', 'TI', 'CO', 'AC5'];
+const Json2csvParser = require('json2csv').Parser;
 module.exports = class Reports {
   /**
    * @apiDefine errorBody
@@ -1792,12 +1794,10 @@ module.exports = class Reports {
                               singleAnswerRecord.Answer = singleAnswer.payload[
                                 "labels"
                               ].toString();
-
                               createValues(singleAnswerRecord);
                             } else {
 
                               singleAnswerRecord.Answer = "Instance Question";
-
                               createValues(singleAnswerRecord);
 
                               if (singleAnswer.payload.labels[0]) {
@@ -1876,7 +1876,6 @@ module.exports = class Reports {
                                       else {
                                         eachInstanceChildRecord.Answer = eachInstanceChildQuestion.value;
                                       }
-
                                       createValues(eachInstanceChildRecord);
                                     }
                                   );
