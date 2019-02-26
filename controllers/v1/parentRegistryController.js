@@ -125,12 +125,35 @@ module.exports = class ParentRegistry extends Abstract {
           let resultObject = {};
           let parentRegistryValue = await parentRegistry.toObject();
 
-          let typeLabelArray = [];
-          if (parentRegistryValue.typeLabel) {
-            typeLabelArray.push(parentRegistryValue.typeLabel)
-          }
-          resultObject.typeLabel = typeLabelArray
 
+          parentRegistryValue.type.forEach(parentType => {
+            resultObject.typeLabel = [];
+            let parentTypeLabel
+            switch (parentType) {
+              case "P1":
+                parentTypeLabel = "Parent only"
+                break;
+              case "P2":
+                parentTypeLabel = "SMC Parent Member"
+                break;
+              case "P3":
+                parentTypeLabel = "Safety Committee Member"
+                break;
+              case "P4":
+                parentTypeLabel = "EWS-DG Parent"
+                break;
+              case "P5":
+                parentTypeLabel = "Social Worker"
+                break;
+              case "P6":
+                parentTypeLabel = "Elected Representative Nominee"
+                break;
+              default:
+                break;
+            }
+
+            resultObject.typeLabel.push(parentTypeLabel)
+          })
           if (parentRegistryValue.callResponse != "") {
             let parentCallResponseLabel
             switch (parentRegistryValue.callResponse) {
