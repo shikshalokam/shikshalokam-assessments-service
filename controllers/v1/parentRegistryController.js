@@ -68,7 +68,7 @@ module.exports = class ParentRegistry extends Abstract {
             req.body.parents
           );
 
-          if(parentRegistryDocuments.length != req.body.parents.length) {
+          if (parentRegistryDocuments.length != req.body.parents.length) {
             throw "Some parent information was not inserted!"
           }
 
@@ -78,7 +78,7 @@ module.exports = class ParentRegistry extends Abstract {
 
         let responseMessage = "Parent information added successfully."
 
-        let response = { message: responseMessage, result: parentRegistryDocuments};
+        let response = { message: responseMessage, result: parentRegistryDocuments };
 
         return resolve(response);
       } catch (error) {
@@ -108,98 +108,38 @@ module.exports = class ParentRegistry extends Abstract {
         req.body = req.body || {};
         let result = {}
 
-        if (req.params._id) {
+        if (!req.params._id) { throw "Bad request" }
 
-          let queryObject = {
-            schoolId: req.params._id
-          }
-
-          result = await database.models.parentRegistry.find(
-            queryObject
-          );
-
-          result = result.map(function (parent) {
-
-            if (parent.type.length > 0) {
-
-              let parentTypeLabelArray = new Array
-
-              parent.type.forEach(parentType => {
-                let parentTypeLabel
-                switch (parentType) {
-                  case "P1":
-                    parentTypeLabel = "Parent only"
-                    break;
-                  case "P2":
-                    parentTypeLabel = "SMC Parent Member"
-                    break;
-                  case "P3":
-                    parentTypeLabel = "Safety Committee Member"
-                    break;
-                  case "P4":
-                    parentTypeLabel = "EWS-DG Parent"
-                    break;
-                  case "P5":
-                    parentTypeLabel = "Social Worker"
-                    break;
-                  case "P6":
-                    parentTypeLabel = "Elected Representative Nominee"
-                    break;
-                  default:
-                    break;
-                }
-
-                if (parentTypeLabel != "") {
-                  parentTypeLabelArray.push(parentTypeLabel)
-                }
-
-              })
-
-              parent.type = parentTypeLabelArray
-
-            }
-
-            if (parent.callResponse != "") {
-              let parentCallResponseLabel
-              switch (parent.callResponse) {
-                case "R1":
-                  parentCallResponseLabel = "Call not initiated"
-                  break;
-                case "R2":
-                  parentCallResponseLabel = "Did not pick up"
-                  break;
-                case "R3":
-                  parentCallResponseLabel = "Not reachable"
-                  break;
-                case "R4":
-                  parentCallResponseLabel = "Call back later"
-                  break;
-                case "R5":
-                  parentCallResponseLabel = "Wrong number"
-                  break;
-                case "R6":
-                  parentCallResponseLabel = "Call disconnected mid way"
-                  break;
-                case "R7":
-                  parentCallResponseLabel = "Completed"
-                  break;
-                default:
-                  break;
-              }
-
-              parent.callResponse = parentCallResponseLabel
-            }
-
-            return parent;
-          })
-
-        } else {
-          throw "Bad Request"
+        let queryObject = {
+          schoolId: req.params._id
         }
+
+        result = await database.models.parentRegistry.find(
+          queryObject
+        );
+
+
+        let resultArray = [];
+
+        await Promise.all(result.map(async (parentRegistry) => {
+          let resultObject = {};
+          let parentRegistryValue = await parentRegistry.toObject();
+
+          let typeLabelArray = [];
+          if (parentRegistryValue.typeLabel) {
+            typeLabelArray.push(parentRegistryValue.typeLabel)
+          }
+          resultObject.typeLabel = typeLabelArray
+
+          Object.keys(_.omit(parentRegistryValue, ["typeLabel"])).forEach(singleKey => {
+            resultObject[singleKey] = parentRegistryValue[singleKey];
+          })
+          resultArray.push(resultObject)
+        }))
 
         let responseMessage = "Parent information fetched successfully."
 
-        let response = { message: responseMessage, result: result };
+        let response = { message: responseMessage, result: resultArray };
 
         return resolve(response);
       } catch (error) {
@@ -208,7 +148,6 @@ module.exports = class ParentRegistry extends Abstract {
 
     })
   }
-
   /**
 * @api {post} /assessment/api/v1/parentRegistry/upload Upload Parent Information CSV
 * @apiVersion 0.0.1
