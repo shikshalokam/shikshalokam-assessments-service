@@ -66,7 +66,7 @@ module.exports = class Reports {
           {
             _id: 1
           }
-        );
+        ).lean();
 
         const fileName = `status`;
         let fileStream = new FileStream(fileName);
@@ -115,7 +115,7 @@ module.exports = class Reports {
                 "status": 1,
                 "evidencesStatus": 1
               }
-            )
+            ).lean();
             await Promise.all(submissionDocumentsArray.map(async (eachSubmissionDocument) => {
               let result = {};
 
@@ -182,7 +182,7 @@ module.exports = class Reports {
         const programQueryParams = {
           externalId: req.params._id
         };
-        const programsDocumentIds = await database.models.programs.find(programQueryParams, { externalId: 1 })
+        const programsDocumentIds = await database.models.programs.find(programQueryParams, { externalId: 1 }).lean();
 
         if (!programsDocumentIds.length) {
           return resolve({
@@ -191,7 +191,7 @@ module.exports = class Reports {
           });
         }
 
-        const assessorDocument = await database.models.schoolAssessors.find({ programId: programsDocumentIds[0]._id }, { _id: 1 })
+        const assessorDocument = await database.models.schoolAssessors.find({ programId: programsDocumentIds[0]._id }, { _id: 1 }).lean();
 
         const fileName = `assessorSchoolsfile`;
         let fileStream = new FileStream(fileName);
@@ -291,7 +291,7 @@ module.exports = class Reports {
         const programQueryParams = {
           externalId: req.params._id
         };
-        const programsDocumentIds = await database.models.programs.find(programQueryParams, { externalId: 1 })
+        const programsDocumentIds = await database.models.programs.find(programQueryParams, { externalId: 1 }).lean();
 
         if (!programsDocumentIds.length) {
           return resolve({
@@ -300,7 +300,7 @@ module.exports = class Reports {
           });
         }
 
-        const assessorDocument = await database.models.schoolAssessors.find({ programId: programsDocumentIds[0]._id }, { _id: 1 })
+        const assessorDocument = await database.models.schoolAssessors.find({ programId: programsDocumentIds[0]._id }, { _id: 1 }).lean();
 
         const fileName = `schoolAssessors`;
         let fileStream = new FileStream(fileName);
@@ -399,7 +399,7 @@ module.exports = class Reports {
         };
         let programDocument = await database.models.programs.findOne(
           programQueryObject
-        );
+        ).lean();
 
         if (!programDocument) {
           return resolve({
@@ -419,7 +419,7 @@ module.exports = class Reports {
           {
             _id: { $in: result.schoolId }
           }
-        ).exec();
+        ).lean().exec();
 
         let submissionDataWithEvidencesCount = database.models.submissions.aggregate(
           [
@@ -448,7 +448,7 @@ module.exports = class Reports {
               }
             }
           ]
-        ).exec();
+        ).lean().exec();
 
         const fileName = `programSchoolsStatusByProgramId_${req.params._id}`;
 
@@ -554,14 +554,15 @@ module.exports = class Reports {
         const submissionDocumentIdsToProcess = await database.models.submissions.find(
           fetchRequiredSubmissionDocumentIdQueryObj,
           { _id: 1 }
-        )
+        ).lean();
 
         let questionIdObject = {}
-        const questionDocument = await database.models.questions.find({}, { externalId: 1 })
+        const questionDocument = await database.models.questions.find({}, { externalId: 1,options:1 }).lean();
 
         questionDocument.forEach(eachQuestionId => {
           questionIdObject[eachQuestionId._id] = {
-            questionExternalId: eachQuestionId.externalId
+            questionExternalId: eachQuestionId.externalId,
+            questionOptions:eachQuestionId.options
           }
         })
 
@@ -615,7 +616,7 @@ module.exports = class Reports {
                 [pathToSubmissionSubmittedBy]: 1,
                 [pathToSubmissionisValid]: 1
               }
-            )
+            ).lean()
 
 
             await Promise.all(submissionDocuments.map(async (submission) => {
@@ -674,20 +675,20 @@ module.exports = class Reports {
 
                           singleAnswerRecord.Answer = "Instance Question";
 
-                          if (singleAnswer.payload.labels[0]) {
+                          if (singleAnswer.value) {
                             for (
                               let instance = 0;
-                              instance < singleAnswer.payload.labels[0].length;
+                              instance < singleAnswer.value.length;
                               instance++
                             ) {
 
-                              singleAnswer.payload.labels[0][instance].forEach(
+                              singleAnswer.value[instance] && Object.values(singleAnswer.value[instance]).forEach(
                                 eachInstanceChildQuestion => {
                                   let eachInstanceChildRecord = {
                                     "School Name": submission.schoolInformation.name,
                                     "School Id": submission.schoolInformation.externalId,
-                                    "Question": eachInstanceChildQuestion.question[0],
-                                    "Question Id": (questionIdObject[eachInstanceChildQuestion._id]) ? questionIdObject[eachInstanceChildQuestion._id].questionExternalId : "",
+                                    "Question": eachInstanceChildQuestion.payload ? eachInstanceChildQuestion.payload.question[0] : "",
+                                    "Question Id": (questionIdObject[eachInstanceChildQuestion.qid]) ? questionIdObject[eachInstanceChildQuestion.qid].questionExternalId : "",
                                     "Answer": "",
                                     "Assessor Id": assessors[evidenceSubmission.submittedBy.toString()].externalId,
                                     "Remarks": eachInstanceChildQuestion.remarks || "",
@@ -699,11 +700,11 @@ module.exports = class Reports {
                                   if (eachInstanceChildQuestion.fileName.length > 0) {
                                     eachInstanceChildQuestion.fileName.forEach(
                                       file => {
-                                        if (file.split('/').length == 1) {
-                                          file = submission._id.toString() + "/" + evidenceSubmission.submittedBy + "/" + file
+                                        if (file.sourcePath.split('/').length == 1) {
+                                          file.sourcePath = submission._id.toString() + "/" + evidenceSubmission.submittedBy + "/" + file.name
                                         }
                                         eachInstanceChildRecord.Files +=
-                                          imageBaseUrl + file + ",";
+                                          imageBaseUrl + file.sourcePath + ",";
                                       }
                                     );
                                     eachInstanceChildRecord.Files = eachInstanceChildRecord.Files.replace(
@@ -719,7 +720,7 @@ module.exports = class Reports {
                                   if (
                                     eachInstanceChildQuestion.responseType == "radio"
                                   ) {
-                                    eachInstanceChildQuestion.options.forEach(
+                                    questionIdObject[eachInstanceChildQuestion.qid].questionOptions.forEach(
                                       option => {
                                         radioResponse[option.value] = option.label;
                                       }
@@ -730,7 +731,7 @@ module.exports = class Reports {
                                     eachInstanceChildQuestion.responseType ==
                                     "multiselect"
                                   ) {
-                                    eachInstanceChildQuestion.options.forEach(
+                                    questionIdObject[eachInstanceChildQuestion.qid].questionOptions.forEach(
                                       option => {
                                         multiSelectResponse[option.value] =
                                           option.label;
@@ -800,11 +801,11 @@ module.exports = class Reports {
           {
             criterias: 1
           }
-        ).exec();
+        ).lean().exec();
 
         let evaluationFrameworksDocuments = database.models[
           "evaluationFrameworks"
-        ].find({}, { themes: 1 }).exec();
+        ].find({}, { themes: 1 }).lean().exec();
 
         const fileName = `generateCriteriasBySchoolId_schoolId_${req.params._id}`;
         let fileStream = new FileStream(fileName);
@@ -825,17 +826,28 @@ module.exports = class Reports {
           let evaluationNameObject = {};
           evaluationFrameworksDocuments.forEach(singleDocument => {
             singleDocument.themes.forEach(singleTheme => {
-              singleTheme.aoi.forEach(singleAoi => {
-                singleAoi.indicators.forEach(singleIndicator => {
-                  singleIndicator.criteria.forEach(singleCriteria => {
+              singleTheme.children && singleTheme.children.forEach(subThemes=>{
+                subThemes.children && subThemes.children.forEach(singleSubTheme=>{
+                  singleSubTheme.criteria.forEach(singleCriteria => {
                     evaluationNameObject[singleCriteria.toString()] = {
                       themeName: singleTheme.name,
-                      aoiName: singleAoi.name,
-                      indicatorName: singleIndicator.name
+                      aoiName: subThemes.name,
+                      indicatorName: singleSubTheme.name
                     };
                   });
-                });
-              });
+                })
+              })
+              // singleTheme.aoi && singleTheme.aoi.forEach(singleAoi => {
+              //   singleAoi.indicators.forEach(singleIndicator => {
+                  // singleIndicator.criteria.forEach(singleCriteria => {
+                  //   evaluationNameObject[singleCriteria.toString()] = {
+                  //     themeName: singleTheme.name,
+                  //     aoiName: singleAoi.name,
+                  //     indicatorName: singleIndicator.name
+                  //   };
+                  // });
+                // });
+              // });
             });
           });
 
@@ -899,12 +911,12 @@ module.exports = class Reports {
         let allCriterias = database.models.criterias.find(
           {},
           { evidences: 1, name: 1 }
-        ).exec();
+        ).lean().exec();
 
         let allQuestionWithOptions = database.models.questions.find(
           { responseType: { $in: ["radio", "multiselect"] } },
           { options: 1 }
-        ).exec();
+        ).lean().exec();
 
         let schoolSubmissionQuery = {
           ["schoolInformation.externalId"]: req.params._id
@@ -916,7 +928,7 @@ module.exports = class Reports {
             answers: 1,
             criterias: 1
           }
-        ).exec();
+        ).lean().exec();
 
         const fileName = `generateSubmissionReportsBySchoolId_${req.params._id}`;
         let fileStream = new FileStream(fileName);
@@ -952,7 +964,7 @@ module.exports = class Reports {
               });
             });
           });
-
+          let questionOptions = {};
           allQuestionWithOptions.forEach(question => {
             if (question.options.length > 0) {
               let optionString = "";
@@ -961,6 +973,7 @@ module.exports = class Reports {
               });
               optionString = optionString.replace(/,\s*$/, "");
               questionOptionObject[question._id.toString()] = optionString;
+              questionOptions[question._id.toString()] = question.options;
             }
           });
 
@@ -971,13 +984,13 @@ module.exports = class Reports {
                 score: singleCriteria.score
               };
             });
-            if (!Object.values(singleSchoolSubmission.answers).length) {
-              return resolve({
-                status: 404,
-                message: "No submissions found for given params."
-              });
-            }
-            else {
+            // if (!singleSchoolSubmission.answers || !Object.values(singleSchoolSubmission.answers).length) {
+            //   return resolve({
+            //     status: 404,
+            //     message: "No submissions found for given params."
+            //   });
+            // }
+            if(singleSchoolSubmission.answers && Object.values(singleSchoolSubmission.answers).length) {
               Object.values(singleSchoolSubmission.answers).forEach(
                 singleAnswer => {
                   if (singleAnswer.payload) {
@@ -995,19 +1008,37 @@ module.exports = class Reports {
                           : questionOptionObject[singleAnswer.qid],
                       "Score": criteriaScoreObject[singleAnswer.criteriaId].score,
                       "Remarks": singleAnswer.remarks || "",
-                      "Files": "",
+                      // "Files": "",
                     };
 
-                    if (singleAnswer.fileName.length > 0) {
-                      singleAnswer.fileName.forEach(file => {
-                        singleAnswerRecord.Files +=
-                          imageBaseUrl + file.sourcePath + ",";
-                      });
-                      singleAnswerRecord.Files = singleAnswerRecord.Files.replace(
-                        /,\s*$/,
-                        ""
-                      );
-                    }
+                    // if (singleAnswer.fileName.length > 0) {
+                    //   singleAnswer.fileName.forEach(
+                    //     file => {
+                    //       if (file.sourcePath.split('/').length == 1) {
+                    //         file = singleSchoolSubmission._id.toString() + "/" + singleSchoolSubmission.submittedBy + "/" + file
+                    //       }else{
+                    //         file = file.sourcePath;
+                    //       }
+                    //       singleAnswerRecord.Files +=
+                    //         imageBaseUrl + file + ",";
+                    //     }
+                    //   );
+                    //   singleAnswerRecord.Files = singleAnswerRecord.Files.replace(
+                    //     /,\s*$/,
+                    //     ""
+                    //   );
+                    // }
+
+                    // if (singleAnswer.fileName.length > 0) {
+                    //   singleAnswer.fileName.forEach(file => {
+                    //     singleAnswerRecord.Files +=
+                    //       imageBaseUrl + file.sourcePath + ",";
+                    //   });
+                    //   singleAnswerRecord.Files = singleAnswerRecord.Files.replace(
+                    //     /,\s*$/,
+                    //     ""
+                    //   );
+                    // }
 
                     if (!singleAnswer.notApplicable) {
                       if (singleAnswer.responseType != "matrix") {
@@ -1017,53 +1048,53 @@ module.exports = class Reports {
                       } else {
                         singleAnswerRecord["Answer"] = "Instance Question";
 
-                        if (singleAnswer.payload.labels[0]) {
+                        if (singleAnswer.value) {
                           for (
                             let instance = 0;
-                            instance < singleAnswer.payload.labels[0].length;
+                            instance < singleAnswer.value.length;
                             instance++
                           ) {
-                            singleAnswer.payload.labels[0][instance].forEach(
+                            Object.values(singleAnswer.value[instance]).forEach(
                               eachInstanceChildQuestion => {
                                 let eachInstanceChildRecord = {
                                   "Criteria Name":
                                     criteriaQuestionDetailsObject[
-                                      eachInstanceChildQuestion._id
+                                      eachInstanceChildQuestion.qid
                                     ] == undefined
                                       ? " Question Deleted Post Submission"
                                       : criteriaQuestionDetailsObject[
-                                        eachInstanceChildQuestion._id
+                                        eachInstanceChildQuestion.qid
                                       ].criteriaName,
-                                  "Question": eachInstanceChildQuestion.question[0],
+                                  "Question": eachInstanceChildQuestion.payload.question[0],
                                   "Answer": eachInstanceChildQuestion.value,
                                   "Options":
                                     questionOptionObject[
-                                      eachInstanceChildQuestion._id
+                                      eachInstanceChildQuestion.qid
                                     ] == undefined
                                       ? " No Options"
                                       : questionOptionObject[
-                                      eachInstanceChildQuestion._id
+                                      eachInstanceChildQuestion.qid
                                       ],
                                   "Score":
                                     criteriaScoreObject[
-                                      eachInstanceChildQuestion.payload.criteriaId
+                                      eachInstanceChildQuestion.criteriaId
                                     ].score,
                                   "Remarks": eachInstanceChildQuestion.remarks || "",
-                                  "Files": "",
+                                  // "Files": "",
                                 };
 
-                                if (eachInstanceChildQuestion.fileName.length > 0) {
-                                  eachInstanceChildQuestion.fileName.forEach(
-                                    file => {
-                                      eachInstanceChildRecord["Files"] +=
-                                        imageBaseUrl + file + ",";
-                                    }
-                                  );
-                                  eachInstanceChildRecord["Files"] = eachInstanceChildRecord["Files"].replace(
-                                    /,\s*$/,
-                                    ""
-                                  );
-                                }
+                                // if (eachInstanceChildQuestion.fileName.length > 0) {
+                                //   eachInstanceChildQuestion.fileName.forEach(
+                                //     file => {
+                                //       eachInstanceChildRecord["Files"] +=
+                                //         imageBaseUrl + file + ",";
+                                //     }
+                                //   );
+                                //   eachInstanceChildRecord["Files"] = eachInstanceChildRecord["Files"].replace(
+                                //     /,\s*$/,
+                                //     ""
+                                //   );
+                                // }
 
                                 let radioResponse = {};
                                 let multiSelectResponse = {};
@@ -1072,7 +1103,7 @@ module.exports = class Reports {
                                 if (
                                   eachInstanceChildQuestion.responseType == "radio"
                                 ) {
-                                  eachInstanceChildQuestion.options.forEach(
+                                  questionOptions[eachInstanceChildQuestion.qid].forEach(
                                     option => {
                                       radioResponse[option.value] = option.label;
                                     }
@@ -1083,7 +1114,7 @@ module.exports = class Reports {
                                   eachInstanceChildQuestion.responseType ==
                                   "multiselect"
                                 ) {
-                                  eachInstanceChildQuestion.options.forEach(
+                                  questionOptions[eachInstanceChildQuestion.qid].forEach(
                                     option => {
                                       multiSelectResponse[option.value] =
                                         option.label;
@@ -1145,7 +1176,7 @@ module.exports = class Reports {
           externalId: req.params._id
         };
 
-        let programsDocumentIds = await database.models.programs.find(programQueryParams, { externalId: 1 })
+        let programsDocumentIds = await database.models.programs.find(programQueryParams, { externalId: 1 }).lean();
 
         if (!programsDocumentIds.length) {
           return resolve({
@@ -1172,7 +1203,7 @@ module.exports = class Reports {
         parentRegistryQueryParams['createdAt']["$gte"] = fromDateValue
         parentRegistryQueryParams['createdAt']["$lte"] = toDate
 
-        const parentRegistryIdsArray = await database.models.parentRegistry.find(parentRegistryQueryParams, { _id: 1 })
+        const parentRegistryIdsArray = await database.models.parentRegistry.find(parentRegistryQueryParams, { _id: 1 }).lean();
 
         let fileName = "parentRegistry";
         (fromDateValue != "") ? fileName += " from " + fromDateValue : "";
@@ -1285,7 +1316,7 @@ module.exports = class Reports {
         }
         const programsDocument = await database.models.programs.find(programsQueryParams, {
           externalId: 1
-        })
+        }).lean();
 
         let fromDateValue = req.query.fromDate ? new Date(req.query.fromDate.split("-").reverse().join("-")) : new Date(0)
         let toDate = req.query.toDate ? new Date(req.query.toDate.split("-").reverse().join("-")) : new Date()
@@ -1306,7 +1337,7 @@ module.exports = class Reports {
         teacherRegistryQueryParams['createdAt']["$gte"] = fromDateValue
         teacherRegistryQueryParams['createdAt']["$lte"] = toDate
 
-        const teacherRegistryDocument = await database.models.teacherRegistry.find(teacherRegistryQueryParams, { _id: 1 })
+        const teacherRegistryDocument = await database.models.teacherRegistry.find(teacherRegistryQueryParams, { _id: 1 }).lean();
 
         let fileName = "Teacher Registry";
         (fromDateValue) ? fileName += "from" + fromDateValue : "";
@@ -1418,7 +1449,7 @@ module.exports = class Reports {
         }
         const programsDocument = await database.models.programs.find(programsQueryParams, {
           externalId: 1
-        })
+        }).lean();
 
         let fromDateValue = req.query.fromDate ? new Date(req.query.fromDate.split("-").reverse().join("-")) : new Date(0)
         let toDate = req.query.toDate ? new Date(req.query.toDate.split("-").reverse().join("-")) : new Date()
@@ -1439,7 +1470,7 @@ module.exports = class Reports {
         schoolLeaderRegistryQueryParams['createdAt']["$gte"] = fromDateValue
         schoolLeaderRegistryQueryParams['createdAt']["$lte"] = toDate
 
-        const schoolLeaderRegistryDocument = await database.models.schoolLeaderRegistry.find(schoolLeaderRegistryQueryParams, { _id: 1 })
+        const schoolLeaderRegistryDocument = await database.models.schoolLeaderRegistry.find(schoolLeaderRegistryQueryParams, { _id: 1 }).lean();
 
         let fileName = "School Leader Registry";
         (fromDateValue) ? fileName += "from" + fromDateValue : "";
@@ -1550,11 +1581,11 @@ module.exports = class Reports {
 
         const submissionIds = await database.models.submissions.find(queryParams, {
           _id: 1
-        })
+        }).lean();
 
         const programsDocument = await database.models.programs.findOne({
           externalId: req.params._id
-        }, { "components.schoolProfileFieldsPerSchoolTypes": 1 })
+        }, { "components.schoolProfileFieldsPerSchoolTypes": 1 }).lean();
 
         let schoolProfileFields = await this.getSchoolProfileFields(programsDocument.components[0].schoolProfileFieldsPerSchoolTypes);
 
@@ -1597,7 +1628,7 @@ module.exports = class Reports {
                 "_id": 1,
                 "programExternalId": 1,
                 "schoolExternalId": 1
-              })
+              }).lean();
 
             await Promise.all(schoolProfileSubmissionDocuments.map(async (eachSchoolProfileSubmissionDocument) => {
 
@@ -1674,20 +1705,21 @@ module.exports = class Reports {
         const submissionDocumentIdsToProcess = await database.models.submissions.find(
           fetchRequiredSubmissionDocumentIdQueryObj,
           { _id: 1 }
-        )
+        ).lean();
 
         let questionIdObject = {}
-        const questionDocument = await database.models.questions.find({}, { externalId: 1 })
+        const questionDocument = await database.models.questions.find({}, { externalId: 1, options: 1 }).lean();
 
         questionDocument.forEach(eachQuestionId => {
           questionIdObject[eachQuestionId._id] = {
-            questionExternalId: eachQuestionId.externalId
+            questionExternalId: eachQuestionId.externalId,
+            questionOptions: eachQuestionId.options
           }
         })
 
         let fileName = `EcmReport`;
-        (fromDate) ? fileName += "from date _" + fromDate : "";
-        (toDate) ? fileName += "to date _" + toDate : new Date();
+        (fromDate) ? fileName += moment(fromDate).format('DD-MM-YYYY') : "";
+        (toDate) ? fileName += "-" + moment(toDate).format('DD-MM-YYYY') : moment(fromDate).format('DD-MM-YYYY');
 
         let fileStream = new FileStream(fileName);
         let input = fileStream.initStream();
@@ -1732,7 +1764,7 @@ module.exports = class Reports {
                 "evidences": 1,
                 status: 1,
               }
-            )
+            ).lean()
 
 
             await Promise.all(submissionDocuments.map(async (submission) => {
@@ -1749,7 +1781,7 @@ module.exports = class Reports {
                 if (singleEvidence.submissions) {
                   singleEvidence.submissions.forEach(evidenceSubmission => {
 
-                    let asssessorId = (assessors[evidenceSubmission.submittedBy.toString()]) ? assessors[evidenceSubmission.submittedBy.toString()].externalId : evidenceSubmission.submittedByName.replace(' null', '');
+                    let asssessorId = (assessors[evidenceSubmission.submittedBy.toString()]) ? assessors[evidenceSubmission.submittedBy.toString()].externalId : (evidenceSubmission.submittedByName ? evidenceSubmission.submittedByName.replace(' null', ''): null);
 
                     // if ((assessors[evidenceSubmission.submittedBy.toString()]) && (evidenceSubmission.isValid === true) && (evidenceSubmission.submissionDate >= fromDate && evidenceSubmission.submissionDate < toDate)) {
                     if ((evidenceSubmission.isValid === true) && (evidenceSubmission.submissionDate >= fromDate && evidenceSubmission.submissionDate < toDate)) {
@@ -1800,20 +1832,20 @@ module.exports = class Reports {
                               singleAnswerRecord.Answer = "Instance Question";
                               input.push(singleAnswerRecord)
 
-                              if (singleAnswer.payload.labels[0]) {
+                              if (singleAnswer.value.length) {
                                 for (
                                   let instance = 0;
-                                  instance < singleAnswer.payload.labels[0].length;
+                                  instance < singleAnswer.value.length;
                                   instance++
                                 ) {
 
-                                  singleAnswer.payload.labels[0][instance].forEach(
+                                  Object.values(singleAnswer.value[instance]).forEach(
                                     eachInstanceChildQuestion => {
                                       let eachInstanceChildRecord = {
                                         "School Name": submission.schoolInformation.name,
                                         "School Id": submission.schoolInformation.externalId,
-                                        "Question": eachInstanceChildQuestion.question[0],
-                                        "Question Id": (questionIdObject[eachInstanceChildQuestion._id]) ? questionIdObject[eachInstanceChildQuestion._id].questionExternalId : "",
+                                        "Question": eachInstanceChildQuestion.payload ? eachInstanceChildQuestion.payload.question[0] : '',
+                                        "Question Id": (questionIdObject[eachInstanceChildQuestion.qid]) ? questionIdObject[eachInstanceChildQuestion.qid].questionExternalId : "",
                                         "Submission Date": this.gmtToIst(evidenceSubmission.submissionDate),
                                         "Answer": "",
                                         "Assessor Id": asssessorId,
@@ -1824,14 +1856,14 @@ module.exports = class Reports {
                                         "ECM": evidenceSubmission.externalId
                                       };
 
-                                      if (eachInstanceChildQuestion.fileName.length > 0) {
+                                      if (eachInstanceChildQuestion.fileName && eachInstanceChildQuestion.fileName.length > 0) {
                                         eachInstanceChildQuestion.fileName.forEach(
                                           file => {
-                                            if (file.split('/').length == 1) {
-                                              file = submission._id.toString() + "/" + evidenceSubmission.submittedBy + "/" + file
+                                            if (file.sourcePath.split('/').length == 1) {
+                                              file.sourcePath = submission._id.toString() + "/" + evidenceSubmission.submittedBy + "/" + file.name
                                             }
                                             eachInstanceChildRecord.Files +=
-                                              imageBaseUrl + file + ",";
+                                              imageBaseUrl + file.sourcePath + ",";
                                           }
                                         );
                                         eachInstanceChildRecord.Files = eachInstanceChildRecord.Files.replace(
@@ -1847,7 +1879,7 @@ module.exports = class Reports {
                                       if (
                                         eachInstanceChildQuestion.responseType == "radio"
                                       ) {
-                                        eachInstanceChildQuestion.options.forEach(
+                                        (questionIdObject[eachInstanceChildQuestion.qid]).questionOptions.forEach(
                                           option => {
                                             radioResponse[option.value] = option.label;
                                           }
@@ -1858,7 +1890,7 @@ module.exports = class Reports {
                                         eachInstanceChildQuestion.responseType ==
                                         "multiselect"
                                       ) {
-                                        eachInstanceChildQuestion.options.forEach(
+                                        (questionIdObject[eachInstanceChildQuestion.qid]).questionOptions.forEach(
                                           option => {
                                             multiSelectResponse[option.value] =
                                               option.label;
@@ -1967,7 +1999,7 @@ module.exports = class Reports {
           {
             _id: 1
           }
-        );
+        ).lean();
 
         const fileName = `Generate Feedback For Submission`;
         let fileStream = new FileStream(fileName);
@@ -2004,7 +2036,7 @@ module.exports = class Reports {
                 }
               },
               { feedback: 1, assessors: 1 }
-            )
+            ).lean();
             await Promise.all(submissionDocumentsArray.map(async (eachSubmission) => {
               let result = {};
               let assessorObject = {};
