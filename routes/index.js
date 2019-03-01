@@ -2,6 +2,8 @@ let authenticator = require(ROOT_PATH + "/generics/middleware/authenticator");
 let pagination = require(ROOT_PATH + "/generics/middleware/pagination")
 let slackClient = require(ROOT_PATH + "/generics/helpers/slackCommunications");
 const fs = require("fs");
+const Joi = require("joi");
+const joiSchema = require(ROOT_PATH + "/generics/joiSchema");
 
 module.exports = function (app) {
 
@@ -23,6 +25,17 @@ module.exports = function (app) {
     else {
 
       try {
+
+        joiSchema.forEach(schema => {
+          if (schema.name == req.params.controller + req.params.method + "Schema") {
+            Joi.validate(req.body, schema.schema, (error, data) => {
+              if (error) {
+                console.log(error)
+                res.status(400).send("Bad Request!");
+              }
+            })
+          }
+        })
 
         var result = await controllers[req.params.version][req.params.controller][req.params.method](req);
 
