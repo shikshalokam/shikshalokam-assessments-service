@@ -32,20 +32,14 @@ module.exports = class Submission extends Abstract {
 
     let submissionDocument = await database.models.submissions.findOne(
       queryObject
-    );
+    );  
 
     if (!submissionDocument) {
-      let schoolAssessorsQueryObject = [
-        {
-          $match: { schools: document.schoolId, programId: document.programId }
-        }
-      ];
-
       document.assessors = await database.models[
         "schoolAssessors"
-      ].aggregate(schoolAssessorsQueryObject);
+      ].findOne({ schools: document.schoolId, programId: document.programId, userId: requestObject.userDetails.userId }).lean();
 
-      let assessorElement = document.assessors.find(assessor => assessor.userId === requestObject.userDetails.userId)
+      let assessorElement = document.assessors
       if (assessorElement && assessorElement.externalId != "") {
         assessorElement.assessmentStatus = "started"
         assessorElement.userAgent = requestObject.headers['user-agent']
