@@ -54,9 +54,29 @@ function getCriteriaIds(themes) {
   return allCriteriaIds;
 }
 
+function getQuestionIds(criterias) {
+  let questionIds = [];
+  criterias.forEach(eachCriteria => {
+    eachCriteria.evidences.forEach(eachEvidence => {
+      eachEvidence.sections.forEach(eachSection => {
+        // eachSection.questions.forEach(eachquestion => {
+          // criteriaQuestionDetailsObject[eachquestion.toString()] = {
+          //   criteriaId: eachCriteria._id,
+          //   criteriaName: eachCriteria.name,
+          //   questionId: eachquestion.toString()
+          // };
+        // });
+        questionIds.push(...eachSection.questions)
+      });
+    });
+  });
+  return questionIds;
+}
+
 module.exports = {
   camelCaseToTitleCase: camelCaseToTitleCase,
   checkIfStringIsUrl: checkIfStringIsUrl,
   generateRandomCharacters: generateRandomCharacters,
-  getCriteriaIds: getCriteriaIds
+  getCriteriaIds: getCriteriaIds,
+  getQuestionIds: getQuestionIds
 };

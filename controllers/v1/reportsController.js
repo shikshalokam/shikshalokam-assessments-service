@@ -792,19 +792,19 @@ module.exports = class Reports {
     return new Promise(async (resolve, reject) => {
       try {
         let schoolId = {
-          ["schoolInformation.externalId"]: req.params._id
+          "schoolExternalId": req.params._id
         };
 
-        let submissionDocument = database.models.submissions.find(
+        let submissionDocument = database.models.submissions.findOne(
           schoolId,
           {
             criterias: 1
           }
-        ).exec();
+        ).lean().exec();
 
         let evaluationFrameworksDocuments = database.models[
           "evaluationFrameworks"
-        ].find({}, { themes: 1 }).exec();
+        ].find({}, { themes: 1 }).lean().exec();
 
         const fileName = `generateCriteriasBySchoolId_schoolId_${req.params._id}`;
         let fileStream = new FileStream(fileName);
@@ -839,14 +839,14 @@ module.exports = class Reports {
             });
           });
 
-          if (!submissionDocument && !submissionDocument[0].criterias.length) {
+          if (!submissionDocument) {
             return resolve({
               status: 404,
               message: "No submissions found for given params."
             });
           }
           else {
-            submissionDocument[0].criterias.forEach(submissionCriterias => {
+            submissionDocument.criterias.forEach(submissionCriterias => {
               let levels = Object.values(submissionCriterias.rubric.levels);
 
               if (submissionCriterias._id) {
@@ -896,27 +896,17 @@ module.exports = class Reports {
     return new Promise(async (resolve, reject) => {
       try {
 
-        let allCriterias = database.models.criterias.find(
-          {},
-          { evidences: 1, name: 1 }
-        ).exec();
-
-        let allQuestionWithOptions = database.models.questions.find(
-          { responseType: { $in: ["radio", "multiselect"] } },
-          { options: 1 }
-        ).exec();
-
         let schoolSubmissionQuery = {
-          ["schoolInformation.externalId"]: req.params._id
+          "schoolExternalId": req.params._id
         };
 
-        let schoolSubmissionDocument = database.models.submissions.find(
+        let schoolSubmissionDocument = await database.models.submissions.findOne(
           schoolSubmissionQuery,
           {
             answers: 1,
             criterias: 1
           }
-        ).exec();
+        ).lean();
 
         const fileName = `generateSubmissionReportsBySchoolId_${req.params._id}`;
         let fileStream = new FileStream(fileName);
@@ -930,191 +920,196 @@ module.exports = class Reports {
           });
         }());
 
-        Promise.all([allCriterias, allQuestionWithOptions, schoolSubmissionDocument]).then(documents => {
+        let criteriaIds = schoolSubmissionDocument.criterias.map(criteria => criteria._id);
 
-          let allCriterias = documents[0];
-          let allQuestionWithOptions = documents[1];
-          let schoolSubmissionDocument = documents[2];
-          let criteriaQuestionDetailsObject = {};
-          let criteriaScoreObject = {};
-          let questionOptionObject = {};
+        let allCriterias = await database.models.criterias.find(
+          { _id: { $in: criteriaIds } },
+          { evidences: 1, name: 1 }
+        ).lean();
 
-          allCriterias.forEach(eachCriteria => {
-            eachCriteria.evidences.forEach(eachEvidence => {
-              eachEvidence.sections.forEach(eachSection => {
-                eachSection.questions.forEach(eachquestion => {
-                  criteriaQuestionDetailsObject[eachquestion.toString()] = {
-                    criteriaId: eachCriteria._id,
-                    criteriaName: eachCriteria.name,
-                    questionId: eachquestion.toString()
-                  };
-                });
+        let questionIds = gen.utils.getQuestionIds(allCriterias);
+
+        let allQuestionWithOptions = await database.models.questions.find(
+          { _id: { $in: questionIds }, responseType: { $in: ["radio", "multiselect"] } },
+          { options: 1 }
+        ).lean();
+
+        let criteriaQuestionDetailsObject = {};
+        let criteriaScoreObject = {};
+        let questionOptionObject = {};
+
+        allCriterias.forEach(eachCriteria => {
+          eachCriteria.evidences.forEach(eachEvidence => {
+            eachEvidence.sections.forEach(eachSection => {
+              eachSection.questions.forEach(eachquestion => {
+                criteriaQuestionDetailsObject[eachquestion.toString()] = {
+                  criteriaId: eachCriteria._id,
+                  criteriaName: eachCriteria.name,
+                  questionId: eachquestion.toString()
+                };
               });
             });
           });
+        });
 
-          allQuestionWithOptions.forEach(question => {
-            if (question.options.length > 0) {
-              let optionString = "";
-              question.options.forEach(option => {
-                optionString += option.label + ",";
-              });
-              optionString = optionString.replace(/,\s*$/, "");
-              questionOptionObject[question._id.toString()] = optionString;
-            }
-          });
-
-          schoolSubmissionDocument.forEach(singleSchoolSubmission => {
-            singleSchoolSubmission.criterias.forEach(singleCriteria => {
-              criteriaScoreObject[singleCriteria._id.toString()] = {
-                id: singleCriteria._id,
-                score: singleCriteria.score
-              };
+        allQuestionWithOptions.forEach(question => {
+          if (question.options.length > 0) {
+            let optionString = "";
+            question.options.forEach(option => {
+              optionString += option.label + ",";
             });
-            if (!Object.values(singleSchoolSubmission.answers).length) {
-              return resolve({
-                status: 404,
-                message: "No submissions found for given params."
-              });
-            }
-            else {
-              Object.values(singleSchoolSubmission.answers).forEach(
-                singleAnswer => {
-                  if (singleAnswer.payload) {
-                    let singleAnswerRecord = {
-                      "Criteria Name":
-                        criteriaQuestionDetailsObject[singleAnswer.qid] == undefined
-                          ? " Question Deleted Post Submission"
-                          : criteriaQuestionDetailsObject[singleAnswer.qid]
-                            .criteriaName,
-                      "Question": singleAnswer.payload.question[0],
-                      "Answer": singleAnswer.notApplicable ? "Not Applicable" : "",
-                      "Options":
-                        questionOptionObject[singleAnswer.qid] == undefined
-                          ? " No Options"
-                          : questionOptionObject[singleAnswer.qid],
-                      "Score": criteriaScoreObject[singleAnswer.criteriaId].score,
-                      "Remarks": singleAnswer.remarks || "",
-                      "Files": "",
-                    };
+            optionString = optionString.replace(/,\s*$/, "");
+            questionOptionObject[question._id.toString()] = optionString;
+          }
+        });
 
-                    if (singleAnswer.fileName.length > 0) {
-                      singleAnswer.fileName.forEach(file => {
-                        singleAnswerRecord.Files +=
-                          imageBaseUrl + file.sourcePath + ",";
-                      });
-                      singleAnswerRecord.Files = singleAnswerRecord.Files.replace(
-                        /,\s*$/,
-                        ""
-                      );
-                    }
+        schoolSubmissionDocument.criterias.forEach(singleCriteria => {
+          criteriaScoreObject[singleCriteria._id.toString()] = {
+            id: singleCriteria._id,
+            score: singleCriteria.score
+          };
+        });
+        if (!Object.values(schoolSubmissionDocument.answers).length) {
+          return resolve({
+            status: 404,
+            message: "No submissions found for given params."
+          });
+        }
+        else {
+          Object.values(schoolSubmissionDocument.answers).forEach(
+            singleAnswer => {
+              if (singleAnswer.payload) {
+                let singleAnswerRecord = {
+                  "Criteria Name":
+                    criteriaQuestionDetailsObject[singleAnswer.qid] == undefined
+                      ? " Question Deleted Post Submission"
+                      : criteriaQuestionDetailsObject[singleAnswer.qid]
+                        .criteriaName,
+                  "Question": singleAnswer.payload.question[0],
+                  "Answer": singleAnswer.notApplicable ? "Not Applicable" : "",
+                  "Options":
+                    questionOptionObject[singleAnswer.qid] == undefined
+                      ? " No Options"
+                      : questionOptionObject[singleAnswer.qid],
+                  "Score": criteriaScoreObject[singleAnswer.criteriaId].score,
+                  "Remarks": singleAnswer.remarks || "",
+                  "Files": "",
+                };
 
-                    if (!singleAnswer.notApplicable) {
-                      if (singleAnswer.responseType != "matrix") {
-                        singleAnswerRecord["Answer"] = singleAnswer.payload[
-                          "labels"
-                        ].toString();
-                      } else {
-                        singleAnswerRecord["Answer"] = "Instance Question";
+                if (singleAnswer.fileName.length > 0) {
+                  singleAnswer.fileName.forEach(file => {
+                    singleAnswerRecord.Files +=
+                      imageBaseUrl + file.sourcePath + ",";
+                  });
+                  singleAnswerRecord.Files = singleAnswerRecord.Files.replace(
+                    /,\s*$/,
+                    ""
+                  );
+                }
 
-                        if (singleAnswer.payload.labels[0]) {
-                          for (
-                            let instance = 0;
-                            instance < singleAnswer.payload.labels[0].length;
-                            instance++
-                          ) {
-                            singleAnswer.payload.labels[0][instance].forEach(
-                              eachInstanceChildQuestion => {
-                                let eachInstanceChildRecord = {
-                                  "Criteria Name":
-                                    criteriaQuestionDetailsObject[
-                                      eachInstanceChildQuestion._id
-                                    ] == undefined
-                                      ? " Question Deleted Post Submission"
-                                      : criteriaQuestionDetailsObject[
-                                        eachInstanceChildQuestion._id
-                                      ].criteriaName,
-                                  "Question": eachInstanceChildQuestion.question[0],
-                                  "Answer": eachInstanceChildQuestion.value,
-                                  "Options":
-                                    questionOptionObject[
-                                      eachInstanceChildQuestion._id
-                                    ] == undefined
-                                      ? " No Options"
-                                      : questionOptionObject[
-                                      eachInstanceChildQuestion._id
-                                      ],
-                                  "Score":
-                                    criteriaScoreObject[
-                                      eachInstanceChildQuestion.payload.criteriaId
-                                    ].score,
-                                  "Remarks": eachInstanceChildQuestion.remarks || "",
-                                  "Files": "",
-                                };
+                if (!singleAnswer.notApplicable) {
+                  if (singleAnswer.responseType != "matrix") {
+                    singleAnswerRecord["Answer"] = singleAnswer.payload[
+                      "labels"
+                    ].toString();
+                  } else {
+                    singleAnswerRecord["Answer"] = "Instance Question";
 
-                                if (eachInstanceChildQuestion.fileName.length > 0) {
-                                  eachInstanceChildQuestion.fileName.forEach(
-                                    file => {
-                                      eachInstanceChildRecord["Files"] +=
-                                        imageBaseUrl + file + ",";
-                                    }
-                                  );
-                                  eachInstanceChildRecord["Files"] = eachInstanceChildRecord["Files"].replace(
-                                    /,\s*$/,
-                                    ""
-                                  );
+                    if (singleAnswer.payload.labels[0]) {
+                      for (
+                        let instance = 0;
+                        instance < singleAnswer.payload.labels[0].length;
+                        instance++
+                      ) {
+                        singleAnswer.payload.labels[0][instance].forEach(
+                          eachInstanceChildQuestion => {
+                            let eachInstanceChildRecord = {
+                              "Criteria Name":
+                                criteriaQuestionDetailsObject[
+                                  eachInstanceChildQuestion._id
+                                ] == undefined
+                                  ? " Question Deleted Post Submission"
+                                  : criteriaQuestionDetailsObject[
+                                    eachInstanceChildQuestion._id
+                                  ].criteriaName,
+                              "Question": eachInstanceChildQuestion.question[0],
+                              "Answer": eachInstanceChildQuestion.value,
+                              "Options":
+                                questionOptionObject[
+                                  eachInstanceChildQuestion._id
+                                ] == undefined
+                                  ? " No Options"
+                                  : questionOptionObject[
+                                  eachInstanceChildQuestion._id
+                                  ],
+                              "Score":
+                                criteriaScoreObject[
+                                  eachInstanceChildQuestion.payload.criteriaId
+                                ].score,
+                              "Remarks": eachInstanceChildQuestion.remarks || "",
+                              "Files": "",
+                            };
+
+                            if (eachInstanceChildQuestion.fileName.length > 0) {
+                              eachInstanceChildQuestion.fileName.forEach(
+                                file => {
+                                  eachInstanceChildRecord["Files"] +=
+                                    imageBaseUrl + file + ",";
                                 }
+                              );
+                              eachInstanceChildRecord["Files"] = eachInstanceChildRecord["Files"].replace(
+                                /,\s*$/,
+                                ""
+                              );
+                            }
 
-                                let radioResponse = {};
-                                let multiSelectResponse = {};
-                                let multiSelectResponseArray = [];
+                            let radioResponse = {};
+                            let multiSelectResponse = {};
+                            let multiSelectResponseArray = [];
 
-                                if (
-                                  eachInstanceChildQuestion.responseType == "radio"
-                                ) {
-                                  eachInstanceChildQuestion.options.forEach(
-                                    option => {
-                                      radioResponse[option.value] = option.label;
-                                    }
-                                  );
-                                  eachInstanceChildRecord["Answer"] =
-                                    radioResponse[eachInstanceChildQuestion.value];
-                                } else if (
-                                  eachInstanceChildQuestion.responseType ==
-                                  "multiselect"
-                                ) {
-                                  eachInstanceChildQuestion.options.forEach(
-                                    option => {
-                                      multiSelectResponse[option.value] =
-                                        option.label;
-                                    }
-                                  );
-
-                                  eachInstanceChildQuestion.value.forEach(value => {
-                                    multiSelectResponseArray.push(
-                                      multiSelectResponse[value]
-                                    );
-                                  });
-
-                                  eachInstanceChildRecord["Answer"] = multiSelectResponseArray.toString();
+                            if (
+                              eachInstanceChildQuestion.responseType == "radio"
+                            ) {
+                              eachInstanceChildQuestion.options.forEach(
+                                option => {
+                                  radioResponse[option.value] = option.label;
                                 }
+                              );
+                              eachInstanceChildRecord["Answer"] =
+                                radioResponse[eachInstanceChildQuestion.value];
+                            } else if (
+                              eachInstanceChildQuestion.responseType ==
+                              "multiselect"
+                            ) {
+                              eachInstanceChildQuestion.options.forEach(
+                                option => {
+                                  multiSelectResponse[option.value] =
+                                    option.label;
+                                }
+                              );
 
-                                input.push(eachInstanceChildRecord);
-                              }
-                            );
+                              eachInstanceChildQuestion.value.forEach(value => {
+                                multiSelectResponseArray.push(
+                                  multiSelectResponse[value]
+                                );
+                              });
+
+                              eachInstanceChildRecord["Answer"] = multiSelectResponseArray.toString();
+                            }
+
+                            input.push(eachInstanceChildRecord);
                           }
-                        }
+                        );
                       }
                     }
-                    input.push(singleAnswerRecord);
                   }
                 }
-              );
+                input.push(singleAnswerRecord);
+              }
             }
-            input.push(null)
-          });
-
-        })
+          );
+        }
+        input.push(null)
 
       } catch (error) {
         return reject({
@@ -1145,9 +1140,9 @@ module.exports = class Reports {
           externalId: req.params._id
         };
 
-        let programsDocumentIds = await database.models.programs.find(programQueryParams, { externalId: 1 })
+        let programsDocumentIds = await database.models.programs.findOne(programQueryParams, { externalId: 1 }).lean();
 
-        if (!programsDocumentIds.length) {
+        if (!programsDocumentIds) {
           return resolve({
             status: 404,
             message: "No parent registry found for given parameters."
@@ -1167,7 +1162,7 @@ module.exports = class Reports {
 
         let parentRegistryQueryParams = {}
 
-        parentRegistryQueryParams["programId"] = programsDocumentIds[0]._id;
+        parentRegistryQueryParams["programId"] = programsDocumentIds._id;
         parentRegistryQueryParams['createdAt'] = {}
         parentRegistryQueryParams['createdAt']["$gte"] = fromDateValue
         parentRegistryQueryParams['createdAt']["$lte"] = toDate
@@ -1283,9 +1278,9 @@ module.exports = class Reports {
         const programsQueryParams = {
           externalId: req.params._id
         }
-        const programsDocument = await database.models.programs.find(programsQueryParams, {
+        const programsDocument = await database.models.programs.findOne(programsQueryParams, {
           externalId: 1
-        })
+        }).lean();
 
         let fromDateValue = req.query.fromDate ? new Date(req.query.fromDate.split("-").reverse().join("-")) : new Date(0)
         let toDate = req.query.toDate ? new Date(req.query.toDate.split("-").reverse().join("-")) : new Date()
@@ -1300,7 +1295,7 @@ module.exports = class Reports {
 
         let teacherRegistryQueryParams = {}
 
-        teacherRegistryQueryParams['programId'] = programsDocument[0]._id
+        teacherRegistryQueryParams['programId'] = programsDocument._id
 
         teacherRegistryQueryParams['createdAt'] = {}
         teacherRegistryQueryParams['createdAt']["$gte"] = fromDateValue
@@ -1416,9 +1411,9 @@ module.exports = class Reports {
         const programsQueryParams = {
           externalId: req.params._id
         }
-        const programsDocument = await database.models.programs.find(programsQueryParams, {
+        const programsDocument = await database.models.programs.findOne(programsQueryParams, {
           externalId: 1
-        })
+        }).lean();
 
         let fromDateValue = req.query.fromDate ? new Date(req.query.fromDate.split("-").reverse().join("-")) : new Date(0)
         let toDate = req.query.toDate ? new Date(req.query.toDate.split("-").reverse().join("-")) : new Date()
@@ -1433,7 +1428,7 @@ module.exports = class Reports {
 
         let schoolLeaderRegistryQueryParams = {}
 
-        schoolLeaderRegistryQueryParams['programId'] = programsDocument[0]._id
+        schoolLeaderRegistryQueryParams['programId'] = programsDocument._id
 
         schoolLeaderRegistryQueryParams['createdAt'] = {}
         schoolLeaderRegistryQueryParams['createdAt']["$gte"] = fromDateValue
