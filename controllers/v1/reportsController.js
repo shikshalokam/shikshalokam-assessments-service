@@ -1301,7 +1301,7 @@ module.exports = class Reports {
         teacherRegistryQueryParams['createdAt']["$gte"] = fromDateValue
         teacherRegistryQueryParams['createdAt']["$lte"] = toDate
 
-        const teacherRegistryDocument = await database.models.teacherRegistry.find(teacherRegistryQueryParams, { _id: 1 })
+        const teacherRegistryDocument = await database.models.teacherRegistry.find(teacherRegistryQueryParams, { _id: 1 }).lean();
 
         let fileName = "Teacher Registry";
         (fromDateValue) ? fileName += "from" + fromDateValue : "";
@@ -1434,7 +1434,7 @@ module.exports = class Reports {
         schoolLeaderRegistryQueryParams['createdAt']["$gte"] = fromDateValue
         schoolLeaderRegistryQueryParams['createdAt']["$lte"] = toDate
 
-        const schoolLeaderRegistryDocument = await database.models.schoolLeaderRegistry.find(schoolLeaderRegistryQueryParams, { _id: 1 })
+        const schoolLeaderRegistryDocument = await database.models.schoolLeaderRegistry.find(schoolLeaderRegistryQueryParams, { _id: 1 }).lean();
 
         let fileName = "School Leader Registry";
         (fromDateValue) ? fileName += "from" + fromDateValue : "";
@@ -1545,11 +1545,11 @@ module.exports = class Reports {
 
         const submissionIds = await database.models.submissions.find(queryParams, {
           _id: 1
-        })
+        }).lean();
 
         const programsDocument = await database.models.programs.findOne({
           externalId: req.params._id
-        }, { "components.schoolProfileFieldsPerSchoolTypes": 1 })
+        }, { "components.schoolProfileFieldsPerSchoolTypes": 1 }).lean();
 
         let schoolProfileFields = await this.getSchoolProfileFields(programsDocument.components[0].schoolProfileFieldsPerSchoolTypes);
 
@@ -1582,19 +1582,19 @@ module.exports = class Reports {
               return eachSubmissionId._id
             })
 
-            schoolProfileSubmissionDocuments = await database.models.submissions.find(
-              {
-                _id: {
-                  $in: submissionIdArray
-                }
-              }, {
-                "schoolProfile": 1,
-                "_id": 1,
-                "programExternalId": 1,
-                "schoolExternalId": 1
-              })
+            schoolProfileSubmissionDocuments = await Promise.all(submissionIdArray.map(async (submissionId) => {
+              return database.models.submissions.findOne(
+                {
+                  _id:  submissionId
+                }, {
+                  "schoolProfile": 1,
+                  "_id": 1,
+                  "programExternalId": 1,
+                  "schoolExternalId": 1
+                }).lean().exec();
+            }))
 
-            await Promise.all(schoolProfileSubmissionDocuments.map(async (eachSchoolProfileSubmissionDocument) => {
+            schoolProfileSubmissionDocuments.forEach((eachSchoolProfileSubmissionDocument) => {
 
               let schoolProfile = _.omit(eachSchoolProfileSubmissionDocument.schoolProfile, ["deleted", "_id", "_v", "createdAt", "updatedAt"]);
               if (schoolProfile) {
@@ -1607,7 +1607,7 @@ module.exports = class Reports {
                 })
                 input.push(schoolProfileObject);
               }
-            }))
+            })
           }
         }
         input.push(null);
