@@ -1027,6 +1027,7 @@ module.exports = class Submission extends Abstract {
         let criteriaIdWithParsingErrors = new Array
 
         let allSubmittedEvidence = submissionDocument.evidencesStatus.every(this.allSubmission)
+        let count = 0
 
         if (allSubmittedEvidence) {
           let criteriaData = await Promise.all(submissionDocument.criterias.map(async (criteria) => {
@@ -1073,6 +1074,7 @@ module.exports = class Submission extends Abstract {
               let errorExpression = {}
 
               if (allValuesAvailable) {
+
                 Object.keys(criteria.rubric.levels).forEach(level => {
 
                   if (criteria.rubric.levels[level].expression != "") {
@@ -1084,6 +1086,7 @@ module.exports = class Submission extends Abstract {
                     } catch (error) {
                       console.log("---------------Some exception caught begins---------------")
                       console.log(error)
+                      console.log("counting error", ++count)
                       console.log(criteria.name)
                       console.log(criteria.rubric.levels[level].expression)
                       console.log(expressionVariables)
@@ -1776,8 +1779,10 @@ module.exports = class Submission extends Abstract {
                     [answers + ".oldValue"]: questionValueConversion.oldValue,
                     [answers + ".value"]: questionValueConversion.newValue,
                     [answers + ".submittedBy"]: eachQuestionRow.assessorID,
+                    [answers + ".payload.labels"]: questionValueConversion.labels,
                     [ecmByCsv + ".oldValue"]: questionValueConversion.oldValue,
                     [ecmByCsv + ".value"]: questionValueConversion.newValue,
+                    [ecmByCsv + ".payload.labels"]: questionValueConversion.labels,
                     [ecmByCsv + ".submittedBy"]: eachQuestionRow.assessorID,
                     [submissionDate]: new Date(),
                     "evidencesStatus.$.submissions.0.submissionDate": new Date()
@@ -1819,6 +1824,7 @@ module.exports = class Submission extends Abstract {
 
   questionValueConversion(question, oldResponse, newResponse) {
     let result = {}
+    result["labels"] = new Array
 
     if (question.responseType == "date") {
 
@@ -1836,6 +1842,7 @@ module.exports = class Submission extends Abstract {
 
       result["oldValue"] = oldResponseArray.map(value => (value < 10) ? "0" + value : value).reverse().join("-")
       result["newValue"] = newResponseArray.map(value => (value < 10) ? "0" + value : value).reverse().join("-")
+      result["labels"].push(newResponseArray.map(value => (value < 10) ? "0" + value : value).reverse().join("-"))
 
     } else if (question.responseType == "radio") {
 
@@ -1847,6 +1854,7 @@ module.exports = class Submission extends Abstract {
 
         if (eachOption.label.replace(/\s/g, '').toLowerCase() == newResponse.replace(/\s/g, '').toLowerCase()) {
           result["newValue"] = eachOption.value
+          result["labels"].push(eachOption.label)
         }
       })
 
@@ -1864,13 +1872,14 @@ module.exports = class Submission extends Abstract {
 
         if (newResponseArray.includes(eachOption.label.replace(/\s/g, '').toLowerCase())) {
           result["newValue"].push(eachOption.value)
+          result["labels"].push(eachOption.label)
         }
       })
 
     } else {
-
       result["oldValue"] = oldResponse
       result["newValue"] = newResponse
+      result["labels"].push(newResponse)
     }
 
     return result
