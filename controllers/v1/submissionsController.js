@@ -1208,10 +1208,10 @@ module.exports = class Submission extends Abstract {
                 commonValues["level"] = eachCriteria.level
 
                 Object.values(eachCriteria.allLevelexpression).forEach(eachLevelExpression=>{
-                  _.merge(toLogObject,commonValues)
                   toLogObject["errorMsg"] = eachLevelExpression.error
                   toLogObject["errorLevel"] = eachLevelExpression.level
                   toLogObject["errorExpression"] = eachLevelExpression.expression
+                  _.merge(toLogObject,commonValues)
                   slackClient.rubricErrorLogs(toLogObject)
                 })
 
