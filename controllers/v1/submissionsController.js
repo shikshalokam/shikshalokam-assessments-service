@@ -1083,11 +1083,11 @@ module.exports = class Submission extends Abstract {
                       }
                     } catch (error) {
                       console.log("---------------Some exception caught begins---------------")
-                      console.log(error)
-                      console.log(criteria.name)
-                      console.log(criteria.rubric.levels[level].expression)
-                      console.log(expressionVariables)
-                      console.log(criteria.rubric.expressionVariables)
+                      console.log("error:",error)
+                      console.log("criteria name :",criteria.name)
+                      console.log("criteria rubric expression :",criteria.rubric.levels[level].expression)
+                      console.log("expression variables :",expressionVariables)
+                      console.log("criteria rubric expression variables :",criteria.rubric.expressionVariables)
                       console.log("---------------Some exception caught ends---------------")
 
                       // errorExpressions.push(criteria.rubric.levels[level].expression)
@@ -1095,6 +1095,7 @@ module.exports = class Submission extends Abstract {
                         errorExpression[criteria.externalId] = {}
                       }
                       errorExpression[criteria.externalId][criteria.rubric.levels[level].level] = {
+                        level:[criteria.rubric.levels[level].level],
                         expression: criteria.rubric.levels[level].expression,
                         error: error.toString()
                       }
@@ -1191,16 +1192,44 @@ module.exports = class Submission extends Abstract {
             result: result
           };
 
-          if (criteriaIdWithParsingErrors.length > 0) {
-            const toLogObject = {
-              submissionId: submissionDocument._id,
-              schoolId: req.params._id,
-              schoolName: submissionDocument.schoolInformation.name,
-              programId: submissionDocument.programInformation.externalId,
-              errorMsg: new Error(JSON.stringify(criteriaIdWithParsingErrors))
-            }
+          const toLogObject = {}
+          const expressionLogObject = {}
+          const expressionVariableLogObject = {}
+          const commonValues = {}
 
-            slackClient.rubricErrorLogs(toLogObject)
+          if (criteriaIdWithParsingErrors.length > 0) {
+            criteriaIdWithParsingErrors.forEach(eachCriteriaId=>{
+              commonValues["submissionId"] = submissionDocument._id
+              commonValues["schoolId"] = req.params._id
+              commonValues["schoolName"] = submissionDocument.schoolInformation.name
+              commonValues["programId"] = submissionDocument.programInformation.externalId
+
+              Object.values(eachCriteriaId).forEach(eachCriteria=>{
+                commonValues["level"] = eachCriteria.level
+
+                Object.values(eachCriteria.allLevelexpression).forEach(eachLevelExpression=>{
+                  _.merge(toLogObject,commonValues)
+                  toLogObject["errorMsg"] = eachLevelExpression.error
+                  toLogObject["errorLevel"] = eachLevelExpression.level
+                  toLogObject["errorExpression"] = eachLevelExpression.expression
+                  slackClient.rubricErrorLogs(toLogObject)
+                })
+
+                Object.entries(eachCriteria.expressionVariables).forEach(eachExpressionVariables=>{
+                  let keyExpressionVariable = eachExpressionVariables[0]
+                  expressionVariableLogObject["expressionVariableDefined"] = {[keyExpressionVariable]:eachExpressionVariables[1]};
+                  _.merge(expressionVariableLogObject,commonValues)
+                  slackClient.rubricErrorLogs(expressionVariableLogObject)
+                })
+
+                Object.entries(eachCriteria.expressionVariableDefined).forEach(eachExpressionVariable=>{
+                  let keyExpressionVariable = eachExpressionVariable[0]
+                  expressionLogObject["expressionVariables"] = {[keyExpressionVariable]:eachExpressionVariable[1]};
+                  _.merge(expressionLogObject,commonValues)
+                  slackClient.rubricErrorLogs(expressionLogObject)
+                })
+              })
+            })   
 
           }
 
