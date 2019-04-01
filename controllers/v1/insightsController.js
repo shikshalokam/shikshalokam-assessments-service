@@ -289,14 +289,14 @@ module.exports = class Insights extends Abstract {
             }
             recordsToProcess.forEach(record => {
               if(!record.hierarchyTrack[hierarchyLevel-1] || !record.hierarchyTrack[hierarchyLevel-1].name) {
-                insightResult[hierarchyLevel].data.push(_.omit(record,"hierarchyTrack"))
+                insightResult[hierarchyLevel].data.push(record)
               } else {
                 if(!insightResult[hierarchyLevel][record.hierarchyTrack[hierarchyLevel-1].name]) {
                   insightResult[hierarchyLevel][record.hierarchyTrack[hierarchyLevel-1].name] = {
                     data : new Array
                   }
                 }
-                insightResult[hierarchyLevel][record.hierarchyTrack[hierarchyLevel-1].name].data.push(_.omit(record,"hierarchyTrack"))
+                insightResult[hierarchyLevel][record.hierarchyTrack[hierarchyLevel-1].name].data.push(record)
               }
             })
             hierarchyLevel += 1
@@ -327,30 +327,43 @@ module.exports = class Insights extends Abstract {
           },
           {
             title:"Date of Assessment",
-            value:new Date()
+            value:insights.ratingCompletedAt.toDateString()
           }
         ]
 
         responseObject.sections = new Array
 
-        Object.keys(insightResult).forEach(hierarchyLevel => {
-          let content = insightResult[hierarchyLevel]
+        let themeSummary = new Array
+
+        let themeSummarySectionHeaders = new Array
+        themeSummarySectionHeaders.push({
+          name: "name",
+          value: ""
+        })
+        for(var k in insights.levelToScoreMapping) themeSummarySectionHeaders.push({name: k,value: insights.levelToScoreMapping[k].label})
+
+
+        let generateSections = function(content) {
 
           if(content.data.length > 0) {
 
             let tableData = new Array
             let subThemeLabel = ""
+            let parentThemeType = ""
+            let parentThemeName = ""
             content.data.forEach(row => {
               subThemeLabel = row.label
+              parentThemeType = (row.hierarchyTrack[row.hierarchyTrack.length-1]) ? row.hierarchyTrack[row.hierarchyTrack.length-1].label : ""
+              parentThemeName = (row.hierarchyTrack[row.hierarchyTrack.length-1]) ? row.hierarchyTrack[row.hierarchyTrack.length-1].name : ""
               row.score = Number(row.score)
               tableData.push(_.pick(row, ["name","score"]))
             })
 
-            let sectionHeading = (hierarchyLevel > 0) ? "Performance in theme " : ""
-            let graphTitle = (hierarchyLevel == 0) ? "Performance by themes" : "Performance in theme "+subThemeLabel
-            let graphSubTitle = (hierarchyLevel == 0) ? "Performance of school acorss themes" : "Performance of school in sub categories of  "+subThemeLabel
+            let sectionHeading = (hierarchyLevel > 0) ? parentThemeType + " - " + parentThemeName : "" 
+            let graphTitle = (hierarchyLevel > 0) ? "Performance in " + parentThemeName : "Performance by "+subThemeLabel
+            let graphSubTitle = (hierarchyLevel > 0) ? "Performance of school in sub categories of "+parentThemeName : "Performance of school acorss "+ subThemeLabel + " in the school development framework" 
 
-            let graphHAxisTitle = (hierarchyLevel == 0) ? "Themes in the school development framework" : "Categories within  "+subThemeLabel
+            let graphHAxisTitle = (hierarchyLevel > 0) ?  "Categories within  "+parentThemeName : subThemeLabel+" in the school development framework"
 
             let eachSection = {
               table: true,
@@ -387,16 +400,129 @@ module.exports = class Insights extends Abstract {
                 ]
               }
             }
-  
-            responseObject.sections.push(eachSection)
-          }
-          // } else {
-          //   Object.keys(content).forEach(subTheme => {
 
-          //   })
-          // }
+
+            responseObject.sections.push(eachSection)
+
+            let tableSummaryTotal = {
+              "name" : "Total"
+            }
+            let tableSummaryPercentage = {
+              "name" : "% for all themes"
+            }
+            for(var k in insights.levelToScoreMapping) {
+              tableSummaryTotal[k] = 0
+              tableSummaryPercentage[k] = 0
+            }
+
+            let summaryTableData = new Array
+            let totalThemeCount = 0
+            content.data.forEach(row => {
+              for(var k in insights.levelToScoreMapping) {
+                row[k] = row.criteriaLevelCount[k]
+                tableSummaryTotal[k] += row.criteriaLevelCount[k]
+                totalThemeCount += row.criteriaLevelCount[k]
+              }
+              summaryTableData.push(_.pick(row, ["name",...Object.keys(insights.levelToScoreMapping)]))
+            })
+
+            for(var k in insights.levelToScoreMapping) {
+              tableSummaryPercentage[k] = Number(((tableSummaryTotal[k] / totalThemeCount) * 100).toFixed(2))
+            }
+            summaryTableData.push(tableSummaryTotal)
+            summaryTableData.push(tableSummaryPercentage)
+            
+            let summaryTableSectionHeading = (hierarchyLevel > 0) ? "Performance report for " +insights.schoolName + " for each " : "Performance Report for " + insights.schoolName + " by "
+
+            let eachSummarySection = {
+              table: true,
+              graph: false,
+              heading: summaryTableSectionHeading,
+              data: summaryTableData,
+              tabularData: {
+                headers: themeSummarySectionHeaders
+              }
+            }
+  
+            themeSummary.push(eachSummarySection)
+          } else {
+            Object.keys(content).forEach(subTheme => {
+              if (subTheme != "data") {
+                generateSections(content[subTheme])
+              }
+            })
+          }
+          
+        }
+
+        Object.keys(insightResult).forEach(hierarchyLevel => {
+          let eachLevelContent = insightResult[hierarchyLevel]
+          generateSections(eachLevelContent)
         })
 
+        criteriaResult.forEach(criteriaGroup => {
+
+          let tableData = new Array
+          let criteriaParent = criteriaGroup.hierarchyTrack[criteriaGroup.hierarchyTrack.length -1].label
+
+          let sectionSummary = new Array
+          criteriaGroup.hierarchyTrack.forEach(hierarchyLevel => {
+            sectionSummary.push({
+              value: hierarchyLevel.name,
+              label: hierarchyLevel.label
+            })
+          })
+
+          criteriaGroup.data.forEach(row => {
+            row.level = Number(row.level.substr(1))
+            tableData.push(_.pick(row, ["name","level"]))
+          })
+
+          let sectionHeading = "Detailed report for each "+criteriaParent
+          let graphTitle = "Distribution of levels by criteria"
+          let graphSubTitle = "Performance index"
+
+          let eachSection = {
+            table: true,
+            graph: true,
+            heading: sectionHeading,
+            summary: sectionSummary,
+            graphData: {
+              title: graphTitle,
+              subTitle: graphSubTitle,
+              chartType: 'ColumnChart',
+              chartOptions: {
+                is3D: true,
+                isStack: true,
+                vAxis: {
+                  title: 'Level',
+                  minValue: 0
+                },
+                hAxis: {
+                  title: "Criteria",
+                  showTextEvery: 1
+                }
+              }
+            },
+            data: tableData,
+            tabularData: {
+              headers: [
+                {
+                  name: "name",
+                  value: "Criteria"
+                },
+                {
+                  name: "level",
+                  value: "Levels"
+                }
+              ]
+            }
+          }
+
+          responseObject.sections.push(eachSection)
+        })
+
+        responseObject.sections = _.concat(responseObject.sections, ...themeSummary)
 
         let response = {
           message: "Insights report fetched successfully.",
