@@ -47,20 +47,6 @@ module.exports = class EvaluationFrameworks extends Abstract {
   async details(req) {
     return new Promise(async (resolve, reject) => {
       try {
-        let criteriaDocument = await database.models.criterias.find({},{"name":1,"rubric.levels":1}).lean()
-
-        let criteriaObject = {}
-
-        criteriaDocument.forEach(eachCriteria=>{
-          let levelsDescription = {}
-
-          for(let k in eachCriteria.rubric.levels){
-            levelsDescription[k] = eachCriteria.rubric.levels[k].description
-          }
-          criteriaObject[eachCriteria._id.toString()] =_.merge({
-            name:eachCriteria.name
-          },levelsDescription) 
-        })
 
         let findQuery = {
           externalId:req.params._id
@@ -68,6 +54,23 @@ module.exports = class EvaluationFrameworks extends Abstract {
 
         let evaluationFrameworkDocument = await database.models.evaluationFrameworks.findOne(findQuery,{themes:1,levelToScoreMapping:1,name:1}).lean()
         
+        let criteriasIdArray = gen.utils.getCriteriaIds(evaluationFrameworkDocument.themes);
+        let criteriaDocument = await database.models.criterias.find({_id: { $in: criteriasIdArray } },{"name":1,"rubric.levels":1}).lean()
+
+        let criteriaObject = {}
+
+        criteriaDocument.forEach(eachCriteria=>{
+          let levelsDescription = {}
+          
+          for(let k in eachCriteria.rubric.levels){
+            levelsDescription[k] = eachCriteria.rubric.levels[k].description
+          }
+
+          criteriaObject[eachCriteria._id.toString()] =_.merge({
+            name:eachCriteria.name
+          },levelsDescription) 
+        })
+
         let responseObject = {}
         responseObject.heading = "Framework + rubric api for - "+evaluationFrameworkDocument.name
         responseObject.summary = [
@@ -95,64 +98,54 @@ module.exports = class EvaluationFrameworks extends Abstract {
           sectionHeaders.push({name: k,value:evaluationFrameworkDocument.levelToScoreMapping[k].label})
         }
 
-        let generateSections = function(eachDocument){
-          
-          if(eachDocument.criterias){
-            let tableData = new Array
-            let levelObjectFromCriteria={}
-
-            eachDocument.criterias.forEach(eachCriteria=>{
+        let count = 0
+        
+        let generateCriteriaThemes =  function (themes,parentData = []) {
+        
+          themes.forEach(theme => {
+            if (theme.children) {  
+              let hierarchyTrackToUpdate = [...parentData]
+              hierarchyTrackToUpdate.push(_.pick(theme,["type","label","externalId","name"]))
+  
+              generateCriteriaThemes(theme.children,hierarchyTrackToUpdate)
+            } else {
               
-              Object.keys(levelValue).forEach(eachLevel=>{
-                levelObjectFromCriteria[eachLevel] = criteriaObject[eachCriteria.criteriaId.toString()][eachLevel]
+              let tableData = new Array
+              let levelObjectFromCriteria={}
+  
+              let hierarchyTrackToUpdate = [...parentData]
+              hierarchyTrackToUpdate.push(_.pick(theme,["type","label","externalId","name"]))
+
+              theme.criteria.forEach(criteria => {
+
+                if(criteriaObject[criteria.criteriaId.toString()]) {
+                  
+                  Object.keys(levelValue).forEach(eachLevel=>{
+                    levelObjectFromCriteria[eachLevel] = criteriaObject[criteria.criteriaId.toString()][eachLevel]
+                  })
+                  
+                  tableData.push(_.merge({
+                    criteriaName:criteriaObject[criteria.criteriaId.toString()].name,
+                  },levelObjectFromCriteria))
+                }
+
               })
-
-              tableData.push(_.merge({
-                criteriaName:criteriaObject[eachCriteria.criteriaId.toString()].name,
-              },levelObjectFromCriteria))
-              
-            })
-          
-            let eachSection = {
-              table: true,
-              heading: "",
-              data: tableData,
-              tabularData: {
+              let eachSection = {
+                table: true,
+                data: tableData,
+                tabularData: {
                 headers: sectionHeaders
+              },
+              summary:hierarchyTrackToUpdate
               }
+              console.log("Count",++count)
+              responseObject.sections.push(eachSection)
             }
-
-            responseObject.sections.push(eachSection)
-          } else{
-            let remainingDocument = _.omit(eachDocument,["name","label"])
-            Object.keys(remainingDocument).forEach(eachValue => {
-              if (eachValue != "criterias") {
-                generateSections(eachDocument[eachValue])
-              }
-            })
-          }
+          })
+  
         }
 
-        evaluationFrameworkDocument.themes.forEach(eachTheme=>{
-          let criteriaDoc
-          let themewithoutChildren = {}
-
-          if(eachTheme.children){
-            criteriaDoc = this.getCriteriaPath(eachTheme.children,eachTheme.name,eachTheme.type)
-          }else{
-            themewithoutChildren[eachTheme.name]={
-              criterias:eachTheme.criteria,
-              name:eachTheme.name,
-              type:eachTheme.type
-            }
-            criteriaDoc =  themewithoutChildren
-          }
-         
-         Object.keys(criteriaDoc).forEach(eachKey=>{
-          let eachDoc = criteriaDoc[eachKey]
-          generateSections(eachDoc)
-         })
-        })
+        generateCriteriaThemes(evaluationFrameworkDocument.themes)
         
         let response = {
           message: "Framework + rubric api fetched successfully.",
@@ -169,41 +162,4 @@ module.exports = class EvaluationFrameworks extends Abstract {
       }
     });
   }
-
-  getCriteriaPath(themes,name,label) {
-
-    if(!this.path) this.path = {}
-    
-    themes.forEach(theme => {
-      if(typeof name == "string") {
-        
-        if(!this.path[name]) this.path[name] = {
-          name:name,
-          label:label
-        }
-
-        this.path[name][theme.name] = {
-          name:theme.name,
-          label:theme.label,
-        }
-      }
-      
-      else{
-        name[theme.name] = {
-          name:theme.name,
-          label:theme.label
-        }
-      }
-
-      if (theme.children) {
-        this.getCriteriaPath(theme.children,this.path[name][theme.name]);
-      } else{
-        name[theme.name] = {
-          criterias:theme.criteria
-        }
-      }
-    })
-
-    return this.path;
-  } 
 };
