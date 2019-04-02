@@ -559,7 +559,6 @@ module.exports = class Insights extends Abstract {
     })
   }
 
-
   /**
   * @api {post} /assessment/api/v1/insights/singleEntityHighLevelReport/PROGID01?:schoolId Return high level insights for a school
   * @apiVersion 0.0.1
@@ -877,7 +876,6 @@ module.exports = class Insights extends Abstract {
 
     })
   }
-
 
   /**
   * @api {post} /assessment/api/v1/insights/multiEntityHighLevelReport/:programId Return insights for a school
