@@ -334,7 +334,7 @@ module.exports = class Insights extends Abstract {
         
         responseObject.frameworkUrl = {
           label:"Framework + rubric",
-          link: "/evaluationFrameworks/details/"+insights.evaluationFrameworkExternalId
+          link: "/evaluationFrameworks/details/"+insights.evaluationFrameworkId.toString()
         }
 
         responseObject.sections = new Array
@@ -636,7 +636,7 @@ module.exports = class Insights extends Abstract {
         
         responseObject.frameworkUrl = {
           label:"Framework + rubric",
-          link: "/evaluationFrameworks/details/"+insights.evaluationFrameworkExternalId
+          link: "/evaluationFrameworks/details/"+insights.evaluationFrameworkId.toString()
         }
         responseObject.sections = new Array
 
@@ -913,7 +913,7 @@ module.exports = class Insights extends Abstract {
             criteriaScores : 1,
             programId: 1,
             levelToScoreMapping : 1,
-            evaluationFrameworkExternalId:1
+            evaluationFrameworkId:1
           }
         );
 
@@ -962,7 +962,7 @@ module.exports = class Insights extends Abstract {
         ]
         responseObject.frameworkUrl = {
           label:"Framework + rubric",
-          link: "/evaluationFrameworks/details/"+insights[0].evaluationFrameworkExternalId
+          link: "/evaluationFrameworks/details/"+insights[0].evaluationFrameworkId.toString()
         }
         responseObject.subTitle = "Categorization of schools at different level - %"
         responseObject.sections = new Array
@@ -1071,7 +1071,7 @@ module.exports = class Insights extends Abstract {
             criteriaScores : 1,
             programId: 1,
             levelToScoreMapping : 1,
-            evaluationFrameworkExternalId:1
+            evaluationFrameworkId:1
           }
         );
 
@@ -1117,7 +1117,7 @@ module.exports = class Insights extends Abstract {
         
         responseObject.frameworkUrl = {
           label:"Framework + rubric",
-          link: "/evaluationFrameworks/details/"+insights[0].evaluationFrameworkExternalId
+          link: "/evaluationFrameworks/details/"+insights[0].evaluationFrameworkId.toString()
         }
         // ,
         //   {
