@@ -97,38 +97,36 @@ module.exports = class EvaluationFrameworks extends Abstract {
 
         let generateSections = function(eachDocument){
           
-          if(eachDocument.criteriaName){
+          if(eachDocument.criterias){
             let tableData = new Array
-            
-            Object.values(eachDocument.criteriaName).forEach(eachData=>{
-              let levelObjectFromCriteria={}
+            let levelObjectFromCriteria={}
 
-              eachData.forEach(eachCriteria=>{
-                Object.keys(levelValue).forEach(eachLevel=>{
-                  levelObjectFromCriteria[eachLevel] = criteriaObject[eachCriteria.criteriaId.toString()][eachLevel]
-                })
-                tableData.push(_.merge({
-                  criteriaName:criteriaObject[eachCriteria.criteriaId.toString()].name,
-                },levelObjectFromCriteria))
+            eachDocument.criterias.forEach(eachCriteria=>{
+              
+              Object.keys(levelValue).forEach(eachLevel=>{
+                levelObjectFromCriteria[eachLevel] = criteriaObject[eachCriteria.criteriaId.toString()][eachLevel]
               })
-            })
 
+              tableData.push(_.merge({
+                criteriaName:criteriaObject[eachCriteria.criteriaId.toString()].name,
+              },levelObjectFromCriteria))
+              
+            })
+          
             let eachSection = {
               table: true,
               heading: "",
               data: tableData,
               tabularData: {
                 headers: sectionHeaders
-              },
-              // summaryData:parentData
+              }
             }
 
             responseObject.sections.push(eachSection)
-          }
-          else{
+          } else{
             let remainingDocument = _.omit(eachDocument,["name","label"])
             Object.keys(remainingDocument).forEach(eachValue => {
-              if (eachValue != "criteriaName") {
+              if (eachValue != "criterias") {
                 generateSections(eachDocument[eachValue])
               }
             })
@@ -136,14 +134,24 @@ module.exports = class EvaluationFrameworks extends Abstract {
         }
 
         evaluationFrameworkDocument.themes.forEach(eachTheme=>{
-         
-         let criteriaDoc = this.getCriteriaPath(eachTheme.children,eachTheme.name,eachTheme.label)
+          let criteriaDoc
+          let themewithoutChildren = {}
+
+          if(eachTheme.children){
+            criteriaDoc = this.getCriteriaPath(eachTheme.children,eachTheme.name,eachTheme.type)
+          }else{
+            themewithoutChildren[eachTheme.name]={
+              criterias:eachTheme.criteria,
+              name:eachTheme.name,
+              type:eachTheme.type
+            }
+            criteriaDoc =  themewithoutChildren
+          }
          
          Object.keys(criteriaDoc).forEach(eachKey=>{
           let eachDoc = criteriaDoc[eachKey]
           generateSections(eachDoc)
          })
-
         })
         
         let response = {
@@ -167,9 +175,6 @@ module.exports = class EvaluationFrameworks extends Abstract {
     if(!this.path) this.path = {}
     
     themes.forEach(theme => {
-
-      if(!this.parent) this.parent= new Array
-
       if(typeof name == "string") {
         
         if(!this.path[name]) this.path[name] = {
@@ -179,23 +184,26 @@ module.exports = class EvaluationFrameworks extends Abstract {
 
         this.path[name][theme.name] = {
           name:theme.name,
-          label:theme.label
+          label:theme.label,
         }
       }
       
-      else name[theme.name] = {
-        name:theme.name,
-        label:theme.label
+      else{
+        name[theme.name] = {
+          name:theme.name,
+          label:theme.label
+        }
       }
-      
+
       if (theme.children) {
         this.getCriteriaPath(theme.children,this.path[name][theme.name]);
       } else{
-        name[theme.name]["criteriaName"] = {
+        name[theme.name] = {
           criterias:theme.criteria
         }
       }
     })
+
     return this.path;
-  }
+  } 
 };
