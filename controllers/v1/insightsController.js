@@ -330,6 +330,11 @@ module.exports = class Insights extends Abstract {
             value:insights.ratingCompletedAt.toDateString()
           }
         ]
+        
+        responseObject.frameworkUrl = {
+          label:"Framework + rubric",
+          link: "/evaluationFrameworks/details/"+insights.evaluationFrameworkExternalId
+        }
 
         responseObject.sections = new Array
 
@@ -628,7 +633,11 @@ module.exports = class Insights extends Abstract {
             value:insights.ratingCompletedAt.toDateString()
           }
         ]
-
+        
+        responseObject.frameworkUrl = {
+          label:"Framework + rubric",
+          link: "/evaluationFrameworks/details/"+insights.evaluationFrameworkExternalId
+        }
         responseObject.sections = new Array
 
         let summarySectionTableHeaders = new Array
@@ -903,7 +912,8 @@ module.exports = class Insights extends Abstract {
             themeScores : 1,
             criteriaScores : 1,
             programId: 1,
-            levelToScoreMapping : 1
+            levelToScoreMapping : 1,
+            evaluationFrameworkExternalId:1
           }
         );
 
@@ -946,6 +956,10 @@ module.exports = class Insights extends Abstract {
             value: new Date()
           }
         ]
+        responseObject.frameworkUrl = {
+          label:"Framework + rubric",
+          link: "/evaluationFrameworks/details/"+insights[0].evaluationFrameworkExternalId
+        }
         responseObject.subTitle = "Categorization of schools at different level - %"
         responseObject.sections = new Array
 
@@ -1055,7 +1069,8 @@ module.exports = class Insights extends Abstract {
             themeScores : 1,
             criteriaScores : 1,
             programId: 1,
-            levelToScoreMapping : 1
+            levelToScoreMapping : 1,
+            evaluationFrameworkExternalId:1
           }
         );
 
@@ -1098,7 +1113,11 @@ module.exports = class Insights extends Abstract {
             value: new Date()
           }
         ]
-
+        
+        responseObject.frameworkUrl = {
+          label:"Framework + rubric",
+          link: "/evaluationFrameworks/details/"+insights[0].evaluationFrameworkExternalId
+        }
         // ,
         //   {
         //     label : "No. Of Criteria in Each School",
