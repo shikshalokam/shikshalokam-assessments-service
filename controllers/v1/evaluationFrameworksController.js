@@ -49,7 +49,7 @@ module.exports = class EvaluationFrameworks extends Abstract {
       try {
 
         let findQuery = {
-          externalId:req.params._id
+          _id:req.params._id
         }
 
         let evaluationFrameworkDocument = await database.models.evaluationFrameworks.findOne(findQuery,{themes:1,levelToScoreMapping:1,name:1}).lean()
@@ -99,7 +99,7 @@ module.exports = class EvaluationFrameworks extends Abstract {
         }
 
         let count = 0
-        
+
         let generateCriteriaThemes =  function (themes,parentData = []) {
         
           themes.forEach(theme => {
