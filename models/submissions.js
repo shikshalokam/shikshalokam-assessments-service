@@ -16,13 +16,14 @@ module.exports = {
     schoolProfile: Object,
     ratingOfManualCriteriaEnabled: Boolean,
     allManualCriteriaRatingSubmitted: Boolean,
-    ratings: Object,
     feedback: Array,
     generalQuestions: Object,
     parentInterviewResponsesStatus: Array,
     parentInterviewResponses: Object,
     completedDate: Date,
     evaluationFrameworkId: "ObjectId",
-    evaluationFrameworkExternalId: String
+    evaluationFrameworkExternalId: String,
+    csvUpdatedHistory: Array,
+    ratingCompletedAt: Date
   }
 };

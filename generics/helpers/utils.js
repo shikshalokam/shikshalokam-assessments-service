@@ -47,30 +47,52 @@ function getCriteriaIds(themes) {
     } else {
       criteriaIdArray = theme.criteria;
     }
-    criteriaIdArray.forEach(eachCriteriaId => {
-      allCriteriaIds.push(eachCriteriaId);
+    criteriaIdArray.forEach(eachCriteria => {
+      if(eachCriteria.criteriaId) {
+        allCriteriaIds.push(eachCriteria.criteriaId);
+      } else {
+        allCriteriaIds.push(eachCriteria);
+      }
     })
   })
   return allCriteriaIds;
 }
 
-function getQuestionIds(criterias) {
+function getUserRole(userDetails, caseSensitive = false) {
+  if (userDetails && userDetails.allRoles.length) {
+    _.pull(userDetails.allRoles, 'PUBLIC');
+    let role = userDetails.allRoles[0];
+    if (caseSensitive == true) {
+      return mapUserRole(role)
+    }
+    return userDetails.allRoles[0];
+  } else {
+    return
+  }
+}
+
+function mapUserRole(role) {
+  let rolesObject = {
+    ASSESSOR: "assessors",
+    LEAD_ASSESSOR: "leadAssessors",
+    PROJECT_MANAGER: "projectManagers",
+    PROGRAM_MANAGER: "programManagers"
+  }
+  return rolesObject[role];
+}
+
+function getAllQuestionId(criteria) {
   let questionIds = [];
-  criterias.forEach(eachCriteria => {
+  criteria.forEach(eachCriteria => {
     eachCriteria.evidences.forEach(eachEvidence => {
       eachEvidence.sections.forEach(eachSection => {
-        // eachSection.questions.forEach(eachquestion => {
-          // criteriaQuestionDetailsObject[eachquestion.toString()] = {
-          //   criteriaId: eachCriteria._id,
-          //   criteriaName: eachCriteria.name,
-          //   questionId: eachquestion.toString()
-          // };
-        // });
-        questionIds.push(...eachSection.questions)
-      });
-    });
-  });
-  return questionIds;
+        eachSection.questions.forEach(eachQuestion => {
+          questionIds.push(eachQuestion)
+        })
+      })
+    })
+  })
+  return questionIds
 }
 
 module.exports = {
@@ -78,5 +100,7 @@ module.exports = {
   checkIfStringIsUrl: checkIfStringIsUrl,
   generateRandomCharacters: generateRandomCharacters,
   getCriteriaIds: getCriteriaIds,
-  getQuestionIds: getQuestionIds
+  getUserRole: getUserRole,
+  mapUserRole: mapUserRole,
+  getAllQuestionId: getAllQuestionId
 };
