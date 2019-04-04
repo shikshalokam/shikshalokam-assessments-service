@@ -1209,7 +1209,7 @@ module.exports = class Submission extends Abstract {
 
                 Object.values(eachCriteria.allLevelexpression).forEach(eachLevelExpression=>{
                   toLogObject["errorMsg"] = eachLevelExpression.error
-                  toLogObject["errorLevel"] = eachLevelExpression.level
+                  toLogObject["errorLevel"] = eachLevelExpression.level.join("")
                   toLogObject["errorExpression"] = eachLevelExpression.expression
                   _.merge(toLogObject,commonValues)
                   slackClient.rubricErrorLogs(toLogObject)
@@ -1217,14 +1217,17 @@ module.exports = class Submission extends Abstract {
 
                 Object.entries(eachCriteria.expressionVariables).forEach(eachExpressionVariables=>{
                   let keyExpressionVariable = eachExpressionVariables[0]
-                  expressionVariableLogObject["expressionVariableDefined"] = {[keyExpressionVariable]:eachExpressionVariables[1]};
+                  expressionVariableLogObject["expressionVariableDefinedName"] = keyExpressionVariable;
+                  expressionVariableLogObject["expressionVariableDefinedValue"] = eachExpressionVariables[1];
                   _.merge(expressionVariableLogObject,commonValues)
+                  JSON.stringify(expressionVariableLogObject.expressionVariableDefined)
                   slackClient.rubricErrorLogs(expressionVariableLogObject)
                 })
 
                 Object.entries(eachCriteria.expressionVariableDefined).forEach(eachExpressionVariable=>{
                   let keyExpressionVariable = eachExpressionVariable[0]
-                  expressionLogObject["expressionVariables"] = {[keyExpressionVariable]:eachExpressionVariable[1]};
+                  expressionLogObject["expressionVariablesName"] = keyExpressionVariable;
+                  expressionLogObject["expressionVariablesValue"] = eachExpressionVariable[1];                  
                   _.merge(expressionLogObject,commonValues)
                   slackClient.rubricErrorLogs(expressionLogObject)
                 })
