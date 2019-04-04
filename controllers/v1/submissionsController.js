@@ -1218,8 +1218,7 @@ module.exports = class Submission extends Abstract {
               commonValues["programId"] = submissionDocument.programInformation.externalId
 
               Object.values(eachCriteriaId).forEach(eachCriteria=>{
-                commonValues["level"] = eachCriteria.level
-
+                commonValues["Criteria Name"] = eachCriteria.criteriaName
                 Object.values(eachCriteria.allLevelexpression).forEach(eachLevelExpression=>{
                   toLogObject["errorMsg"] = eachLevelExpression.error
                   toLogObject["errorLevel"] = eachLevelExpression.level.join("")
