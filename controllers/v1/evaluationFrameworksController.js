@@ -60,7 +60,7 @@ module.exports = class EvaluationFrameworks extends Abstract {
         let sectionHeaders = new Array
 
         sectionHeaders.push({
-          key:"criteriaName",
+          name:"criteriaName",
           value:"Domain"
         })
 
@@ -158,5 +158,13 @@ module.exports = class EvaluationFrameworks extends Abstract {
 
     let evaluationFrameworkDocuments = await database.models["evaluationFrameworks"].find(queryObject, projectionObject);
     return evaluationFrameworkDocuments
+  }
+
+  async checkForScoringSystemFromInsights(evaluationId) {
+
+    let evaluationDocument = await database.models.evaluationFrameworks.find({
+      _id:evaluationId,
+      scoringSystem:{$exists:true,$ne:""}},{scoringSystem:1}).lean()
+    return evaluationDocument
   }
 };
