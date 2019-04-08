@@ -125,77 +125,104 @@ math.import({
 
     return checkIfPresentResult
   },
-  checkIfModeIs: function (needle, haystack) {
+  checkIfModeIs: function (needle, haystack,allValuesEqual = false) {
 
     let searchKey
     let isMode
 
-    if(needle._data) {
-
-      searchKey = needle._data
-      searchKey.sort()
-      haystack.forEach(haystackElm => {
-        if(haystackElm != "") {haystackElm.sort()}
-      })
-
-      let countOfElements = Object.entries(_.countBy(haystack)).sort((a,b) => {return b[1]-a[1]})
+    if(allValuesEqual){
       
-      isMode = (_.isEqual(countOfElements[0][0].split(','), searchKey) && ((countOfElements[1]) ? countOfElements[0][1] > countOfElements[1][1] : true )) ? 1 : -1
-    
-    } else {
+      let allValuesEqualArray = allValuesEqual.split("<")
 
-      if(typeof needle != "string" && typeof needle != "number") {
-        return -1
-      }
-
-      let searchParameters = new Array
-      let matchOperator = ''
-      
       if(needle.split('||').length > 1) {
-        searchParameters = needle.split('||')
-        matchOperator = 'or'
-      } else if (needle.split('&&').length > 1) {
-        searchParameters = needle.split('&&')
-        matchOperator = 'and'
+        let needleArray = needle.split('||')
+        if(needleArray.includes(allValuesEqualArray[0])){
+          isMode = true
+        }else{
+          isMode = -1
+        }
+      }else{
+        if(needle == allValuesEqualArray[0]){
+          if(typeof allValuesEqualArray[0] != "string" && typeof allValuesEqualArray[0] != "number") {
+            return -1
+          }
+  
+          isMode = true
+        }else{
+          isMode = -1
+        }
       }
 
-      searchKey = needle
+    }else{
+      if(needle._data) {
 
-      let countOfElements = Object.entries(_.countBy(haystack)).sort((a,b) => {return b[1]-a[1]})
-
-      isMode = -1
-      let modeValueCalculated
-
-      if (matchOperator === 'or') {
-        for (let pointerToSearchParametersArray = 0; pointerToSearchParametersArray < searchParameters.length; pointerToSearchParametersArray++) {
-          modeValueCalculated = (countOfElements[0][0] === searchParameters[pointerToSearchParametersArray] && ((countOfElements[1]) ? countOfElements[0][1] > countOfElements[1][1] : true )) ? 1 : -1
-          if(modeValueCalculated >= 0) {
-            isMode = 0
-            break;
-          }
-        }
-      } else if (matchOperator === 'and') {
-        isMode = 0
-        for (let pointerToSearchParametersArray = 0; pointerToSearchParametersArray < searchParameters.length; pointerToSearchParametersArray++) {
-          modeValueCalculated = (countOfElements[0][0] === searchParameters[pointerToSearchParametersArray] && ((countOfElements[1]) ? countOfElements[0][1] > countOfElements[1][1] : true )) ? 1 : -1
-          if(modeValueCalculated < 0) {
-            isMode = -1
-            break;
-          }
-        }
-      } else {
-        isMode = (countOfElements[0][0] === searchKey && ((countOfElements[1]) ? countOfElements[0][1] > countOfElements[1][1] : true )) ? 1 : -1
-      }
+        searchKey = needle._data
+        searchKey.sort()
+        haystack.forEach(haystackElm => {
+          if(haystackElm != "") {haystackElm.sort()}
+        })
+  
+        let countOfElements = Object.entries(_.countBy(haystack)).sort((a,b) => {return b[1]-a[1]})
+        
+        isMode = (_.isEqual(countOfElements[0][0].split(','), searchKey) && ((countOfElements[1]) ? countOfElements[0][1] > countOfElements[1][1] : true )) ? 1 : -1
       
+      } else {
+  
+        if(typeof needle != "string" && typeof needle != "number") {
+          return -1
+        }
+  
+        let searchParameters = new Array
+        let matchOperator = ''
+        
+        if(needle.split('||').length > 1) {
+          searchParameters = needle.split('||')
+          matchOperator = 'or'
+        } else if (needle.split('&&').length > 1) {
+          searchParameters = needle.split('&&')
+          matchOperator = 'and'
+        }
+  
+        searchKey = needle
+  
+        let countOfElements = Object.entries(_.countBy(haystack)).sort((a,b) => {return b[1]-a[1]})
+  
+        isMode = -1
+        let modeValueCalculated
+  
+        if (matchOperator === 'or') {
+          for (let pointerToSearchParametersArray = 0; pointerToSearchParametersArray < searchParameters.length; pointerToSearchParametersArray++) {
+            modeValueCalculated = (countOfElements[0][0] === searchParameters[pointerToSearchParametersArray] && ((countOfElements[1]) ? countOfElements[0][1] > countOfElements[1][1] : true )) ? 1 : -1
+            if(modeValueCalculated >= 0) {
+              isMode = 0
+              break;
+            }
+          }
+        } else if (matchOperator === 'and') {
+          isMode = 0
+          for (let pointerToSearchParametersArray = 0; pointerToSearchParametersArray < searchParameters.length; pointerToSearchParametersArray++) {
+            modeValueCalculated = (countOfElements[0][0] === searchParameters[pointerToSearchParametersArray] && ((countOfElements[1]) ? countOfElements[0][1] > countOfElements[1][1] : true )) ? 1 : -1
+            if(modeValueCalculated < 0) {
+              isMode = -1
+              break;
+            }
+          }
+        } else {
+          isMode = (countOfElements[0][0] === searchKey && ((countOfElements[1]) ? countOfElements[0][1] > countOfElements[1][1] : true )) ? 1 : -1
+        }
+        
+      }
     }
 
+    return isMode
+   
     // if(needle._data) {
     //   isMode = (_.isEqual(countOfElements[0][0].split(','), searchKey) && ((countOfElements[1]) ? countOfElements[0][1] > countOfElements[1][1] : true )) ? 1 : -1
     // } else {
     //   isMode = (countOfElements[0][0] === searchKey && ((countOfElements[1]) ? countOfElements[0][1] > countOfElements[1][1] : true )) ? 1 : -1
     // }
 
-    return isMode
+    
   },
   modeValue: function (haystack) {
     const countOfElements = Object.entries(_.countBy(haystack)).sort((a,b) => {return b[1]-a[1]})
