@@ -1027,7 +1027,7 @@ module.exports = class Submission extends Abstract {
 
         let submissionDocument = await database.models.submissions.findOne(
           queryObject,
-          { answers: 1, criterias: 1, evidencesStatus: 1, "schoolProfile":1,"schoolInformation.name": 1, "programInformation.externalId": 1 }
+          { answers: 1, criterias: 1, evidencesStatus: 1,  "programInformation.externalId": 1 }
         ).lean();
 
         if (!submissionDocument._id) {
