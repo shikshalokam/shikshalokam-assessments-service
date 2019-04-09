@@ -134,19 +134,31 @@ math.import({
       
       let allValuesEqualArray = allValuesEqual.split("<")
 
-      if(needle.split('||').length > 1) {
-        let needleArray = needle.split('||')
-        if(needleArray.includes(allValuesEqualArray[0])){
-          isMode = true
-        }else{
-          isMode = -1
-        }
-      }else{
-        if(needle == allValuesEqualArray[0]){
-          if(typeof allValuesEqualArray[0] != "string" && typeof allValuesEqualArray[0] != "number") {
-            return -1
+      let countOfElements = Object.entries(_.countBy(haystack)).sort((a,b) => {return b[1]-a[1]})
+
+      if(countOfElements[0][1] == countOfElements[1][1] ) {
+
+        let countEqualArrayElement = new Array
+
+        countOfElements.forEach(eachCount=>{
+          if(eachCount[1] == countOfElements[0][1]){
+            countEqualArrayElement.push(eachCount)
           }
-  
+        })
+
+        if(needle.split('||').length > 1) {
+          let needleArray = needle.split('||')
+
+          if(needleArray.includes(allValuesEqualArray[0])){
+            isMode = true
+          }else{
+            isMode = needleArray.includes(countOfElements[0][0]) ||  needleArray.includes(countOfElements[1][0]) ?true:-1
+          }
+        }else{
+          isMode =(needle.includes(countEqualArrayElement) && (needle == allValuesEqualArray[0]))?true:1
+        }   
+      }else{
+        if(countOfElements[0][0] == needle && countOfElements[0][1]>countOfElements[1][1]){
           isMode = true
         }else{
           isMode = -1
