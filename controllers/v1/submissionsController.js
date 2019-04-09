@@ -1036,7 +1036,6 @@ module.exports = class Submission extends Abstract {
 
         let result = {}
         result.runUpdateQuery = true
-        // let criteriaIdWithParsingErrors = new Array
 
         let allSubmittedEvidence = submissionDocument.evidencesStatus.every(this.allSubmission)
 
@@ -1053,10 +1052,6 @@ module.exports = class Submission extends Abstract {
                 
                 const questionArray = question.split('.')
                 let result;
-                console.log(questionArray[0])
-                if(questionArray[0] === "schoolProfile"){
-                  (submissionDocument.schoolProfile[questionArray[1]])?result = submissionDocument.schoolProfile[questionArray[1]]:""
-                }else{
                   submissionAnswers.push(submissionDocument.answers[questionArray[0]])
                   let inputTypes = ["value", "instanceResponses", "endTime", "startTime", "countOfInstances"];
                   inputTypes.forEach(inputType => {
@@ -1068,7 +1063,7 @@ module.exports = class Submission extends Abstract {
                       }
                     }
                   })
-                }
+                
                 return result;
               }
               let expressionVariables = {};
@@ -1078,9 +1073,6 @@ module.exports = class Submission extends Abstract {
               Object.keys(criteria.rubric.expressionVariables).forEach(variable => {
                 if (variable != "default") {
                   expressionVariables[variable] = questionValueExtractor(criteria.rubric.expressionVariables[variable]);
-                  if(variable == "C1001"){
-                    console.log("here")
-                  }
                   expressionVariables[variable] = (expressionVariables[variable] === "NA" && criteria.rubric.expressionVariables.default && criteria.rubric.expressionVariables.default[variable]) ? criteria.rubric.expressionVariables.default[variable] : expressionVariables[variable]
                   if (expressionVariables[variable] === "NA") {
                     allValuesAvailable = false;
@@ -1089,8 +1081,6 @@ module.exports = class Submission extends Abstract {
               })
 
               let errorWhileParsingCriteriaExpression = false
-              // let errorLevel = {}
-              // let errorLevels = [];
               let errorExpression = {}
 
               if (allValuesAvailable) {
@@ -1111,21 +1101,9 @@ module.exports = class Submission extends Abstract {
                       console.log("criteria rubric expression variables :",criteria.rubric.expressionVariables)
                       console.log("---------------Some exception caught ends---------------")
 
-
-                      // errorExpressions.push(criteria.rubric.levels[level].expression)
                       if (_.isEmpty(errorExpression[criteria.externalId], true)) {
                         errorExpression[criteria.externalId] = {}
                       }
-                      // errorExpression[criteria.externalId][criteria.rubric.levels[level].level] = {
-                      //   level:[criteria.rubric.levels[level].level],
-                      //   expression: criteria.rubric.levels[level].expression,
-                      //   error: error.toString()
-                      // }
-
-                      // errorLevels.push(criteria.rubric.levels[level].level)
-                      // errorLevel[criteria.externalId] = {
-                      //   level: errorLevels.join(',')
-                      // }
 
                       let errorObject = {
                         errorName:error.message,
@@ -1182,20 +1160,6 @@ module.exports = class Submission extends Abstract {
               result[criteria.externalId].expressionResult = expressionResult
               result[criteria.externalId].submissionAnswers = submissionAnswers
 
-              // if (errorWhileParsingCriteriaExpression) {
-
-              //   criteriaIdWithParsingErrors.push({
-              //     [criteria.externalId]: {
-              //       criteriaName: result[criteria.externalId].criteriaName,
-              //       criteriaId: result[criteria.externalId].criteriaExternalId,
-              //       expressionVariableDefined: result[criteria.externalId].expressionVariablesDefined,
-              //       expressionVariables: result[criteria.externalId].expressionVariables,
-              //       level: errorLevel[criteria.externalId].level,
-              //       allLevelexpression: errorExpression[criteria.externalId] ? errorExpression[criteria.externalId] : "",
-              //     }
-              //   })
-
-              // }
             }
             return criteria
 
@@ -1223,49 +1187,6 @@ module.exports = class Submission extends Abstract {
             message: message,
             result: result
           };
-
-          // const toLogObject = {}
-          // const expressionLogObject = {}
-          // const expressionVariableLogObject = {}
-          // const commonValues = {}
-
-          // if (criteriaIdWithParsingErrors.length > 0) {
-          //   criteriaIdWithParsingErrors.forEach(eachCriteriaId=>{
-          //     commonValues["submissionId"] = submissionDocument._id
-          //     commonValues["schoolId"] = req.params._id
-          //     commonValues["schoolName"] = submissionDocument.schoolInformation.name
-          //     commonValues["programId"] = submissionDocument.programInformation.externalId
-
-          //     Object.values(eachCriteriaId).forEach(eachCriteria=>{
-          //       commonValues["Criteria Name"] = eachCriteria.criteriaName
-          //       Object.values(eachCriteria.allLevelexpression).forEach(eachLevelExpression=>{
-          //         toLogObject["errorMsg"] = eachLevelExpression.error
-          //         toLogObject["errorLevel"] = eachLevelExpression.level.join("")
-          //         toLogObject["errorExpression"] = eachLevelExpression.expression
-          //         _.merge(toLogObject,commonValues)
-          //         slackClient.rubricErrorLogs(toLogObject)
-          //       })
-
-          //       Object.entries(eachCriteria.expressionVariables).forEach(eachExpressionVariables=>{
-          //         let keyExpressionVariable = eachExpressionVariables[0]
-          //         expressionVariableLogObject["expressionVariableDefinedName"] = keyExpressionVariable;
-          //         expressionVariableLogObject["expressionVariableDefinedValue"] = eachExpressionVariables[1];
-          //         _.merge(expressionVariableLogObject,commonValues)
-          //         JSON.stringify(expressionVariableLogObject.expressionVariableDefined)
-          //         slackClient.rubricErrorLogs(expressionVariableLogObject)
-          //       })
-
-          //       Object.entries(eachCriteria.expressionVariableDefined).forEach(eachExpressionVariable=>{
-          //         let keyExpressionVariable = eachExpressionVariable[0]
-          //         expressionLogObject["expressionVariablesName"] = keyExpressionVariable;
-          //         expressionLogObject["expressionVariablesValue"] = eachExpressionVariable[1];                  
-          //         _.merge(expressionLogObject,commonValues)
-          //         slackClient.rubricErrorLogs(expressionLogObject)
-          //       })
-          //     })
-          //   })   
-
-          // }
 
           return resolve(response);
         }
