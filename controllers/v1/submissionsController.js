@@ -1971,4 +1971,47 @@ module.exports = class Submission extends Abstract {
 
     return result
   }
+
+  async resetEcm(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        let programId = req.params._id
+
+        if (!programId) {
+          throw "Program id is missing"
+        }
+
+        let schoolId = req.query.schoolId
+        let ecmToBeReset = req.query.ecm
+        let evidencesToBeReset = "evidences." +ecmToBeReset
+
+          if (!schoolId) {
+          throw "School id is missing"
+        }
+
+        await database.models.submissions.update({
+          programExternalId:programId,
+          schoolExternalId:schoolId,
+          "evidencesStatus.externalId":req.query.ecm
+        },
+        {$set:{[evidencesToBeReset+".submissions"]:[],[evidencesToBeReset+".isSubmitted"]:false,
+        [evidencesToBeReset+".endTime"]:false,[evidencesToBeReset+".startTime"]:false,
+        [evidencesToBeReset+".hasConflicts"]:false,"evidencesStatus.$.submissions":[],
+        "evidencesStatus.$.isSubmitted":false,"evidencesStatus.$.hasConflicts":false,
+        "evidencesStatus.$.startTime":"","evidencesStatus.$.endTime":""}})
+        
+        resolve({
+          message:"ECM Reset successfully"
+        })
+
+      } catch (error) {
+        return reject({
+          status: 500,
+          message: error,
+          errorObject: error
+        });
+      }
+    });
+  }
 };
