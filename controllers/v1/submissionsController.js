@@ -1882,7 +1882,7 @@ module.exports = class Submission extends Abstract {
                 if (!schoolHistoryUpdatedArray.includes(eachQuestionRow.schoolId)) {
                   schoolHistoryUpdatedArray.push(eachQuestionRow.schoolId)
                   csvUpdateHistory.push({ userId: req.userDetails.id, date: new Date() })
-                  updateQuery["$addToSet"] = { "csvUpdatedHistory": csvUpdateHistory }
+                  updateQuery["$addToSet"] = { "submissionsUpdatedHistory": csvUpdateHistory }
                 }
 
                 let submissionCheck = await database.models.submissions.findOneAndUpdate(findQuery, updateQuery).lean()
@@ -1985,21 +1985,33 @@ module.exports = class Submission extends Abstract {
         let schoolId = req.query.schoolId
         let ecmToBeReset = req.query.ecm
         let evidencesToBeReset = "evidences." +ecmToBeReset
+        let submissionUpdated=new Array
 
           if (!schoolId) {
           throw "School id is missing"
         }
 
-        await database.models.submissions.update({
+        let findQuery = {
           programExternalId:programId,
           schoolExternalId:schoolId,
           "evidencesStatus.externalId":req.query.ecm
-        },
-        {$set:{[evidencesToBeReset+".submissions"]:[],[evidencesToBeReset+".isSubmitted"]:false,
-        [evidencesToBeReset+".endTime"]:false,[evidencesToBeReset+".startTime"]:false,
-        [evidencesToBeReset+".hasConflicts"]:false,"evidencesStatus.$.submissions":[],
-        "evidencesStatus.$.isSubmitted":false,"evidencesStatus.$.hasConflicts":false,
-        "evidencesStatus.$.startTime":"","evidencesStatus.$.endTime":""}})
+        }
+
+        let updateQuery = {
+          $set: {
+            [evidencesToBeReset+".submissions"]:[],
+            [evidencesToBeReset+".isSubmitted"]:false,
+            [evidencesToBeReset+".endTime"]:"",[evidencesToBeReset+".startTime"]:"",
+            [evidencesToBeReset+".hasConflicts"]:false,"evidencesStatus.$.submissions":[],
+            "evidencesStatus.$.isSubmitted":false,"evidencesStatus.$.hasConflicts":false,
+            "evidencesStatus.$.startTime":"","evidencesStatus.$.endTime":""
+          }
+        }
+
+        submissionUpdated.push({ userId: req.userDetails.id, date: new Date(),updatedEcm:req.query.ecm })
+        updateQuery["$addToSet"] = { "submissionsUpdatedHistory": submissionUpdated }
+
+        let updatedQuery = await database.models.submissions.findOneAndUpdate(findQuery,updateQuery)
         
         resolve({
           message:"ECM Reset successfully"
