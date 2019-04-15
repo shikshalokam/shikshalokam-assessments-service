@@ -2008,7 +2008,7 @@ module.exports = class Submission extends Abstract {
           }
         }
 
-        submissionUpdated.push({ userId: req.userDetails.id, date: new Date(),updatedEcm:req.query.ecm })
+        submissionUpdated.push({ userId: req.userDetails.id, date: new Date(),message: "Updated ECM "+req.query.ecm })
         updateQuery["$addToSet"] = { "submissionsUpdatedHistory": submissionUpdated }
 
          await database.models.submissions.findOneAndUpdate(findQuery,updateQuery)
