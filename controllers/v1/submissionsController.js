@@ -1994,6 +1994,7 @@ module.exports = class Submission extends Abstract {
         let findQuery = {
           programExternalId:programId,
           schoolExternalId:schoolId,
+          [evidencesToBeReset]:{$ne:null},
           "evidencesStatus.externalId":req.query.ecm
         }
 
@@ -2011,9 +2012,13 @@ module.exports = class Submission extends Abstract {
         submissionUpdated.push({ userId: req.userDetails.id, date: new Date(),message: "Updated ECM "+req.query.ecm })
         updateQuery["$addToSet"] = { "submissionsUpdatedHistory": submissionUpdated }
 
-         await database.models.submissions.findOneAndUpdate(findQuery,updateQuery)
+         let updatedQuery = await database.models.submissions.findOneAndUpdate(findQuery,updateQuery).lean()
+         
+         if(updatedQuery == null){
+           throw "Ecm doesnot exists" 
+        }
         
-        resolve({
+        return resolve({
           message:"ECM Reset successfully"
         })
 
