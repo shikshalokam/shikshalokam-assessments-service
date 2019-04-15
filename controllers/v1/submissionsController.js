@@ -2011,7 +2011,7 @@ module.exports = class Submission extends Abstract {
         submissionUpdated.push({ userId: req.userDetails.id, date: new Date(),updatedEcm:req.query.ecm })
         updateQuery["$addToSet"] = { "submissionsUpdatedHistory": submissionUpdated }
 
-        let updatedQuery = await database.models.submissions.findOneAndUpdate(findQuery,updateQuery)
+         await database.models.submissions.findOneAndUpdate(findQuery,updateQuery)
         
         resolve({
           message:"ECM Reset successfully"
