@@ -1,6 +1,18 @@
 const csv = require("csvtojson");
 
 module.exports = class Schools extends Abstract {
+  /**
+    * @apiDefine errorBody
+    * @apiError {String} status 4XX,5XX
+    * @apiError {String} message Error
+    */
+
+  /**
+     * @apiDefine successBody
+     *  @apiSuccess {String} status 200
+     * @apiSuccess {String} result Data
+     */
+
   constructor() {
     super(schoolsSchema);
     this.roles = {
@@ -326,10 +338,32 @@ module.exports = class Schools extends Abstract {
     });
   }
 
+  /**
+* @api {get} /assessment/api/v1/schools/find School find
+* @apiVersion 0.0.1
+* @apiName School find
+* @apiGroup School
+* @apiHeader {String} X-authenticated-user-token Authenticity token
+* @apiSampleRequest /assessment/api/v1/schools/find
+* @apiUse successBody
+* @apiUse errorBody
+*/
+
   find(req) {
     req.query.fields = ["name", "externalId"];
     return super.find(req);
   }
+
+  /**
+* @api {get} /assessment/api/v1/schools/assessments/:schoolID School assessments
+* @apiVersion 0.0.1
+* @apiName School assessments
+* @apiGroup School
+* @apiHeader {String} X-authenticated-user-token Authenticity token
+* @apiSampleRequest /assessment/api/v1/schools/assessments/5beaa888af0065f0e0a10515
+* @apiUse successBody
+* @apiUse errorBody
+*/
 
   async assessments(req) {
     return new Promise(async (resolve, reject) => {
@@ -381,11 +415,12 @@ module.exports = class Schools extends Abstract {
           programQueryObject
         );
 
+
         if (!programDocument) {
           let responseMessage = 'No program found.';
           return resolve({ status: 400, message: responseMessage })
         }
-
+        
         let accessability =
           programDocument.components[0].roles[
             await this.getRoll(req.userDetails.allRoles)
@@ -435,41 +470,6 @@ module.exports = class Schools extends Abstract {
           "imageCompression"
         ]);
 
-        let schoolAssessorHierarchyObject = [
-          {
-            $match: {
-              userId: req.userDetails.id,
-              programId: programDocument._id
-            }
-          },
-          {
-            $graphLookup: {
-              from: "schoolAssessors", // Use the schoolAssessors collection
-              startWith: "$parentId", // Start looking at the document's `parentId` property
-              connectFromField: "parentId", // A link in the graph is represented by the parentId property...
-              connectToField: "userId", // ... pointing to another assessor's _id property
-              maxDepth: 2, // Only recurse one level deep
-              as: "connections" // Store this in the `connections` property
-            }
-          }
-        ];
-
-        // let userHierarchyDocument = await database.models.schoolAssessors.aggregate(schoolAssessorHierarchyObject);
-        // userHierarchyDocument[0].connections.forEach(connection => {
-        //   if (connection.role === "PROJECT_MANAGER") {
-        //     response.result.program.projectManagers = _.pick(connection, [
-        //       "userId",
-        //       "externalId"
-        //     ]);
-        //   }
-        //   if (connection.role === "LEAD_ASSESSOR") {
-        //     response.result.program.leadAssessors = _.pick(connection, [
-        //       "userId",
-        //       "externalId"
-        //     ]);
-        //   }
-        // });
-
         let submissionDocument = {
           schoolId: schoolDocument._id,
           schoolInformation: schoolDocument,
@@ -503,40 +503,39 @@ module.exports = class Schools extends Abstract {
           let component = programDocument.components[counter];
           let assessment = {};
 
-          let evaluationFrameworkQueryObject = [
-            { $match: { _id: ObjectId(component.id) } },
-            {
-              $project: { themes: 1, name: 1, description: 1, externalId: 1, questionSequenceByEcm: 1 }
+          let evaluationFrameworkDocument = await database.models["evaluationFrameworks"].findOne(
+            { _id: ObjectId(component.id) },
+            { themes: 1, name: 1, description: 1, externalId: 1, questionSequenceByEcm: 1 }
+          ).lean();
+
+          assessment.name = evaluationFrameworkDocument.name;
+          assessment.description = evaluationFrameworkDocument.description;
+          assessment.externalId = evaluationFrameworkDocument.externalId;
+
+
+          submissionDocument.evaluationFrameworkId =  evaluationFrameworkDocument._id
+          submissionDocument.evaluationFrameworkExternalId =  evaluationFrameworkDocument.externalId
+
+          let criteriasId = new Array
+          let criteriaObject = {}
+          let criteriasIdArray = gen.utils.getCriteriaIdsAndWeightage(evaluationFrameworkDocument.themes);
+
+          criteriasIdArray.forEach(eachCriteriaId=>{
+            criteriasId.push(eachCriteriaId.criteriaId)
+            criteriaObject[eachCriteriaId.criteriaId.toString()]={
+              weightage:eachCriteriaId.weightage
             }
-          ];
-
-          let evaluationFrameworkDocument = await database.models[
-            "evaluationFrameworks"
-          ].aggregate(evaluationFrameworkQueryObject);
-
-          assessment.name = evaluationFrameworkDocument[0].name;
-          assessment.description = evaluationFrameworkDocument[0].description;
-          assessment.externalId = evaluationFrameworkDocument[0].externalId;
-
-          let criteriasIdArray = new Array
-          evaluationFrameworkDocument.forEach(eachEvaluation => {
-            eachEvaluation.themes.forEach(eachTheme => {
-
-              let themeCriterias = new Array
-
-              if (eachTheme.children) {
-                themeCriterias = this.getCriteriaIds(eachTheme.children)
-              } else {
-                themeCriterias = eachTheme.criteria
-              }
-
-              themeCriterias.forEach(themeCriteriaId => {
-                criteriasIdArray.push(themeCriteriaId)
-              })
-            })
-          });
-
-          let criteriaQuestionDocument = await database.models.criteriaQuestions.find({})
+          })
+          let criteriaQuestionDocument = await database.models.criteriaQuestions.find(
+            { _id: { $in: criteriasId } },
+            {
+              resourceType:0,
+              language:0,
+              keywords:0,
+              concepts:0,
+              createdFor:0
+            }
+          ).lean();
 
           let evidenceMethodArray = {};
           let submissionDocumentEvidences = {};
@@ -544,13 +543,9 @@ module.exports = class Schools extends Abstract {
 
           criteriaQuestionDocument.forEach(criteria => {
 
+            criteria.weightage = criteriaObject[criteria._id.toString()].weightage
             submissionDocumentCriterias.push(
-              _.omit(criteria._doc, [
-                "resourceType",
-                "language",
-                "keywords",
-                "concepts",
-                "createdFor",
+              _.omit(criteria, [
                 "evidences"
               ])
             );
@@ -630,7 +625,7 @@ module.exports = class Schools extends Abstract {
             Object.values(evidenceMethodArray),
             schoolDocument.schoolTypes,
             submissionDoc.result.evidences,
-            (evaluationFrameworkDocument.length && evaluationFrameworkDocument[0].questionSequenceByEcm) ? evaluationFrameworkDocument[0].questionSequenceByEcm : false
+            (evaluationFrameworkDocument.length && evaluationFrameworkDocument.questionSequenceByEcm) ? evaluationFrameworkDocument.questionSequenceByEcm : false
           );
 
           assessment.evidences = parsedAssessment.evidences;
@@ -781,19 +776,4 @@ module.exports = class Schools extends Abstract {
     };
   }
 
-  getCriteriaIds(arrayOfChildren) {
-    let allCriteriaIds = new Array
-    arrayOfChildren.forEach(eachChildren => {
-      let criteriaIdArray = new Array
-      if (eachChildren.children) {
-        criteriaIdArray = this.getCriteriaIds(eachChildren.children)
-      } else {
-        criteriaIdArray = eachChildren.criteria
-      }
-      criteriaIdArray.forEach(eachCriteriaId => {
-        allCriteriaIds.push(eachCriteriaId)
-      })
-    })
-    return allCriteriaIds
-  }
 };

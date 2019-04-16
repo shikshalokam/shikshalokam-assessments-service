@@ -1,5 +1,31 @@
 module.exports = class Assessments {
 
+    /**
+     * @apiDefine errorBody
+     * @apiError {String} status 4XX,5XX
+     * @apiError {String} message Error
+     */
+
+    /**
+       * @apiDefine successBody
+       *  @apiSuccess {String} status 200
+       * @apiSuccess {String} result Data
+       */
+
+    /**
+    * @api {get} /assessment/api/v1/assessments/list?type={assessment}&subType={individual}&status={active} Individual assessment list
+    * @apiVersion 0.0.1
+    * @apiName Individual assessment list
+    * @apiGroup IndividualAssessments
+    * @apiParam {String} type Type.
+    * @apiParam {String} subType SubType.
+    * @apiParam {String} status Status.
+    * @apiHeader {String} X-authenticated-user-token Authenticity token
+    * @apiSampleRequest /assessment/api/v1/assessments/list
+    * @apiUse successBody
+    * @apiUse errorBody
+    */
+
     async list(req) {
 
         return new Promise(async (resolve, reject) => {
@@ -57,6 +83,18 @@ module.exports = class Assessments {
 
     }
 
+    /**
+    * @api {get} /assessment/api/v1/assessments/details/{programID}?assessmentId={assessmentID} Detailed assessments
+    * @apiVersion 0.0.1
+    * @apiName Individual assessment details
+    * @apiGroup IndividualAssessments
+    * @apiParam {String} assessmentId Assessment ID.
+    * @apiHeader {String} X-authenticated-user-token Authenticity token
+    * @apiSampleRequest /assessment/api/v1/assessments/details/:programID
+    * @apiUse successBody
+    * @apiUse errorBody
+    */
+
     async details(req) {
 
         return new Promise(async (resolve, reject) => {
@@ -65,21 +103,20 @@ module.exports = class Assessments {
             let assessmentId = req.query.assessmentId;
             let detailedAssessment = {};
 
-            let programDocument = await database.models.programs.findOne(
+            detailedAssessment.program = await database.models.programs.findOne(
                 { externalId: programExternalId },
-            );
+                { 'components': 0, 'isDeleted': 0, 'updatedAt': 0, 'createdAt': 0 }
+            ).lean();
 
-            detailedAssessment.program = _.pick(programDocument, ['_id', 'externalId', 'name', 'description', 'owner', 'createdBy', 'updatedBy', 'status', 'resourceType', 'language', 'keywords', 'concepts', 'createdFor', 'imageCompression'])
-            detailedAssessment.entityProfile = await database.models.entityAssessors.findOne({}, {
-                "assessmentStatus": 0,
+            detailedAssessment.entityProfile = await database.models.entities.findOne({ userId: req.userDetails.id }, {
                 "deleted": 0,
                 "createdAt": 0,
                 "updatedAt": 0,
             });
 
-            let frameWorkDocument = await database.models.evaluationFrameworks.findOne({ _id: assessmentId });
+            let frameWorkDocument = await database.models.evaluationFrameworks.findOne({ _id: assessmentId }).lean();
 
-            if (!frameWorkDocument){
+            if (!frameWorkDocument) {
                 let responseMessage = 'No assessments found.';
                 return resolve({ status: 400, message: responseMessage })
             }
@@ -90,25 +127,44 @@ module.exports = class Assessments {
             assessment.description = frameWorkDocument.description;
             assessment.externalId = frameWorkDocument.externalId;
 
-            let criteriasIdArray = new Array
-            frameWorkDocument.themes.forEach(eachTheme => {
+            let criteriasIdArray = gen.utils.getCriteriaIds(frameWorkDocument.themes);
 
-                let themeCriterias = new Array
+            let submissionDocument = {
+                entityId: detailedAssessment.entityProfile._id,
+                entityInformation: detailedAssessment.entityProfile,
+                programId: detailedAssessment.program._id,
+                programExternalId: detailedAssessment.program.externalId,
+                entityExternalId: detailedAssessment.entityProfile.externalId,
+                programInformation: {
+                    name: detailedAssessment.program.name,
+                    externalId: detailedAssessment.program.externalId,
+                    description: detailedAssessment.program.description,
+                    owner: detailedAssessment.program.owner,
+                    createdBy: detailedAssessment.program.createdBy,
+                    updatedBy: detailedAssessment.program.updatedBy,
+                    resourceType: detailedAssessment.program.resourceType,
+                    language: detailedAssessment.program.language,
+                    keywords: detailedAssessment.program.keywords,
+                    concepts: detailedAssessment.program.concepts,
+                    createdFor: detailedAssessment.program.createdFor,
+                    imageCompression: detailedAssessment.program.imageCompression
+                },
+                evidenceSubmissions: [],
+                status: "started"
+            };
+            submissionDocument.evaluationFrameworkId = frameWorkDocument._id;
+            submissionDocument.evaluationFrameworkExternalId = frameWorkDocument.externalId;
 
-                if (eachTheme.children) {
-                    themeCriterias = controllers.schoolsController.getCriteriaIds(eachTheme.children)
-                } else {
-                    themeCriterias = eachTheme.criteria
+            let criteriaQuestionDocument = await database.models.criteriaQuestions.find(
+                { _id: { $in: criteriasIdArray } },
+                {
+                    resourceType: 0,
+                    language: 0,
+                    keywords: 0,
+                    concepts: 0,
+                    createdFor: 0
                 }
-
-                themeCriterias.forEach(themeCriteriaId => {
-                    criteriasIdArray.push(themeCriteriaId)
-                })
-            })
-
-            let submissionDocument = {};
-
-            let criteriaQuestionDocument = await database.models.criteriaQuestions.find({ _id: { $in: criteriasIdArray } })
+            ).lean()
 
             let evidenceMethodArray = {};
             let submissionDocumentEvidences = {};
@@ -116,12 +172,7 @@ module.exports = class Assessments {
 
             criteriaQuestionDocument.forEach(criteria => {
                 submissionDocumentCriterias.push(
-                    _.omit(criteria._doc, [
-                        "resourceType",
-                        "language",
-                        "keywords",
-                        "concepts",
-                        "createdFor",
+                    _.omit(criteria, [
                         "evidences"
                     ])
                 );
@@ -130,6 +181,7 @@ module.exports = class Assessments {
                     evidenceMethod.notApplicable = false;
                     evidenceMethod.canBeNotAllowed = true;
                     evidenceMethod.remarks = "";
+                    evidenceMethod.submissions = new Array;
                     submissionDocumentEvidences[evidenceMethod.externalId] = _.omit(
                         evidenceMethod,
                         ["sections"]
@@ -179,8 +231,7 @@ module.exports = class Assessments {
             submissionDocument.evidences = submissionDocumentEvidences;
             submissionDocument.evidencesStatus = Object.values(submissionDocumentEvidences);
             submissionDocument.criterias = submissionDocumentCriterias;
-            let submissionController = new submissionsBaseController;
-            let submissionDoc = await submissionController.findSubmissionBySchoolProgram(
+            let submissionDoc = await this.findSubmissionByEntityProgram(
                 submissionDocument,
                 req
             );
@@ -203,9 +254,61 @@ module.exports = class Assessments {
 
     }
 
+    async findSubmissionByEntityProgram(document, requestObject) {
+
+        let queryObject = {
+            entityId: document.entityId,
+            programId: document.programId
+        };
+
+        let submissionDocument = await database.models.submissions.findOne(
+            queryObject
+        ).lean();
+
+        if (!submissionDocument) {
+            let entityAssessorsQueryObject = [
+                {
+                    $match: { userId: requestObject.userDetails.userId, programId: document.programId }
+                }
+            ];
+
+            document.assessors = await database.models[
+                "entityAssessors"
+            ].aggregate(entityAssessorsQueryObject);
+
+            let assessorElement = document.assessors.find(assessor => assessor.userId === requestObject.userDetails.userId)
+            if (assessorElement && assessorElement.externalId != "") {
+                assessorElement.assessmentStatus = "started"
+                assessorElement.userAgent = requestObject.headers['user-agent']
+            }
+
+            submissionDocument = await database.models.submissions.create(
+                document
+            );
+        } else {
+            let assessorElement = submissionDocument.assessors.find(assessor => assessor.userId === requestObject.userDetails.userId)
+            if (assessorElement && assessorElement.externalId != "") {
+                assessorElement.assessmentStatus = "started"
+                assessorElement.userAgent = requestObject.headers['user-agent']
+                let updateObject = {}
+                updateObject.$set = {
+                    assessors: submissionDocument.assessors
+                }
+                submissionDocument = await database.models.submissions.findOneAndUpdate(
+                    queryObject,
+                    updateObject
+                );
+            }
+        }
+
+        return {
+            message: "Submission found",
+            result: submissionDocument
+        };
+    }
+
     async parseQuestionsByIndividual(evidences, submissionDocEvidences) {
         let sectionQuestionArray = {};
-        let generalQuestions = [];
         let questionArray = {};
         let submissionsObjects = {};
         evidences.sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));

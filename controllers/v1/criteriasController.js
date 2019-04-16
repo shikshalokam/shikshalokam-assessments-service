@@ -1,6 +1,18 @@
 const csv = require("csvtojson");
 
 module.exports = class Criterias extends Abstract {
+  /**
+   * @apiDefine errorBody
+   * @apiError {String} status 4XX,5XX
+   * @apiError {String} message Error
+   */
+
+  /**
+     * @apiDefine successBody
+     *  @apiSuccess {String} status 200
+     * @apiSuccess {String} result Data
+     */
+
   constructor() {
     super(criteriasSchema);
   }
@@ -10,12 +22,111 @@ module.exports = class Criterias extends Abstract {
   }
 
 
+  /**
+  * @api {post} /assessment/api/v1/criterias/insert Add Criterias
+  * @apiVersion 0.0.1
+  * @apiName Add Criterias
+  * @apiGroup criterias
+  * @apiParamExample {json} Request-Body:
+* {
+  "externalId": "",
+*  "owner": "",
+*  "timesUsed": "",
+*  "weightage": "",
+*  "remarks": "",
+*  "name": "",
+*  "description": "",
+*  "criteriaType": "",
+*  "score": "",
+*  "resourceType": [
+*    "Program",
+*    "Framework",
+*    "Criteria"
+*  ],
+*  "language": [
+*    "English"
+*  ],
+*  "keywords": [
+*    "Keyword 1",
+*    "Keyword 2"
+*  ],
+*  "concepts": [
+*    {
+*      "identifier": "",
+*      "name": "",
+*      "objectType": "",
+*      "relation": "",
+*      "description": ,
+*      "index": "",
+*      "status": "",
+*      "depth": "",
+*      "mimeType": "",
+*      "visibility": "",
+*      "compatibilityLevel":"" 
+*    },
+*    {
+*      "identifier": "",
+*      "name": "",
+*      "objectType": "",
+*      "relation": "",
+*      "description": "",
+*      "index": "",
+*      "status": "",
+*      "depth": "",
+*      "mimeType": "",
+*      "visibility": "",
+*      "compatibilityLevel": ""
+*    }
+*  ],
+*  "flag": "",
+*  "createdFor": [
+*    "",
+*    ""
+*  ],
+*  "rubric": {
+*    "levels": [
+*      {
+*        "level": "L1",
+*        "label": "Level 1",
+*        "description": "",
+*        "expression": "",
+*        "expressionVariables": []
+*      },
+*      {
+*        "level": "L2",
+*        "label": "Level 2",
+*        "description": "",
+*        "expression": "",
+*        "expressionVariables": []
+*      },
+*      {
+*        "level": "L3",
+*        "label": "Level 3",
+*        "description": "",
+*        "expression": "",
+*        "expressionVariables": []
+*      },
+*      {
+*        "level": "L4",
+*        "label": "Level 4",
+*        "description": "",
+*        "expression": "",
+*        "expressionVariables": []
+*      }
+*    ]
+*  },
+*  "evidences": []
+* }
+* @apiUse successBody
+* @apiUse errorBody
+  */
+
   insert(req) {
 
     return new Promise(async (resolve, reject) => {
 
       try {
-        
+
         let result = {}
         let criteria = req.body
         criteria.owner = req.userDetails.id;
@@ -46,7 +157,7 @@ module.exports = class Criterias extends Abstract {
 
         return resolve(response);
       } catch (error) {
-        return reject({message:error});
+        return reject({ message: error });
       }
 
     })
@@ -61,12 +172,12 @@ module.exports = class Criterias extends Abstract {
     let criteria = await this.getCriterias(req);
     // log.debug(criteria);
     // return criteria;
-    return new Promise(async function(resolve, reject) {
+    return new Promise(async function (resolve, reject) {
       let merged = {},
         query = [],
         sectionData = {};
 
-      await criteria.forEach(function(value, i) {
+      await criteria.forEach(function (value, i) {
         query.push({ _id: ObjectId(value) });
       });
 
@@ -74,8 +185,8 @@ module.exports = class Criterias extends Abstract {
       // log.debug(criterias);
       // if (Array.isArray(criterias)) {
 
-      await _.forEachRight(criterias, async function(crit, i) {
-        await crit.evidences.forEach(async function(evidence, i) {
+      await _.forEachRight(criterias, async function (crit, i) {
+        await crit.evidences.forEach(async function (evidence, i) {
           if (!merged[evidence.externalId]) {
             merged[evidence.externalId] = evidence;
           } else {
@@ -133,8 +244,18 @@ module.exports = class Criterias extends Abstract {
   }
 
 
+  /**
+* @api {get} /assessment/api/v1/criterias/getCriteriasParentQuesAndInstParentQues/ Get Criterias Parent Ques And Instance Parent Ques
+* @apiVersion 0.0.1
+* @apiName Get Criterias Parent Ques And Instance Parent Ques
+* @apiGroup criterias
+* @apiHeader {String} X-authenticated-user-token Authenticity token
+* @apiUse successBody
+* @apiUse errorBody
+*/
+
   async getCriteriasParentQuesAndInstParentQues(req) {
-    return new Promise(async function(resolve, reject) {
+    return new Promise(async function (resolve, reject) {
 
       let criteriaQueryResult = await database.models.criterias.find({});
 
@@ -146,13 +267,13 @@ module.exports = class Criterias extends Abstract {
       ].find(questionQueryObject);
 
       let result = {
-        criteria : new Array(),
-        questions : new Array(),
-        instanceParentQuestions : new Array()
+        criteria: new Array(),
+        questions: new Array(),
+        instanceParentQuestions: new Array()
       }
 
       questionQueryResult.forEach(question => {
-        if (question.responseType == "matrix") { 
+        if (question.responseType == "matrix") {
           result.instanceParentQuestions.push({
             _id: question._id,
             externalId: question.externalId,
@@ -185,6 +306,53 @@ module.exports = class Criterias extends Abstract {
     });
   }
 
+  /**
+  * @api {post} /assessment/api/v1/criterias/addQuestion Add Criteria Question
+  * @apiVersion 0.0.1
+  * @apiName Add Criteria Question
+  * @apiGroup criterias
+  * @apiParamExample {json} Request-Body:
+  * {
+  * "question": [],
+  * "externalId": "",
+  * "parentId": "",
+  * "instanceParentId": "",
+  * "visibleIf": [{"operator": "===", "value": "R1"}],
+  * "file": {
+  *	"required": true, 
+  *	"type": ["JPEG"], 
+  *	"minCount": Number, 
+  *	"maxCount": Number, 
+  *	"caption": Boolean
+  * },
+  * "responseType": "",
+  * "validation": {
+  *  "required": Boolean
+  * },
+  * "children": [],
+  * "fileName": [],
+  * "showRemarks": Boolean,
+  * "isCompleted": Boolean,
+  * "remarks": "",
+  * "value": "",
+  * "canBeNotApplicable": Boolean,
+  * "notApplicable": "",
+  * "usedForScoring": "",
+  * "modeOfCollection": "",
+  * "questionType": "",
+  * "questionGroup": [
+  *  "A1"
+  * ],
+  * "accessibility": "",
+  * "payload": {
+  *	"criteriaId": "",
+  *	"evidenceId": "",
+  *	"section": ""
+  * }
+* }
+* @apiUse successBody
+* @apiUse errorBody
+  */
 
   addQuestion(req) {
 
@@ -193,7 +361,7 @@ module.exports = class Criterias extends Abstract {
     return new Promise(async (resolve, reject) => {
 
       try {
-        
+
         let result = {}
 
         let question = req.body
@@ -204,11 +372,11 @@ module.exports = class Criterias extends Abstract {
         delete question.payload
 
         let criterias = await database.models.criterias.find({
-          externalId : questionCriteriaId
+          externalId: questionCriteriaId
         });
 
         let questionCriteria
-        if(criterias[0].externalId != "") {
+        if (criterias[0].externalId != "") {
           questionCriteria = criterias[0]
         } else {
           throw "No criteria with ID " + questionCriteriaId + " found"
@@ -217,32 +385,32 @@ module.exports = class Criterias extends Abstract {
         let questionCollection = {}
         let toFetchQuestionIds = new Array
         toFetchQuestionIds.push(question.externalId)
-        if(question.parentId != "") {toFetchQuestionIds.push(question.parentId)}
-        if(question.instanceParentId != "") {toFetchQuestionIds.push(question.instanceParentId)}
+        if (question.parentId != "") { toFetchQuestionIds.push(question.parentId) }
+        if (question.instanceParentId != "") { toFetchQuestionIds.push(question.instanceParentId) }
 
         let questionsFromDatabase = await database.models.questions.find({
-          externalId : { $in: toFetchQuestionIds }
+          externalId: { $in: toFetchQuestionIds }
         });
 
-        if(questionsFromDatabase.length > 0) {
+        if (questionsFromDatabase.length > 0) {
           questionsFromDatabase.forEach(question => {
             questionCollection[question.externalId] = question
           })
         }
 
-        if(questionCollection[question.externalId]) {
+        if (questionCollection[question.externalId]) {
           throw "The question with the external ID " + question.externalId + " already exists"
         }
 
-        if(question.parentId != "" && !questionCollection[question.parentId]) {
+        if (question.parentId != "" && !questionCollection[question.parentId]) {
           throw "Parent question with external ID " + question.parentId + " not found"
         }
 
-        if(question.instanceParentId != "" && !questionCollection[question.instanceParentId]) {
+        if (question.instanceParentId != "" && !questionCollection[question.instanceParentId]) {
           throw "Instance Parent question with external ID " + question.instanceParentId + " not found"
         }
 
-        if(Object.keys(question.visibleIf[0]).length <= 0) {
+        if (Object.keys(question.visibleIf[0]).length <= 0) {
           question.visibleIf = ""
         } else {
           question.visibleIf[0]._id = questionCollection[question.parentId]._id
@@ -255,12 +423,12 @@ module.exports = class Criterias extends Abstract {
         result._id = generatedQuestionDocument._id
 
 
-        if(question.parentId != "") {
+        if (question.parentId != "") {
           let queryParentQuestionObject = {
             _id: questionCollection[question.parentId]._id
           }
           let updateParentQuestionObject = {}
-          updateParentQuestionObject.$push = { 
+          updateParentQuestionObject.$push = {
             ["children"]: generatedQuestionDocument._id
           }
           await database.models.questions.findOneAndUpdate(
@@ -269,12 +437,12 @@ module.exports = class Criterias extends Abstract {
           )
         }
 
-        if(question.instanceParentId != "") {
+        if (question.instanceParentId != "") {
           let queryInstanceParentQuestionObject = {
             _id: questionCollection[question.instanceParentId]._id
           }
           let updateInstanceParentQuestionObject = {}
-          updateInstanceParentQuestionObject.$push = { 
+          updateInstanceParentQuestionObject.$push = {
             ["instanceQuestions"]: generatedQuestionDocument._id
           }
           await database.models.questions.findOneAndUpdate(
@@ -282,18 +450,18 @@ module.exports = class Criterias extends Abstract {
             updateInstanceParentQuestionObject
           )
         }
-      
-        let criteriaEvidences = questionCriteria.evidences
-        let indexOfEvidenceMethodInCriteria = criteriaEvidences.findIndex( evidence => evidence.externalId === questionEvidenceMethod );
 
-        if(indexOfEvidenceMethodInCriteria < 0) {
+        let criteriaEvidences = questionCriteria.evidences
+        let indexOfEvidenceMethodInCriteria = criteriaEvidences.findIndex(evidence => evidence.externalId === questionEvidenceMethod);
+
+        if (indexOfEvidenceMethodInCriteria < 0) {
           criteriaEvidences.push(req.evidenceObjects[questionEvidenceMethod])
           indexOfEvidenceMethodInCriteria = criteriaEvidences.length - 1
         }
 
         let indexOfSectionInEvidenceMethod = criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.findIndex(section => section.name === questionSection)
-        if(indexOfSectionInEvidenceMethod < 0) {
-          criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.push({name:questionSection, questions: new Array})
+        if (indexOfSectionInEvidenceMethod < 0) {
+          criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.push({ name: questionSection, questions: new Array })
           indexOfSectionInEvidenceMethod = criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.length - 1
         }
 
@@ -303,7 +471,7 @@ module.exports = class Criterias extends Abstract {
           _id: questionCriteria._id
         }
         let updateCriteriaObject = {}
-        updateCriteriaObject.$set = { 
+        updateCriteriaObject.$set = {
           ["evidences"]: criteriaEvidences
         }
         await database.models.criterias.findOneAndUpdate(
@@ -317,15 +485,15 @@ module.exports = class Criterias extends Abstract {
 
         return resolve(response);
       } catch (error) {
-        return reject({message:error});
+        return reject({ message: error });
       }
 
     })
   }
 
 
-  getEvidenceObjectsForDCPCR () {
-    return  {
+  getEvidenceObjectsForDCPCR() {
+    return {
 
       "BL": {
         externalId: "BL",
@@ -399,7 +567,7 @@ module.exports = class Criterias extends Abstract {
         modeOfCollection: "onfield",
         canBeNotApplicable: false
       },
-      "AC3" : {
+      "AC3": {
         externalId: "AC3",
         tip: "Some tip at evidence level.",
         name: "Assessment- Class 3",
@@ -451,8 +619,8 @@ module.exports = class Criterias extends Abstract {
   }
 
 
-  getEvidenceObjects () {
-    return  {
+  getEvidenceObjects() {
+    return {
 
       "DA": {
         externalId: "DA",
@@ -514,7 +682,7 @@ module.exports = class Criterias extends Abstract {
         modeOfCollection: "onfield",
         canBeNotApplicable: false
       },
-      "AC3" : {
+      "AC3": {
         externalId: "AC3",
         tip: "",
         name: "Assessment Class 3",
@@ -617,13 +785,13 @@ module.exports = class Criterias extends Abstract {
         });
 
         let programsFromDatabase = await database.models.programs.find(
-          {externalId : { $in: Object.values(programQueryList) }},
-          {name:1,components:1,externalId:1}
+          { externalId: { $in: Object.values(programQueryList) } },
+          { name: 1, components: 1, externalId: 1 }
         );
-        
-        const programsData = programsFromDatabase.reduce( 
-          (ac, program) => ({...ac, [program.externalId]: program }), {} )
-        
+
+        const programsData = programsFromDatabase.reduce(
+          (ac, program) => ({ ...ac, [program.externalId]: program }), {})
+
         criteriaData = await Promise.all(criteriaData.map(async (criteria) => {
 
           let criteriaQueryObject = {
@@ -634,28 +802,34 @@ module.exports = class Criterias extends Abstract {
             criteriaQueryObject,
             { name: 1, description: 1, criteriaType: 1, rubric: 1 }
           )
-          
-          if(!existingCriteria) {
+
+          if (!existingCriteria) {
             return
           }
 
-          let expressionVariables = {} 
+          let expressionVariables = {}
           let expressionVariablesArray = criteria.expressionVariables.split(",")
           expressionVariablesArray.forEach(expressionVariable => {
-            let expressionVariableArray = expressionVariable.split("=")
-            expressionVariables[expressionVariableArray[0]] = expressionVariableArray[1]
+            let expressionVariableArray = expressionVariable.split("=");
+            let defaultVariableArray = expressionVariableArray[0].split("-")
+            if(defaultVariableArray.length>1){
+              if(!expressionVariables.default) expressionVariables.default = {};
+              expressionVariables.default[defaultVariableArray[0]] = expressionVariableArray[1]
+            }else{
+              expressionVariables[expressionVariableArray[0]] = expressionVariableArray[1]
+            }
           })
           let rubric = {
             name: existingCriteria.name,
             description: existingCriteria.description,
-            type:existingCriteria.criteriaType,
+            type: existingCriteria.criteriaType,
             expressionVariables: expressionVariables,
             levels: {}
           }
-          
+
           let existingCriteriaRubricLevels
 
-          if(Array.isArray(existingCriteria.rubric.levels)) {
+          if (Array.isArray(existingCriteria.rubric.levels)) {
             existingCriteriaRubricLevels = existingCriteria.rubric.levels
           } else {
             existingCriteriaRubricLevels = Object.values(existingCriteria.rubric.levels)
@@ -663,10 +837,10 @@ module.exports = class Criterias extends Abstract {
 
           existingCriteriaRubricLevels.forEach(levelObject => {
             rubric.levels[levelObject.level] = {
-              level:levelObject.level,
-              label:levelObject.label,
-              description:levelObject.description,
-              expression:criteria[levelObject.level]
+              level: levelObject.level,
+              label: levelObject.label,
+              description: levelObject.description,
+              expression: criteria[levelObject.level]
             }
           })
 
@@ -676,8 +850,8 @@ module.exports = class Criterias extends Abstract {
             queryOptions: true
           }
 
-          updateObject.$set = { 
-            rubric : rubric
+          updateObject.$set = {
+            rubric: rubric
           }
 
           criteria = await database.models.criterias.findOneAndUpdate(
@@ -685,34 +859,30 @@ module.exports = class Criterias extends Abstract {
             updateObject,
             queryOptions
           );
-          
+
           return criteria
 
 
         }));
 
 
-        if (criteriaData.findIndex( criteria => criteria === undefined) >= 0) {
+        if (criteriaData.findIndex(criteria => criteria === undefined) >= 0) {
           throw "Something went wrong, not all records were inserted/updated."
         }
 
         let submissionDocumentCriterias = [];
-        
+
         for (
           let counter = 0;
           counter < programsData[programId].components.length;
           counter++
         ) {
           let component = programsData[programId].components[counter];
+
           let evaluationFrameworkQueryObject = [
             { $match: { _id: ObjectId(component.id) } },
             {
-              $lookup: {
-                from: "criteriaQuestions",
-                localField: "themes.aoi.indicators.criteria",
-                foreignField: "_id",
-                as: "criteriaDocs"
-              }
+              $project: { themes: 1, name: 1, description: 1, externalId: 1, questionSequenceByEcm: 1 }
             }
           ];
 
@@ -720,9 +890,23 @@ module.exports = class Criterias extends Abstract {
             "evaluationFrameworks"
           ].aggregate(evaluationFrameworkQueryObject);
 
-          evaluationFrameworkDocument[0].criteriaDocs.forEach(criteria => {
+          let criteriasId = new Array
+          let criteriaObject = {}
+          let criteriasIdArray = gen.utils.getCriteriaIdsAndWeightage(evaluationFrameworkDocument[0].themes);
+
+          criteriasIdArray.forEach(eachCriteriaId=>{
+            criteriasId.push(eachCriteriaId.criteriaId)
+            criteriaObject[eachCriteriaId.criteriaId.toString()]={
+              weightage:eachCriteriaId.weightage
+            }
+          })
+
+          let criteriaQuestionDocument = await database.models.criteriaQuestions.find({ _id: { $in: criteriasId } })
+
+          criteriaQuestionDocument.forEach(criteria => {
+            criteria.weightage = criteriaObject[criteria._id.toString()].weightage
             submissionDocumentCriterias.push(
-              _.omit(criteria, [
+              _.omit(criteria._doc, [
                 "resourceType",
                 "language",
                 "keywords",
@@ -736,14 +920,12 @@ module.exports = class Criterias extends Abstract {
 
         let updatedCriteriasObject = {}
 
-        updatedCriteriasObject.$set = { 
-          criterias : submissionDocumentCriterias,
-          programExternalId : programId,
-          "programInformation.externalId":programId
+        updatedCriteriasObject.$set = {
+          criterias: submissionDocumentCriterias
         }
 
         let updateSubmissions = await database.models.submissions.updateMany(
-          {programId : programsData[programId]._id},
+          { programId: programsData[programId]._id },
           updatedCriteriasObject
         );
 
@@ -764,5 +946,138 @@ module.exports = class Criterias extends Abstract {
     })
   }
 
+  async uploadCriterias(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!req.files || !req.files.criterias) {
+          throw "Csv file for criterias should be selected"
+        }
+
+        let criteriaData = await csv().fromString(req.files.criterias.data.toString())
+
+        let criteriaDocumentArray = criteriaData.map(criteria => {
+
+          let rubric = {}
+          rubric.name = criteria.criteriaName
+          rubric.description = criteria.criteriaName
+          rubric.type = criteria.type
+          rubric.expressionVariables = {}
+          rubric.levels = {};
+          let countLabel = 1;
+
+          Object.keys(criteria).forEach(eachCriteriaKey => {
+
+            let regExpForLevels = /^L+[0-9]/
+            if (regExpForLevels.test(eachCriteriaKey)) {
+
+              let label = "Level " + countLabel++;
+
+              rubric.levels[eachCriteriaKey] = {
+                level: eachCriteriaKey,
+                label: label,
+                description: criteria[eachCriteriaKey],
+                expression: ""
+              }
+            }
+          })
+
+          let criteriaStructure = {
+            owner: req.userDetails.id,
+            name: criteria.criteriaName,
+            description: criteria.criteriaName,
+            resourceType: [
+              "Program",
+              "Framework",
+              "Criteria"
+            ],
+            language: [
+              "English"
+            ],
+            keywords: [
+              "Keyword 1",
+              "Keyword 2"
+            ],
+            concepts: [
+              {
+                identifier: "LPD20100",
+                name: "Teacher_Performance",
+                objectType: "Concept",
+                relation: "associatedTo",
+                description: null,
+                index: null,
+                status: null,
+                depth: null,
+                mimeType: null,
+                visibility: null,
+                compatibilityLevel: null
+              },
+              {
+                identifier: "LPD20400",
+                name: "Instructional_Programme",
+                objectType: "Concept",
+                relation: "associatedTo",
+                description: null,
+                index: null,
+                status: null,
+                depth: null,
+                mimeType: null,
+                visibility: null,
+                compatibilityLevel: null
+              },
+              {
+                identifier: "LPD20200",
+                name: "Teacher_Empowerment",
+                objectType: "Concept",
+                relation: "associatedTo",
+                description: null,
+                index: null,
+                status: null,
+                depth: null,
+                mimeType: null,
+                visibility: null,
+                compatibilityLevel: null
+              }
+            ],
+            createdFor: [
+              "0125747659358699520",
+              "0125748495625912324"
+            ],
+            evidences: [],
+            deleted: false,
+            externalId: criteria.criteriaID,
+            owner: req.userDetails.id,
+            timesUsed: 12,
+            weightage: 20,
+            remarks: "",
+            name: criteria.criteriaName,
+            description: criteria.criteriaName,
+            criteriaType: "auto",
+            score: "",
+            flag: "",
+            rubric: rubric
+          };
+
+          return criteriaStructure;
+        })
+
+        let criteriaDocuments = await database.models.criterias.create(
+          criteriaDocumentArray
+        );
+
+        let result = _.mapValues(_.keyBy(criteriaDocuments, 'externalId'), '_id');
+        let responseMessage = "Criteria levels updated successfully."
+        let response = { message: responseMessage, result: result };
+
+        return resolve(response)
+      }
+      catch (error) {
+        return reject({
+          status: 500,
+          message: error,
+          errorObject: error
+        });
+      }
+    })
+  }
 
 };

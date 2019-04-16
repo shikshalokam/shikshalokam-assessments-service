@@ -2,6 +2,18 @@ const csv = require("csvtojson");
 
 module.exports = class ParentRegistry extends Abstract {
 
+  /**
+   * @apiDefine errorBody
+   * @apiError {String} status 4XX,5XX
+   * @apiError {String} message Error
+   */
+
+  /**
+     * @apiDefine successBody
+     *  @apiSuccess {String} status 200
+     * @apiSuccess {String} result Data
+     */
+
   constructor() {
     super(parentRegistrySchema);
   }
@@ -10,6 +22,33 @@ module.exports = class ParentRegistry extends Abstract {
     return "parentRegistry";
   }
 
+  /**
+  * @api {post} /assessment/api/v1/parentRegistry/add Parent registry add
+  * @apiVersion 0.0.1
+  * @apiName Parent Registry add
+  * @apiGroup ParentRegistry
+  * @apiParamExample {json} Request-Body:
+  * {
+  *	"parents": [
+  *       {
+  *	        "studentName" : "",
+  *	        "grade" : "",
+  *	        "name" : "",
+  *	        "gender" : "",
+  *   		  "type": "",
+  *  		    "typeLabel":"",
+  * 		    "phone1": "Phone",
+  * 		    "phone2": "",
+  * 		    "address": "",
+  *	        "schoolId" : "",
+  *   		  "schoolName": "",
+  *  		    "programId": ""
+  *      },
+  *	]
+  *}
+  * @apiUse successBody
+  * @apiUse errorBody
+  */
 
   add(req) {
 
@@ -17,19 +56,19 @@ module.exports = class ParentRegistry extends Abstract {
 
       try {
 
-        if(req.body.parents) {
+        if (req.body.parents) {
 
           req.body.parents.forEach(parent => {
-            if(typeof parent.type === "string") {
+            if (typeof parent.type === "string") {
               parent.type = new Array(parent.type)
             }
           })
 
-          let addParentsQuery = await database.models.parentRegistry.create(
+          var parentRegistryDocuments = await database.models.parentRegistry.create(
             req.body.parents
           );
 
-          if(addParentsQuery.length != req.body.parents.length) {
+          if(parentRegistryDocuments.length != req.body.parents.length) {
             throw "Some parent information was not inserted!"
           }
 
@@ -39,15 +78,26 @@ module.exports = class ParentRegistry extends Abstract {
 
         let responseMessage = "Parent information added successfully."
 
-        let response = { message: responseMessage};
+        let response = { message: responseMessage, result: parentRegistryDocuments};
 
         return resolve(response);
       } catch (error) {
-        return reject({message:error});
+        return reject({ message: error });
       }
 
     })
   }
+
+  /**
+  * @api {get} /assessment/api/v1/parentRegistry/list/:schoolId Parent Registry list
+  * @apiVersion 0.0.1
+  * @apiName Parent Registry list
+  * @apiGroup ParentRegistry
+  * @apiHeader {String} X-authenticated-user-token Authenticity token
+  * @apiSampleRequest /assessment/api/v1/parentRegistry/list/5c48875a4196bd6d6904c2c3
+  * @apiUse successBody
+  * @apiUse errorBody
+  */
 
   list(req) {
 
@@ -58,19 +108,29 @@ module.exports = class ParentRegistry extends Abstract {
         req.body = req.body || {};
         let result = {}
 
-        if(req.params._id) {
-    
+        if (req.params._id) {
+
           let queryObject = {
             schoolId: req.params._id
           }
 
           result = await database.models.parentRegistry.find(
             queryObject
-          );
+          ).lean();
 
-          result = result.map(function(parent) {
-            
-            if(parent.type.length > 0) {
+          let submissionParentInterviewResponses = await database.models.submissions.findOne(
+            {
+              schoolId : req.params._id
+            },
+            {
+              parentInterviewResponses : 1
+            }
+          ).lean();
+          
+          submissionParentInterviewResponses = (submissionParentInterviewResponses && submissionParentInterviewResponses.parentInterviewResponses && Object.values(submissionParentInterviewResponses.parentInterviewResponses).length > 0) ? submissionParentInterviewResponses.parentInterviewResponses : {}
+          result = result.map(function (parent) {
+
+            if (parent.type.length > 0) {
 
               let parentTypeLabelArray = new Array
 
@@ -99,17 +159,17 @@ module.exports = class ParentRegistry extends Abstract {
                     break;
                 }
 
-                if(parentTypeLabel != "") {
+                if (parentTypeLabel != "") {
                   parentTypeLabelArray.push(parentTypeLabel)
                 }
 
               })
 
-              parent.type = parentTypeLabelArray
+              parent.typeLabel = parentTypeLabelArray
 
             }
 
-            if(parent.callResponse != "") {
+            if (parent.callResponse != "") {
               let parentCallResponseLabel
               switch (parent.callResponse) {
                 case "R1":
@@ -131,8 +191,11 @@ module.exports = class ParentRegistry extends Abstract {
                   parentCallResponseLabel = "Call disconnected mid way"
                   break;
                 case "R7":
-                    parentCallResponseLabel = "Completed"
-                    break;
+                  parentCallResponseLabel = "Completed"
+                  break;
+                case "R00":
+                  parentCallResponseLabel = "Call Response Completed But Survey Not Completed."
+                  break;
                 default:
                   break;
               }
@@ -140,6 +203,7 @@ module.exports = class ParentRegistry extends Abstract {
               parent.callResponse = parentCallResponseLabel
             }
 
+            parent.submissionStatus = (submissionParentInterviewResponses[parent._id.toString()]) ? submissionParentInterviewResponses[parent._id.toString()].status : ""
             return parent;
           })
 
@@ -149,16 +213,26 @@ module.exports = class ParentRegistry extends Abstract {
 
         let responseMessage = "Parent information fetched successfully."
 
-        let response = { message: responseMessage,result: result};
+        let response = { message: responseMessage, result: result };
 
         return resolve(response);
       } catch (error) {
-        return reject({message:error});
+        return reject({ message: error });
       }
 
     })
   }
 
+  /**
+* @api {post} /assessment/api/v1/parentRegistry/upload Upload Parent Information CSV
+* @apiVersion 0.0.1
+* @apiName Upload Parent Information CSV
+* @apiGroup ParentRegistry
+* @apiParamExample {json} Request-Body:
+* 	Upload CSV
+* @apiUse successBody
+* @apiUse errorBody
+*/
 
   async upload(req) {
 
@@ -176,25 +250,25 @@ module.exports = class ParentRegistry extends Abstract {
         });
 
         let schoolsFromDatabase = await database.models.schools.find({
-          externalId : { $in: Object.values(schoolQueryList) }
+          externalId: { $in: Object.values(schoolQueryList) }
         }, {
-          externalId: 1,
-          name:1
-        });
+            externalId: 1,
+            name: 1
+          });
 
         let programsFromDatabase = await database.models.programs.find({
-          externalId : { $in: Object.values(programQueryList) }
+          externalId: { $in: Object.values(programQueryList) }
         });
 
-        const schoolsData = schoolsFromDatabase.reduce( 
-          (ac, school) => ({...ac, [school.externalId]: {_id:school._id,name:school.name} }), {} )
-        
-        const programsData = programsFromDatabase.reduce( 
-          (ac, program) => ({...ac, [program.externalId]: program }), {} )
+        const schoolsData = schoolsFromDatabase.reduce(
+          (ac, school) => ({ ...ac, [school.externalId]: { _id: school._id, name: school.name } }), {})
 
-        
+        const programsData = programsFromDatabase.reduce(
+          (ac, program) => ({ ...ac, [program.externalId]: program }), {})
+
+
         schoolWiseParentsData = await Promise.all(schoolWiseParentsData.map(async (schoolWiseParents) => {
-          
+
           let parentInformation = new Array
           let nameOfParentTypeField
           let nameOfParentTypeLabelField
@@ -204,12 +278,12 @@ module.exports = class ParentRegistry extends Abstract {
           let validParentCount = 0
 
           for (let parentCounter = 1; parentCounter < 50; parentCounter++) {
-            nameOfParentTypeField = "parent"+parentCounter+"Type";
-            nameOfParentNameField = "parent"+parentCounter+"Name";
-            nameOfParentAddressField = "parent"+parentCounter+"Address";
-            nameOfParentPhoneField = "parent"+parentCounter+"Phone";
+            nameOfParentTypeField = "parent" + parentCounter + "Type";
+            nameOfParentNameField = "parent" + parentCounter + "Name";
+            nameOfParentAddressField = "parent" + parentCounter + "Address";
+            nameOfParentPhoneField = "parent" + parentCounter + "Phone";
 
-            if(schoolWiseParents[nameOfParentNameField] && schoolWiseParents[nameOfParentPhoneField] && schoolsData[schoolWiseParents.schoolId]&& schoolWiseParents[nameOfParentNameField] != "" && schoolWiseParents[nameOfParentPhoneField].length > 5) {
+            if (schoolWiseParents[nameOfParentNameField] && schoolWiseParents[nameOfParentPhoneField] && schoolsData[schoolWiseParents.schoolId] && schoolWiseParents[nameOfParentNameField] != "" && schoolWiseParents[nameOfParentPhoneField].length > 5) {
               parentInformation.push({
                 name: schoolWiseParents[nameOfParentNameField],
                 type: schoolWiseParents[nameOfParentTypeField],
@@ -224,9 +298,9 @@ module.exports = class ParentRegistry extends Abstract {
           }
 
           parentInformation = await Promise.all(parentInformation.map(async (parent) => {
-          
+
             parent = await database.models.parentRegistry.findOneAndUpdate(
-              { 
+              {
                 phone1: parent.phone1,
                 programId: parent.programId,
                 schoolId: parent.schoolId
@@ -236,14 +310,14 @@ module.exports = class ParentRegistry extends Abstract {
                 upsert: true,
                 new: true,
                 setDefaultsOnInsert: true,
-                returnNewDocument : true
+                returnNewDocument: true
               }
             );
             return parent
 
           }));
 
-          if(validParentCount > 0 && validParentCount == parentInformation.length) {
+          if (validParentCount > 0 && validParentCount == parentInformation.length) {
             return parentInformation
           } else {
             return;
@@ -251,7 +325,7 @@ module.exports = class ParentRegistry extends Abstract {
 
         }));
 
-        if (schoolWiseParentsData.findIndex( school => school === undefined) >= 0) {
+        if (schoolWiseParentsData.findIndex(school => school === undefined) >= 0) {
           throw "Something went wrong, not all records were inserted/updated."
         }
 
@@ -262,15 +336,25 @@ module.exports = class ParentRegistry extends Abstract {
         return resolve(response);
 
       } catch (error) {
-        return reject({message:error});
+        return reject({ message: error });
       }
 
     })
   }
 
+  /**
+  * @api {get} /assessment/api/v1/parentRegistry/form Parent registry form
+  * @apiVersion 0.0.1
+  * @apiName Parent Registry form
+  * @apiGroup ParentRegistry
+  * @apiHeader {String} X-authenticated-user-token Authenticity token
+  * @apiSampleRequest /assessment/api/v1/parentRegistry/form
+  * @apiUse successBody
+  * @apiUse errorBody
+  */
 
   async form(req) {
-    return new Promise(async function(resolve, reject) {
+    return new Promise(async function (resolve, reject) {
 
       let result = [
         {
@@ -309,51 +393,51 @@ module.exports = class ParentRegistry extends Abstract {
               label: "Kindergarten"
             },
             {
-              value: 1,
+              value: "1",
               label: 1
             },
             {
-              value: 2,
+              value: "2",
               label: 2
             },
             {
-              value: 3,
+              value: "3",
               label: 3
             },
             {
-              value: 4,
+              value: "4",
               label: 4
             },
             {
-              value: 5,
+              value: "5",
               label: 5
             },
             {
-              value: 6,
+              value: "6",
               label: 6
             },
             {
-              value: 7,
+              value: "7",
               label: 7
             },
             {
-              value: 8,
+              value: "8",
               label: 8
             },
             {
-              value: 9,
+              value: "9",
               label: 9
             },
             {
-              value: 10,
+              value: "10",
               label: 10
             },
             {
-              value: 11,
+              value: "11",
               label: 11
             },
             {
-              value: 12,
+              value: "12",
               label: 12
             }
           ],
@@ -522,15 +606,25 @@ module.exports = class ParentRegistry extends Abstract {
     });
   }
 
+  /**
+  * @api {get} /assessment/api/v1/parentRegistry/fetch/:schoolId Parent profile
+  * @apiVersion 0.0.1
+  * @apiName Parent Registry profile
+  * @apiGroup ParentRegistry
+  * @apiHeader {String} X-authenticated-user-token Authenticity token
+  * @apiSampleRequest /assessment/api/v1/parentRegistry/fetch/5c48875a4196bd6d6904c2c3
+  * @apiUse successBody
+  * @apiUse errorBody
+  */
 
   async fetch(req) {
-    return new Promise(async function(resolve, reject) {
-      
+    return new Promise(async function (resolve, reject) {
+
       let parentInformation = await database.models.parentRegistry.findOne(
-        {_id:ObjectId(req.params._id)}
+        { _id: ObjectId(req.params._id) }
       );
-      
-      if(!parentInformation){
+
+      if (!parentInformation) {
         let responseMessage = `No parent information found for given params.`;
         return resolve({ status: 400, message: responseMessage })
       }
@@ -539,7 +633,7 @@ module.exports = class ParentRegistry extends Abstract {
         {
           field: "name",
           label: "Parent Name",
-          value: (parentInformation.name) ? parentInformation.name: "",
+          value: (parentInformation.name) ? parentInformation.name : "",
           visible: true,
           editable: true,
           input: "text",
@@ -550,7 +644,7 @@ module.exports = class ParentRegistry extends Abstract {
         {
           field: "gender",
           label: "Parent Gender",
-          value: (parentInformation.gender) ? parentInformation.gender: "",
+          value: (parentInformation.gender) ? parentInformation.gender : "",
           visible: true,
           editable: true,
           input: "radio",
@@ -571,7 +665,7 @@ module.exports = class ParentRegistry extends Abstract {
         {
           field: "phone1",
           label: "Phone Number",
-          value: (parentInformation.phone1) ? parentInformation.phone1: "",
+          value: (parentInformation.phone1) ? parentInformation.phone1 : "",
           visible: true,
           editable: false,
           input: "number",
@@ -583,7 +677,7 @@ module.exports = class ParentRegistry extends Abstract {
         {
           field: "phone2",
           label: "Additional Phone Number",
-          value: (parentInformation.phone2) ? parentInformation.phone2: "",
+          value: (parentInformation.phone2) ? parentInformation.phone2 : "",
           visible: true,
           editable: true,
           input: "number",
@@ -595,7 +689,7 @@ module.exports = class ParentRegistry extends Abstract {
         {
           field: "studentName",
           label: "Student Name",
-          value: (parentInformation.studentName) ? parentInformation.studentName: "",
+          value: (parentInformation.studentName) ? parentInformation.studentName : "",
           visible: true,
           editable: true,
           input: "text",
@@ -606,7 +700,7 @@ module.exports = class ParentRegistry extends Abstract {
         {
           field: "grade",
           label: "Grade",
-          value: (parentInformation.grade) ? parentInformation.grade: "",
+          value: (parentInformation.grade) ? parentInformation.grade : "",
           visible: true,
           editable: true,
           input: "radio",
@@ -628,51 +722,51 @@ module.exports = class ParentRegistry extends Abstract {
               label: "Kindergarten"
             },
             {
-              value: 1,
+              value: "1",
               label: 1
             },
             {
-              value: 2,
+              value: "2",
               label: 2
             },
             {
-              value: 3,
+              value: "3",
               label: 3
             },
             {
-              value: 4,
+              value: "4",
               label: 4
             },
             {
-              value: 5,
+              value: "5",
               label: 5
             },
             {
-              value: 6,
+              value: "6",
               label: 6
             },
             {
-              value: 7,
+              value: "7",
               label: 7
             },
             {
-              value: 8,
+              value: "8",
               label: 8
             },
             {
-              value: 9,
+              value: "9",
               label: 9
             },
             {
-              value: 10,
+              value: "10",
               label: 10
             },
             {
-              value: 11,
+              value: "11",
               label: 11
             },
             {
-              value: 12,
+              value: "12",
               label: 12
             }
           ],
@@ -683,7 +777,7 @@ module.exports = class ParentRegistry extends Abstract {
         {
           field: "schoolName",
           label: "School Name",
-          value: (parentInformation.schoolName) ? parentInformation.schoolName: "",
+          value: (parentInformation.schoolName) ? parentInformation.schoolName : "",
           visible: true,
           editable: false,
           input: "text",
@@ -694,7 +788,7 @@ module.exports = class ParentRegistry extends Abstract {
         {
           field: "type",
           label: "Parent Type",
-          value: (parentInformation.type) ? parentInformation.type: "",
+          value: (parentInformation.type) ? parentInformation.type : "",
           visible: true,
           editable: true,
           input: "multiselect",
@@ -731,7 +825,7 @@ module.exports = class ParentRegistry extends Abstract {
         {
           field: "callResponse",
           label: "Call Response",
-          value: (parentInformation.callResponse) ? parentInformation.callResponse: "",
+          value: (parentInformation.callResponse) ? parentInformation.callResponse : "",
           visible: true,
           editable: true,
           input: "radio",
@@ -759,10 +853,6 @@ module.exports = class ParentRegistry extends Abstract {
             {
               value: "R6",
               label: "Call disconnected mid way"
-            },
-            {
-              value: "R7",
-              label: "Completed"
             }
           ],
           validation: {
@@ -782,26 +872,119 @@ module.exports = class ParentRegistry extends Abstract {
   }
 
 
+  /**
+* @api {post} /assessment/api/v1/parentRegistry/update/:parentRegistryId Update Parent Information
+* @apiVersion 0.0.1
+* @apiName Update Parent Information
+* @apiGroup ParentRegistry
+* @apiParamExample {json} Request-Body:
+* 	{
+*	        "studentName" : "",
+*	        "grade" : "",
+*	        "name" : "",
+*	        "gender" : "",
+*   		  "type": "",
+*  		    "typeLabel":"",
+*  		    "phone1": "",
+*  	    	"phone2": "",
+*     		"address": "",
+*	        "schoolId" : "",
+*    		  "schoolName": "",
+*    		  "programId": "",
+*    		  "callResponse":""
+*   }
+* @apiUse successBody
+* @apiUse errorBody
+*/
+
   async update(req) {
-    return new Promise(async function(resolve, reject) {
-      
+    return new Promise(async function (resolve, reject) {
+
       try {
+
+        const parentDocument = await database.models.parentRegistry.findOne(
+          { _id: ObjectId(req.params._id) }
+        );
+        
+        if(!parentDocument) throw "No such parent found"
+        
+        let updateSubmissionDocument = false
+        if(req.body.updateFromParentPortal === true ) {
+          if(req.body.callResponse && req.body.callResponse != "" && (!parentDocument.callResponse || (parentDocument.callResponse != req.body.callResponse) )) {
+            req.body.callResponseUpdatedTime = new Date()
+          }
+          updateSubmissionDocument = true
+        }
+
         let parentInformation = await database.models.parentRegistry.findOneAndUpdate(
-          {_id:ObjectId(req.params._id)},
+          { _id: ObjectId(req.params._id) },
           req.body,
           { new: true }
         );
 
+        if(updateSubmissionDocument) {
+
+          let queryObject = {
+            schoolId: ObjectId(parentInformation.schoolId)
+          }
+          
+          let submissionDocument = await database.models.submissions.findOne(
+            queryObject,
+            {["parentInterviewResponses."+parentInformation._id.toString()] : 1, parentInterviewResponsesStatus : 1}
+          );
+
+          let updateObject = {}
+          updateObject.$set = {}
+          let parentInterviewResponse = {}
+          if(submissionDocument.parentInterviewResponses && submissionDocument.parentInterviewResponses[parentInformation._id.toString()]) {
+            parentInterviewResponse = submissionDocument.parentInterviewResponses[parentInformation._id.toString()]
+            parentInterviewResponse.parentInformation = parentInformation
+          } else {
+            parentInterviewResponse = {
+              parentInformation : parentInformation,
+              status: "started",
+              startedAt : new Date()
+            }
+          }
+
+          updateObject.$set = {
+            ["parentInterviewResponses."+parentInformation._id.toString()] : parentInterviewResponse
+          }
+
+          let parentInterviewResponseStatus = _.omit(parentInterviewResponse, ["parentInformation","answers"])
+          parentInterviewResponseStatus.parentId = parentInformation._id
+          parentInterviewResponseStatus.parentType = parentInformation.type
+
+          if (submissionDocument.parentInterviewResponsesStatus) {
+            let parentInterviewReponseStatusElementIndex = submissionDocument.parentInterviewResponsesStatus.findIndex(parentInterviewStatus => parentInterviewStatus.parentId.toString() === parentInterviewResponseStatus.parentId.toString())
+            if(parentInterviewReponseStatusElementIndex >= 0) {
+              submissionDocument.parentInterviewResponsesStatus[parentInterviewReponseStatusElementIndex] = parentInterviewResponseStatus
+            } else {
+              submissionDocument.parentInterviewResponsesStatus.push(parentInterviewResponseStatus)
+            }
+          } else {
+            submissionDocument.parentInterviewResponsesStatus = new Array
+            submissionDocument.parentInterviewResponsesStatus.push(parentInterviewResponseStatus)
+          }
+
+          updateObject.$set.parentInterviewResponsesStatus = submissionDocument.parentInterviewResponsesStatus
+
+          const submissionDocumentUpdate = await database.models.submissions.findOneAndUpdate(
+            { _id: submissionDocument._id},
+            updateObject
+          );
+        }
+
         let responseMessage = "Parent information updated successfully."
 
         let response = { message: responseMessage, result: parentInformation };
-        
+
         return resolve(response);
 
       } catch (error) {
         return reject({
-          status:500,
-          message:error,
+          status: 500,
+          message: error,
           errorObject: error
         });
       }
