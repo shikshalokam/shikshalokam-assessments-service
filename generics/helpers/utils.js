@@ -20,12 +20,12 @@ function camelCaseToTitleCase(in_camelCaseString) {
 }
 
 function checkIfStringIsUrl(str) {
-  var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-  '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|'+ // domain name
-  '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-  '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
-  '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
-  '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+  var pattern = new RegExp('^(https?:\\/\\/)?' + // protocol
+    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|' + // domain name
+    '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+    '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+    '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
   return pattern.test(str);
 }
 
@@ -47,17 +47,80 @@ function getCriteriaIds(themes) {
     } else {
       criteriaIdArray = theme.criteria;
     }
-    criteriaIdArray.forEach(eachCriteriaId => {
-      allCriteriaIds.push(eachCriteriaId);
+    criteriaIdArray.forEach(eachCriteria => {
+      if(eachCriteria.criteriaId) {
+        allCriteriaIds.push(eachCriteria.criteriaId);
+      } else {
+        allCriteriaIds.push(eachCriteria);
+      }
     })
   })
   return allCriteriaIds;
 }
 
+function getCriteriaIdsAndWeightage(themes) {
+  let allCriteriaIds = [];
+  themes.forEach(theme => {
+    let criteriaIdArray = [];
+    if (theme.children) {
+      criteriaIdArray = this.getCriteriaIdsAndWeightage(theme.children);
+    } else {
+      criteriaIdArray = theme.criteria;
+    }
+    criteriaIdArray.forEach(eachCriteria => {
+        allCriteriaIds.push({
+          criteriaId:eachCriteria.criteriaId,
+          weightage:eachCriteria.weightage
+        });
+    })
+  })
+  return allCriteriaIds;
+}
+
+function getUserRole(userDetails, caseSensitive = false) {
+  if (userDetails && userDetails.allRoles.length) {
+    _.pull(userDetails.allRoles, 'PUBLIC');
+    let role = userDetails.allRoles[0];
+    if (caseSensitive == true) {
+      return mapUserRole(role)
+    }
+    return userDetails.allRoles[0];
+  } else {
+    return
+  }
+}
+
+function mapUserRole(role) {
+  let rolesObject = {
+    ASSESSOR: "assessors",
+    LEAD_ASSESSOR: "leadAssessors",
+    PROJECT_MANAGER: "projectManagers",
+    PROGRAM_MANAGER: "programManagers"
+  }
+  return rolesObject[role];
+}
+
+function getAllQuestionId(criteria) {
+  let questionIds = [];
+  criteria.forEach(eachCriteria => {
+    eachCriteria.evidences.forEach(eachEvidence => {
+      eachEvidence.sections.forEach(eachSection => {
+        eachSection.questions.forEach(eachQuestion => {
+          questionIds.push(eachQuestion)
+        })
+      })
+    })
+  })
+  return questionIds
+}
 
 module.exports = {
   camelCaseToTitleCase: camelCaseToTitleCase,
   checkIfStringIsUrl: checkIfStringIsUrl,
   generateRandomCharacters: generateRandomCharacters,
-  getCriteriaIds: getCriteriaIds
+  getCriteriaIds: getCriteriaIds,
+  getUserRole: getUserRole,
+  mapUserRole: mapUserRole,
+  getAllQuestionId: getAllQuestionId,
+  getCriteriaIdsAndWeightage:getCriteriaIdsAndWeightage
 };

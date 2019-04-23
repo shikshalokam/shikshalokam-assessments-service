@@ -2,6 +2,7 @@ module.exports = {
   name: "submissions",
   schema: {
     schoolId: "ObjectId",
+    entityId: "ObjectId",
     programId: "ObjectId",
     assessors: Array,
     status: "String",
@@ -10,18 +11,22 @@ module.exports = {
     criterias: Array,
     answers: Object,
     schoolExternalId: "String",
+    entityExternalId: "String",
     schoolInformation: Object,
+    entityInformation: Object,
     programExternalId: "String",
     programInformation: Object,
     schoolProfile: Object,
     ratingOfManualCriteriaEnabled: Boolean,
     allManualCriteriaRatingSubmitted: Boolean,
-    ratings: Object,
     feedback: Array,
     generalQuestions: Object,
+    parentInterviewResponsesStatus: Array,
     parentInterviewResponses: Object,
     completedDate: Date,
     evaluationFrameworkId: "ObjectId",
-    evaluationFrameworkExternalId: String
+    evaluationFrameworkExternalId: String,
+    submissionsUpdatedHistory: Array,
+    ratingCompletedAt: Date
   }
 };
