@@ -15,10 +15,12 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 var fs = require("fs");
 var path = require("path");
+var expressValidator = require('express-validator');
 
 //To enable cors
 app.use(cors());
 
+app.use(expressValidator())
 
 //health check
 app.get("/ping", (req, res) => {

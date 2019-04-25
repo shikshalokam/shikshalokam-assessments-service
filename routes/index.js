@@ -4,8 +4,8 @@ let dataRangeFilter = require(ROOT_PATH + "/generics/middleware/dateRangeFilter"
 let userPrograms = require(ROOT_PATH + "/generics/middleware/userPrograms");
 let slackClient = require(ROOT_PATH + "/generics/helpers/slackCommunications");
 const fs = require("fs");
-const Joi = require("joi");
-const joiSchema = require(ROOT_PATH + "/generics/joiSchema");
+const inputValidator = require(ROOT_PATH + "/generics/middleware/expressValidator");
+
 
 module.exports = function (app) {
 
@@ -15,10 +15,10 @@ module.exports = function (app) {
   app.use(applicationBaseUrl, pagination);
   app.use(applicationBaseUrl, dataRangeFilter);
   app.use(applicationBaseUrl, userPrograms);
-
+  
   var router = async function (req, res, next) {
-
-    //req.params.controller = (req.params.controller).toLowerCase();
+    
+    
     req.params.controller += "Controller";
     if (!req.params.version) next();
     else if (!controllers[req.params.version]) next();
@@ -29,16 +29,10 @@ module.exports = function (app) {
 
       try {
 
-        joiSchema.forEach(schema => {
-          if (schema.name == req.params.controller + req.params.method + "Schema") {
-            Joi.validate(req.body, schema.schema, (error, data) => {
-              if (error) {
-                console.log(error)
-                res.status(400).send("Bad Request!");
-              }
-            })
-          }
-        })
+        let validationError = req.validationErrors();
+        
+        if(validationError.length)
+          throw { status: 400, message: validationError }
 
         var result = await controllers[req.params.version][req.params.controller][req.params.method](req);
 
@@ -122,9 +116,9 @@ module.exports = function (app) {
     }
   };
 
-  app.all(applicationBaseUrl + "api/:version/:controller/:method", router);
+  app.all(applicationBaseUrl + "api/:version/:controller/:method",inputValidator, router);
 
-  app.all(applicationBaseUrl + "api/:version/:controller/:method/:_id", router);
+  app.all(applicationBaseUrl + "api/:version/:controller/:method/:_id",inputValidator, router);
 
   app.use((req, res, next) => {
     res.status(404).send("Not found!");
