@@ -4,9 +4,14 @@
   "description": "shikshalokam",
   "main": "app.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest  --watchAll --detectOpenHandles --forceExit ",
     "start": "node app.js",
     "dev": "nodemon app.js"
+  },
+  "jest": {
+    "testMatch": [
+      "**/tests/**/*.js?(x)"
+    ]
   },
   "keywords": [
     "shikshalokam",
@@ -16,6 +21,8 @@
   "license": "ISC",
   "dependencies": {
     "@google-cloud/storage": "^2.0.3",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^24.7.1",
     "body-parser": "^1.18.2",
     "bunyan": "^1.8.12",
     "cache-manager": "^2.9.0",

@@ -116,3 +116,5 @@ app.listen(config.port, () => {
   log.info("Application is running on the port:" + config.port);
 
 });
+
+module.exports = app;
