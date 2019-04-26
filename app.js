@@ -72,6 +72,7 @@ global.loggerObj = bunyan.createLogger({
     }
   ]
 });
+
 global.loggerExceptionObj = bunyan.createLogger({
   name: "exceptionLogs",
   streams: [

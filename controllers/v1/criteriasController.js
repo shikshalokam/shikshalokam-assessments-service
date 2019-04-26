@@ -21,7 +21,6 @@ module.exports = class Criterias extends Abstract {
     return "criterias";
   }
 
-
   /**
   * @api {post} /assessment/api/v1/criterias/insert Add Criterias
   * @apiVersion 0.0.1

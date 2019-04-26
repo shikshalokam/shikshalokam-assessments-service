@@ -43,6 +43,7 @@ module.exports = (req) => {
             .custom(value=> typeof(value)=="object").withMessage("invalid value")
 
         },
+        
         addQuestion: function () {
             req.check('question').exists().withMessage("required question")
             .custom(value=> typeof(value)=="object").withMessage("invalid value")

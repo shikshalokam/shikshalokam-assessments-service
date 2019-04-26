@@ -10,6 +10,9 @@ module.exports = (req, res, next) => {
     if(req.params.controller == "programOperations" ) require("./programOperationSchema")(req);
     if(req.params.controller == "insights" ) require("./insightSchema")(req);
     if(req.params.controller == "reports" ) require("./reportSchema")(req);
+    if(req.params.controller == "schools") require("./schoolSchema")(req)
+    if(req.params.controller == "evaluationFrameworks") require("./evaluationFrameworksSchema")
+    if(req.params.controller == "assessors") require("./assessorsSchema")
 
     next();
 
