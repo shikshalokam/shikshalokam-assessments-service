@@ -37,37 +37,50 @@ module.exports = class Assessments {
                 }
 
                 let queryObject = {};
-                queryObject["components.type"] = req.query.type;
-                queryObject["components.subType"] = req.query.subType;
-                queryObject["components.entities"] = req.userDetails.userId;
-                if (req.query.fromDate) queryObject["components.fromDate"] = { $gte: new Date(req.query.fromDate) };
-                if (req.query.toDate) queryObject["components.toDate"] = { $lte: new Date(req.query.toDate) };
-                if (req.query.status) queryObject["components.status"] = req.query.status;
+                queryObject["type"] = req.query.type;
+                queryObject["subType"] = req.query.subType;
+                queryObject["entities"] = req.userDetails.userId;
+                if (req.query.fromDate) queryObject["startDate"] = { $gte: new Date(req.query.fromDate) };
+                if (req.query.toDate) queryObject["endDate"] = { $lte: new Date(req.query.toDate) };
+                if (req.query.status) queryObject["status"] = req.query.status;
 
 
-                let programDocument = await database.models.programs.aggregate([
+                let solutionDocument = await database.models.solutions.aggregate([
                     {
                         $match: queryObject
                     },
                     {
                         $project: {
-                            'components.roles': 0,
-                            'components.entities': 0,
-                            'components.entityProfileFieldsPerSchoolTypes': 0,
+                            "externalId": "$programExternalId",
+                            "_id": "$programId",
+                            "name": "$programName",
+                            "description": "$programDescription",
+                            "assessmentId": "$_id",
+                            "assessmentExternalId": "$externalId",
+                            "assessmentName": "$name",
+                            "assessmentDescription": "$description"
                         }
                     },
-                    {
-                        $project: {
-                            'assessments': '$components',
-                            'externalId': 1,
-                            'name': 1,
-                            'description': 1
+                    { 
+                        $group : {
+                            _id : "$_id",
+                            name : {$first : "$name"},
+                            description : {$first : "$description"},
+                            externalId : {$first : "$externalId"},
+                            assessments : { $push :{
+                                "_id": "$assessmentId",
+                                "externalId": "$assessmentExternalId",
+                                "name": "$assessmentName",
+                                "description": "$assessmentDescription" 
+                            }},
                         }
-                    }
+                    },
                 ]);
 
+                
+
                 return resolve({
-                    result: programDocument
+                    result: solutionDocument
                 })
 
             }
@@ -108,13 +121,13 @@ module.exports = class Assessments {
                 { 'components': 0, 'isDeleted': 0, 'updatedAt': 0, 'createdAt': 0 }
             ).lean();
 
-            detailedAssessment.entityProfile = await database.models.entities.findOne({ userId: req.userDetails.id }, {
+            detailedAssessment.entityProfile = await database.models.entities.findOne({ entityType:"teacher", "metaInformation.userId": req.userDetails.id }, {
                 "deleted": 0,
                 "createdAt": 0,
                 "updatedAt": 0,
             });
 
-            let frameWorkDocument = await database.models.evaluationFrameworks.findOne({ _id: assessmentId }).lean();
+            let frameWorkDocument = await database.models.solutions.findOne({ _id: assessmentId }).lean();
 
             if (!frameWorkDocument) {
                 let responseMessage = 'No assessments found.';
@@ -131,10 +144,10 @@ module.exports = class Assessments {
 
             let submissionDocument = {
                 entityId: detailedAssessment.entityProfile._id,
-                entityInformation: detailedAssessment.entityProfile,
+                entityInformation: detailedAssessment.entityProfile.metaInformation,
                 programId: detailedAssessment.program._id,
                 programExternalId: detailedAssessment.program.externalId,
-                entityExternalId: detailedAssessment.entityProfile.externalId,
+                entityExternalId: detailedAssessment.entityProfile.metaInformation.externalId,
                 programInformation: {
                     name: detailedAssessment.program.name,
                     externalId: detailedAssessment.program.externalId,

@@ -156,7 +156,7 @@ module.exports = class Frameworks extends Abstract {
       });
     }
 
-    let evaluationFrameworkDocuments = await database.models["evaluationFrameworks"].find(queryObject, projectionObject);
+    let evaluationFrameworkDocuments = await database.models.solutions.find(queryObject, projectionObject).lean();
     return evaluationFrameworkDocuments
   }
 
