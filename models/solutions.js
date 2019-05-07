@@ -22,6 +22,8 @@ module.exports = {
     entities: Array,
     programId: "ObjectId",
     programExternalId: String,
+    programName: String,
+    programDescription: String,
     startDate: Date,
     endDate: Date,
     status: String,

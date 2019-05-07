@@ -3,7 +3,7 @@ const FileStream = require(ROOT_PATH + "/generics/fileStream");
 module.exports = class ProgramOperations {
 
     constructor() {
-        this.assessorSchoolTracker = new assessorSchoolTrackersBaseController;
+        this.entityAssessorsTracker = new entityAssessorsTrackersBaseController;
     }
 
     checkUserAuthorization(userDetails, programExternalId) {
@@ -755,7 +755,7 @@ module.exports = class ProgramOperations {
                 }
 
 
-                let schoolIds = await this.assessorSchoolTracker.filterByDate(req.query, userIds, programDocument._id);
+                let schoolIds = await this.entityAssessorsTracker.filterByDate(req.query, userIds, programDocument._id);
 
                 let schoolObjectIds = _.uniq(schoolIds).map(schoolId => ObjectId(schoolId));
 
