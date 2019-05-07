@@ -14,7 +14,6 @@ module.exports = {
     concepts: ["json"],
     createdFor: ["String"],
     imageCompression: {},
-    components: ["json"],
-    components: ["json"]
+    solutions: ["json"]
   }
 };

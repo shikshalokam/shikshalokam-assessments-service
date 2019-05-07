@@ -40,14 +40,6 @@ module.exports = function () {
     }
   });
 
-  //load helpers
-  fs.readdirSync(ROOT_PATH + '/module/').forEach(function (file) {
-    if (file.includes('Module')) {
-      var name = file.replace('Module', '');
-      global[name + 'Helper'] = require(ROOT_PATH + `/module/${file}/${name}Helper.js`);
-    }
-  });
-
   //load base controllers
   fs.readdirSync(ROOT_PATH + '/controllers/v1/').forEach(function (file) {
     if (file.match(/\.js$/) !== null) {

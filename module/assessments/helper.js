@@ -3,33 +3,23 @@ const csv = require("csvtojson");
 module.exports = class assessmentsHelper {
 
     constructor() {
-        this.roles = {
-            ASSESSOR: "assessors",
-            LEAD_ASSESSOR: "leadAssessors",
-            PROJECT_MANAGER: "projectManagers",
-            PROGRAM_MANAGER: "programManagers"
-        };
     }
 
     static get name() {
         return "assessmentsHelper";
     }
 
-    async list(req) {
+    async list(query, userDetails) {
 
         try {
-            if (!req.query.type || !req.query.subType) {
-                let responseMessage = "Bad request.";
-                throw { status: 400, message: responseMessage }
-            }
 
             let queryObject = {};
-            queryObject["type"] = req.query.type;
-            queryObject["subType"] = req.query.subType;
-            queryObject["entities"] = req.userDetails.userId;
-            if (req.query.fromDate) queryObject["startDate"] = { $gte: new Date(req.query.fromDate) };
-            if (req.query.toDate) queryObject["endDate"] = { $lte: new Date(req.query.toDate) };
-            if (req.query.status) queryObject["status"] = req.query.status;
+            queryObject["type"] = query.type;
+            queryObject["subType"] = query.subType;
+            queryObject["entities"] = userDetails.userId;
+            if (query.fromDate) queryObject["startDate"] = { $gte: new Date(query.fromDate) };
+            if (query.toDate) queryObject["endDate"] = { $lte: new Date(query.toDate) };
+            if (query.status) queryObject["status"] = query.status;
 
 
             let solutionDocument = await database.models.solutions.aggregate([
@@ -66,27 +56,17 @@ module.exports = class assessmentsHelper {
                 },
             ]);
 
-
-
-            return ({
-                result: solutionDocument
-            })
+            return solutionDocument
 
         }
         catch (error) {
-            throw {
-                status: 500,
-                message: error,
-                errorObject: error
-            };
+            throw error
         }
 
     }
 
-    async details(req) {
+    async details(programExternalId, assessmentId, userId, userAgent) {
         try {
-            let programExternalId = req.params._id;
-            let assessmentId = req.query.assessmentId;
             let detailedAssessment = {};
 
             detailedAssessment.program = await database.models.programs.findOne(
@@ -95,7 +75,7 @@ module.exports = class assessmentsHelper {
             ).lean();
 
 
-            let entityProfile = await database.models.entities.findOne({ entityType: "teacher", "metaInformation.userId": req.userDetails.id }, {
+            let entityProfile = await database.models.entities.findOne({ entityType: "teacher", "metaInformation.userId": userId }, {
                 "deleted": 0,
                 "createdAt": 0,
                 "updatedAt": 0,
@@ -110,20 +90,20 @@ module.exports = class assessmentsHelper {
                 externalId: entityProfile.metaInformation.externalId || ""
             }
 
-            let frameWorkDocument = await database.models.solutions.findOne({ _id: assessmentId }).lean();
+            let solutionDocument = await database.models.solutions.findOne({ _id: assessmentId }).lean();
 
-            if (!frameWorkDocument) {
+            if (!solutionDocument) {
                 let responseMessage = 'No assessments found.';
                 return resolve({ status: 400, message: responseMessage })
             }
 
             let assessment = {};
 
-            assessment.name = frameWorkDocument.name;
-            assessment.description = frameWorkDocument.description;
-            assessment.externalId = frameWorkDocument.externalId;
+            assessment.name = solutionDocument.name;
+            assessment.description = solutionDocument.description;
+            assessment.externalId = solutionDocument.externalId;
 
-            let criteriasIdArray = gen.utils.getCriteriaIds(frameWorkDocument.themes);
+            let criteriasIdArray = gen.utils.getCriteriaIds(solutionDocument.themes);
 
             let submissionDocument = {
                 entityId: detailedAssessment.entityProfile._id,
@@ -148,8 +128,8 @@ module.exports = class assessmentsHelper {
                 evidenceSubmissions: [],
                 status: "started"
             };
-            submissionDocument.evaluationFrameworkId = frameWorkDocument._id;
-            submissionDocument.evaluationFrameworkExternalId = frameWorkDocument.externalId;
+            submissionDocument.solutionId = solutionDocument._id;
+            submissionDocument.solutionExternalId = solutionDocument.externalId;
 
             let criteriaQuestionDocument = await database.models.criteriaQuestions.find(
                 { _id: { $in: criteriasIdArray } },
@@ -229,7 +209,8 @@ module.exports = class assessmentsHelper {
             submissionDocument.criterias = submissionDocumentCriterias;
             let submissionDoc = await this.updateSubmissionAssessors(
                 submissionDocument,
-                req
+                userId,
+                userAgent
             );
             assessment.submissionId = submissionDoc.result._id;
 
@@ -242,21 +223,15 @@ module.exports = class assessmentsHelper {
             assessment.submissions = parsedAssessment.submissions;
             detailedAssessment['assessments'] = assessment
 
-            return {
-                result: detailedAssessment
-            }
+            return detailedAssessment;
 
         } catch (error) {
-            throw {
-                status: 500,
-                message: error,
-                errorObject: error
-            };
+            throw error;
 
         }
     }
 
-    async updateSubmissionAssessors(document, requestObject) {
+    async updateSubmissionAssessors(document, userId, userAgent) {
 
         let queryObject = {
             entityId: document.entityId,
@@ -270,7 +245,7 @@ module.exports = class assessmentsHelper {
         if (!submissionDocument) {
             let entityAssessorsQueryObject = [
                 {
-                    $match: { userId: requestObject.userDetails.userId, programId: document.programId }
+                    $match: { userId: userId, programId: document.programId }
                 }
             ];
 
@@ -278,20 +253,20 @@ module.exports = class assessmentsHelper {
                 "entityAssessors"
             ].aggregate(entityAssessorsQueryObject);
 
-            let assessorElement = document.assessors.find(assessor => assessor.userId === requestObject.userDetails.userId)
+            let assessorElement = document.assessors.find(assessor => assessor.userId === userId)
             if (assessorElement && assessorElement.externalId != "") {
                 assessorElement.assessmentStatus = "started"
-                assessorElement.userAgent = requestObject.headers['user-agent']
+                assessorElement.userAgent = userAgent
             }
 
             submissionDocument = await database.models.submissions.create(
                 document
             );
         } else {
-            let assessorElement = submissionDocument.assessors.find(assessor => assessor.userId === requestObject.userDetails.userId)
+            let assessorElement = submissionDocument.assessors.find(assessor => assessor.userId === userId)
             if (assessorElement && assessorElement.externalId != "") {
                 assessorElement.assessmentStatus = "started"
-                assessorElement.userAgent = requestObject.headers['user-agent']
+                assessorElement.userAgent = userAgent
                 let updateObject = {}
                 updateObject.$set = {
                     assessors: submissionDocument.assessors
@@ -380,129 +355,140 @@ module.exports = class assessmentsHelper {
     }
 
     async upload(req) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                let assessorUploadData = await csv().fromString(
-                    req.files.assessments.data.toString()
-                );
+        try {
+            let assessorUploadData = await csv().fromString(
+                req.files.assessments.data.toString()
+            );
 
-                let programQueryList = {};
-                let solutionQueryList = {};
+            let programQueryList = {};
+            let solutionQueryList = {};
 
-                assessorUploadData.forEach(assessor => {
-                    programQueryList[assessor.externalId] = assessor.programId;
-                    solutionQueryList[assessor.externalId] = assessor.solutionId;
-                });
+            assessorUploadData.forEach(assessor => {
+                programQueryList[assessor.externalId] = assessor.programId;
+                solutionQueryList[assessor.externalId] = assessor.solutionId;
+            });
 
-                let solutionsDocuments = await database.models.solutions.find(
-                    {
-                        externalId: { $in: Object.values(solutionQueryList) }
-                    },
-                    {
-                        externalId: 1
+            let solutionsDocuments = await database.models.solutions.find(
+                {
+                    externalId: { $in: Object.values(solutionQueryList) }
+                },
+                {
+                    externalId: 1,
+                    entities: 1
+                }
+            ).lean();
+
+            let programsFromDatabase = await database.models.programs.find({
+                externalId: { $in: Object.values(programQueryList) }
+            }).lean();
+
+            const programsData = programsFromDatabase.reduce(
+                (ac, program) => ({ ...ac, [program.externalId]: program }),
+                {}
+            );
+
+            const solutionsData = solutionsDocuments.reduce(
+                (ac, solution) => ({
+                    ...ac,
+                    [solution.externalId]: {
+                        _id: solution._id,
+                        entities: solution.entities
                     }
-                );
+                }),
+                {}
+            );
 
-                let programsFromDatabase = await database.models.programs.find({
-                    externalId: { $in: Object.values(programQueryList) }
-                });
-
-                const programsData = programsFromDatabase.reduce(
-                    (ac, program) => ({ ...ac, [program.externalId]: program }),
-                    {}
-                );
-
-                const evaluationFrameworksData = solutionsDocuments.reduce(
-                    (ac, evaluationFramework) => ({
-                        ...ac,
-                        [evaluationFramework.externalId]: evaluationFramework._id
-                    }),
-                    {}
-                );
-
-                const schoolUploadedData = await Promise.all(
-                    assessorUploadData.map(async assessor => {
-                        let entityAssessorsDocument = {}
-                        entityAssessorsDocument.programId = programsData[assessor.programId];
-                        entityAssessorsDocument.assessmentStatus = "pending";
-                        entityAssessorsDocument.parentId = "";
-                        entityAssessorsDocument["entities"] = [assessor.userId];
-                        entityAssessorsDocument.frameworkId = assessor.frameworkId;
-                        entityAssessorsDocument.role = assessor.role;
-                        entityAssessorsDocument.userId = assessor.userId;
-                        entityAssessorsDocument.externalId = assessor.externalId;
-                        entityAssessorsDocument.name = assessor.name;
-                        entityAssessorsDocument.email = assessor.email;
-                        entityAssessorsDocument.createdBy = req.userDetails.id;
-                        entityAssessorsDocument.updatedBy = req.userDetails.id;
-                        await database.models.entityAssessors.findOneAndUpdate(
-                            { userId: entityAssessorsDocument.userId },
-                            entityAssessorsDocument,
-                            {
-                                upsert: true,
-                                new: true,
-                                setDefaultsOnInsert: true,
-                                returnNewDocument: true
-                            }
-                        );
-
-                        let componentsIndex = programsData[assessor.programId].components.findIndex(component => {
-                            return component.id.toString() == evaluationFrameworksData[assessor.frameworkId].toString()
-                        });
-
-                        let entities = programsData[assessor.programId].components[componentsIndex]['entities'];
-
-                        if (!entities.includes(assessor.userId)) {
-                            entities.push(assessor.userId)
-                        }
-
-                        programsData[assessor.programId].components[componentsIndex]['entities'] = entities;
-
-                        await database.models.programs.findOneAndUpdate(
-                            { externalId: assessor.programId },
-                            programsData[assessor.programId],
-                            {
-                                upsert: true,
-                                new: true,
-                                setDefaultsOnInsert: true,
-                                returnNewDocument: true
-                            }
-                        )
-
-                        await database.models.entities.findOneAndUpdate(
-                            {
-                                "userId": assessor.userId
-                            },
-                            {
+            await Promise.all(
+                assessorUploadData.map(async assessor => {
+                    let entityData = await database.models.entities.findOneAndUpdate(
+                        {
+                            entityType: "teacher",
+                            "metaInformation.userId": assessor.userId
+                        },
+                        {
+                            "entityTypeId": ObjectId("5cc6cfed268296027d75026c"),
+                            "entityType": "teacher",
+                            "regsitryDetails": {},
+                            "groups": {},
+                            "metaInformation": {
                                 "name": assessor.name,
                                 "userId": assessor.userId,
-                                "externalId": assessor.externalId
+                                "email": assessor.email,
+                                "externalId": assessor.externalId,
+                                "programId": assessor.programId,
+                                "role": assessor.role,
+                                "solutionId": assessor.solutionId
                             },
-                            {
-                                upsert: true,
-                                new: true,
-                                setDefaultsOnInsert: true,
-                                returnNewDocument: true
-                            }
-                        )
-                        return
+                            "updatedBy": assessor.userId,
+                            "createdBy": assessor.userId,
+                        },
+                        {
+                            upsert: true,
+                            new: true,
+                            setDefaultsOnInsert: true,
+                            returnNewDocument: true
+                        }
+                    )
 
+                    let entityAssessorsDocument = {}
+                    entityAssessorsDocument.programId = programsData[assessor.programId];
+                    entityAssessorsDocument.assessmentStatus = "pending";
+                    entityAssessorsDocument.parentId = "";
+                    entityAssessorsDocument["entities"] = [entityData._id];
+                    entityAssessorsDocument.solutionId = assessor.solutionId;
+                    entityAssessorsDocument.role = assessor.role;
+                    entityAssessorsDocument.userId = assessor.userId;
+                    entityAssessorsDocument.externalId = assessor.externalId;
+                    entityAssessorsDocument.name = assessor.name;
+                    entityAssessorsDocument.email = assessor.email;
+                    entityAssessorsDocument.createdBy = req.userDetails.id;
+                    entityAssessorsDocument.updatedBy = req.userDetails.id;
+                    await database.models.entityAssessors.findOneAndUpdate(
+                        { userId: entityAssessorsDocument.userId },
+                        entityAssessorsDocument,
+                        {
+                            upsert: true,
+                            new: true,
+                            setDefaultsOnInsert: true,
+                            returnNewDocument: true
+                        }
+                    );
+
+                    // if(!solutionsData[assessor.solutionId]['entities'].includes(entityData._id)) solutionsData[assessor.solutionId]['entities'].push(assessor.userId)
+                    let entityIndex = solutionsData[assessor.solutionId]['entities'].findIndex(entity => {
+                        return entity.toString() == entityData._id.toString()
                     })
-                );
 
-                let responseMessage = "Assessor record created successfully.";
+                    if (entityIndex < 0) {
+                        solutionsData[assessor.solutionId]['entities'].push(entityData._id)
+                    }
 
-                let response = { message: responseMessage };
+                    await database.models.solutions.findOneAndUpdate(
+                        { externalId: assessor.solutionId },
+                        {
+                            $set: {
+                                entities: solutionsData[assessor.solutionId]['entities']
+                            }
+                        },
+                        {
+                            upsert: true,
+                            new: true,
+                            setDefaultsOnInsert: true,
+                            returnNewDocument: true
+                        }
+                    )
+                    return
 
-                return resolve(response);
-            } catch (error) {
-                return reject({
-                    status: 500,
-                    message: error,
-                    errorObject: error
-                });
-            }
-        });
+                })
+            );
+
+            let responseMessage = "Assessor record created successfully.";
+
+            return responseMessage;
+
+        } catch (error) {
+            throw error;
+        }
     }
 }
 
