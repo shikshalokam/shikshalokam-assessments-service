@@ -295,7 +295,7 @@ module.exports = class assessmentsHelper {
         };
     }
 
-    async parseQuestionsByIndividual(evidences, submissionDocEvidences, questionGroup) {
+    async parseQuestionsByIndividual(evidences, submissionDocEvidences, entityQuestionGroup) {
         let sectionQuestionArray = {};
         let questionArray = {};
         let submissionsObjects = {};
@@ -319,8 +319,9 @@ module.exports = class assessmentsHelper {
 
             evidence.sections.forEach(section => {
                 section.questions.forEach((question, index, section) => {
-                    //question filter based on questionGroup
-                    if (_.intersection(question.questionGroup, questionGroup).length > 0) {
+                    //question filter based on entity question group
+                    if(!entityQuestionGroup || !entityQuestionGroup.length) entityQuestionGroup=["A1"];
+                    if (_.intersection(question.questionGroup, entityQuestionGroup).length > 0) {
                         question.evidenceMethod = evidence.externalId
                         sectionQuestionArray[question._id] = section
                         questionArray[question._id] = question
