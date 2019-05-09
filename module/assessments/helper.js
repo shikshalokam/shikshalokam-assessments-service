@@ -75,7 +75,7 @@ module.exports = class assessmentsHelper {
             ).lean();
 
 
-            let entityProfile = await database.models.entities.findOne({ entityType: "teacher", "metaInformation.userId": userId }, {
+            let entityProfile = await database.models.entities.findOne({ "metaInformation.userId": userId }, {
                 "deleted": 0,
                 "createdAt": 0,
                 "updatedAt": 0,
@@ -90,11 +90,11 @@ module.exports = class assessmentsHelper {
                 externalId: entityProfile.metaInformation.externalId || ""
             }
 
-            let solutionDocument = await database.models.solutions.findOne({ _id: assessmentId },{
-                name:1,
-                description:1,
-                externalId:1,
-                themes:1
+            let solutionDocument = await database.models.solutions.findOne({ _id: assessmentId }, {
+                name: 1,
+                description: 1,
+                externalId: 1,
+                themes: 1
             }).lean();
 
             if (!solutionDocument) {
@@ -221,7 +221,8 @@ module.exports = class assessmentsHelper {
 
             const parsedAssessment = await this.parseQuestionsByIndividual(
                 Object.values(evidenceMethodArray),
-                submissionDoc.result.evidences
+                submissionDoc.result.evidences,
+                entityProfile.metaInformation.questionGroup
             );
 
             assessment.evidences = parsedAssessment.evidences;
@@ -244,7 +245,7 @@ module.exports = class assessmentsHelper {
         };
 
         let projectObject = {
-            assessors:1
+            assessors: 1
         }
 
         let submissionDocument = await database.models.submissions.findOne(
@@ -294,7 +295,7 @@ module.exports = class assessmentsHelper {
         };
     }
 
-    async parseQuestionsByIndividual(evidences, submissionDocEvidences) {
+    async parseQuestionsByIndividual(evidences, submissionDocEvidences, questionGroup) {
         let sectionQuestionArray = {};
         let questionArray = {};
         let submissionsObjects = {};
@@ -318,9 +319,12 @@ module.exports = class assessmentsHelper {
 
             evidence.sections.forEach(section => {
                 section.questions.forEach((question, index, section) => {
-                    question.evidenceMethod = evidence.externalId
-                    sectionQuestionArray[question._id] = section
-                    questionArray[question._id] = question
+                    //question filter based on questionGroup
+                    if (_.intersection(question.questionGroup, questionGroup).length > 0) {
+                        question.evidenceMethod = evidence.externalId
+                        sectionQuestionArray[question._id] = section
+                        questionArray[question._id] = question
+                    }
                 });
             });
         });
