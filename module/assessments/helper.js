@@ -90,7 +90,12 @@ module.exports = class assessmentsHelper {
                 externalId: entityProfile.metaInformation.externalId || ""
             }
 
-            let solutionDocument = await database.models.solutions.findOne({ _id: assessmentId }).lean();
+            let solutionDocument = await database.models.solutions.findOne({ _id: assessmentId },{
+                name:1,
+                description:1,
+                externalId:1,
+                themes:1
+            }).lean();
 
             if (!solutionDocument) {
                 let responseMessage = 'No assessments found.';
@@ -238,8 +243,13 @@ module.exports = class assessmentsHelper {
             programId: document.programId
         };
 
+        let projectObject = {
+            assessors:1
+        }
+
         let submissionDocument = await database.models.submissions.findOne(
-            queryObject
+            queryObject,
+            projectObject
         ).lean();
 
         if (!submissionDocument) {
@@ -352,143 +362,6 @@ module.exports = class assessmentsHelper {
             evidences: evidences,
             submissions: submissionsObjects,
         };
-    }
-
-    async upload(req) {
-        try {
-            let assessorUploadData = await csv().fromString(
-                req.files.assessments.data.toString()
-            );
-
-            let programQueryList = {};
-            let solutionQueryList = {};
-
-            assessorUploadData.forEach(assessor => {
-                programQueryList[assessor.externalId] = assessor.programId;
-                solutionQueryList[assessor.externalId] = assessor.solutionId;
-            });
-
-            let solutionsDocuments = await database.models.solutions.find(
-                {
-                    externalId: { $in: Object.values(solutionQueryList) }
-                },
-                {
-                    externalId: 1,
-                    entities: 1
-                }
-            ).lean();
-
-            let programsFromDatabase = await database.models.programs.find({
-                externalId: { $in: Object.values(programQueryList) }
-            }).lean();
-
-            const programsData = programsFromDatabase.reduce(
-                (ac, program) => ({ ...ac, [program.externalId]: program }),
-                {}
-            );
-
-            const solutionsData = solutionsDocuments.reduce(
-                (ac, solution) => ({
-                    ...ac,
-                    [solution.externalId]: {
-                        _id: solution._id,
-                        entities: solution.entities
-                    }
-                }),
-                {}
-            );
-
-            await Promise.all(
-                assessorUploadData.map(async assessor => {
-                    let entityData = await database.models.entities.findOneAndUpdate(
-                        {
-                            entityType: "teacher",
-                            "metaInformation.userId": assessor.userId
-                        },
-                        {
-                            "entityTypeId": ObjectId("5cc6cfed268296027d75026c"),
-                            "entityType": "teacher",
-                            "regsitryDetails": {},
-                            "groups": {},
-                            "metaInformation": {
-                                "name": assessor.name,
-                                "userId": assessor.userId,
-                                "email": assessor.email,
-                                "externalId": assessor.externalId,
-                                "programId": assessor.programId,
-                                "role": assessor.role,
-                                "solutionId": assessor.solutionId
-                            },
-                            "updatedBy": assessor.userId,
-                            "createdBy": assessor.userId,
-                        },
-                        {
-                            upsert: true,
-                            new: true,
-                            setDefaultsOnInsert: true,
-                            returnNewDocument: true
-                        }
-                    )
-
-                    let entityAssessorsDocument = {}
-                    entityAssessorsDocument.programId = programsData[assessor.programId];
-                    entityAssessorsDocument.assessmentStatus = "pending";
-                    entityAssessorsDocument.parentId = "";
-                    entityAssessorsDocument["entities"] = [entityData._id];
-                    entityAssessorsDocument.solutionId = assessor.solutionId;
-                    entityAssessorsDocument.role = assessor.role;
-                    entityAssessorsDocument.userId = assessor.userId;
-                    entityAssessorsDocument.externalId = assessor.externalId;
-                    entityAssessorsDocument.name = assessor.name;
-                    entityAssessorsDocument.email = assessor.email;
-                    entityAssessorsDocument.createdBy = req.userDetails.id;
-                    entityAssessorsDocument.updatedBy = req.userDetails.id;
-                    await database.models.entityAssessors.findOneAndUpdate(
-                        { userId: entityAssessorsDocument.userId },
-                        entityAssessorsDocument,
-                        {
-                            upsert: true,
-                            new: true,
-                            setDefaultsOnInsert: true,
-                            returnNewDocument: true
-                        }
-                    );
-
-                    // if(!solutionsData[assessor.solutionId]['entities'].includes(entityData._id)) solutionsData[assessor.solutionId]['entities'].push(assessor.userId)
-                    let entityIndex = solutionsData[assessor.solutionId]['entities'].findIndex(entity => {
-                        return entity.toString() == entityData._id.toString()
-                    })
-
-                    if (entityIndex < 0) {
-                        solutionsData[assessor.solutionId]['entities'].push(entityData._id)
-                    }
-
-                    await database.models.solutions.findOneAndUpdate(
-                        { externalId: assessor.solutionId },
-                        {
-                            $set: {
-                                entities: solutionsData[assessor.solutionId]['entities']
-                            }
-                        },
-                        {
-                            upsert: true,
-                            new: true,
-                            setDefaultsOnInsert: true,
-                            returnNewDocument: true
-                        }
-                    )
-                    return
-
-                })
-            );
-
-            let responseMessage = "Assessor record created successfully.";
-
-            return responseMessage;
-
-        } catch (error) {
-            throw error;
-        }
     }
 }
 

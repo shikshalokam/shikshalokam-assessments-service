@@ -97,37 +97,4 @@ module.exports = class Assessment {
 
   }
 
-  /**
- * @api {post} /assessment/api/v1/assessments/details/{programID}?assessmentId={assessmentID} Upload assessments
- * @apiVersion 0.0.1
- * @apiName Upload individual assessment
- * @apiGroup IndividualAssessments
-* @apiParamExample {json} Request-Body:
-* 	Upload CSV
-* @apiUse successBody
-* @apiUse errorBody
-*/
-
-  async upload(req) {
-
-    return new Promise(async (resolve, reject) => {
-
-      let result;
-
-      try {
-
-        result = await this.assessmentsHelper.upload(req);
-
-      } catch (error) {
-
-        return reject(error)
-
-      }
-
-      return resolve(result);
-
-    })
-
-  }
-
 }
