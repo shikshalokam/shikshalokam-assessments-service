@@ -4,15 +4,20 @@ module.exports = async (req, res, next) => {
         let roles = _.pull(req.userDetails.allRoles, 'PUBLIC');
         let queryParams = roles.map(role => {
             return {
-                [`components.roles.${gen.utils.mapUserRole(role)}.users`]: { $in: [req.userDetails.id] }
+                [`roles.${gen.utils.mapUserRole(role)}.users`]: { $in: [req.userDetails.id] }
             }
         })
 
-        let programs = await database.models.programs.find({ $or: queryParams }, {
-            externalId: 1,
-            name: 1,
-            description: 1
-        }).lean();
+        let programs = await database.models.solutions.aggregate([
+            { $match: { $or: queryParams } },
+            {
+                $project: {
+                    externalId: "$programExternalId",
+                    name: "$programName",
+                    description: "$programDescription"
+                }
+            }
+        ]);
 
         if (programs.length) req['userDetails'].accessiblePrograms = programs
 

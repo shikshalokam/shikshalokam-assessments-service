@@ -16,7 +16,6 @@ module.exports = class assessmentsHelper {
             let queryObject = {};
             queryObject["type"] = query.type;
             queryObject["subType"] = query.subType;
-            queryObject["entities"] = userDetails.userId;
             if (query.fromDate) queryObject["startDate"] = { $gte: new Date(query.fromDate) };
             if (query.toDate) queryObject["endDate"] = { $lte: new Date(query.toDate) };
             if (query.status) queryObject["status"] = query.status;
@@ -80,6 +79,8 @@ module.exports = class assessmentsHelper {
                 "createdAt": 0,
                 "updatedAt": 0,
             });
+
+            if (!entityProfile) throw { message: "No entities found for this assessments." }
 
             detailedAssessment.entityProfile = {
                 _id: entityProfile._id,
@@ -320,7 +321,7 @@ module.exports = class assessmentsHelper {
             evidence.sections.forEach(section => {
                 section.questions.forEach((question, index, section) => {
                     //question filter based on entity question group
-                    if(!entityQuestionGroup || !entityQuestionGroup.length) entityQuestionGroup=["A1"];
+                    if (!entityQuestionGroup || !entityQuestionGroup.length) entityQuestionGroup = ["A1"];
                     if (_.intersection(question.questionGroup, entityQuestionGroup).length > 0) {
                         question.evidenceMethod = evidence.externalId
                         sectionQuestionArray[question._id] = section
