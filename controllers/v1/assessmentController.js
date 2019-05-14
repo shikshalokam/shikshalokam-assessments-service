@@ -34,11 +34,13 @@ module.exports = class Assessment {
   list(req) {
     return new Promise(async (resolve, reject) => {
 
-      let result;
-
       try {
 
-        result = await this.assessmentsHelper.list(req.query, req.userDetails);
+        let result = await this.assessmentsHelper.list(req.query.type, req.query.subType, req.query.status, req.query.fromDate, req.query.toDate, req.userDetails.id, req.userDetails.userRole);
+
+        return resolve({
+          result: result
+        });
 
       } catch (error) {
 
@@ -50,9 +52,6 @@ module.exports = class Assessment {
 
       }
 
-      return resolve({
-        result: result
-      });
 
     })
   }
@@ -73,11 +72,14 @@ module.exports = class Assessment {
 
     return new Promise(async (resolve, reject) => {
 
-      let result;
 
       try {
 
-        result = await this.assessmentsHelper.details(req.params._id, req.query.assessmentId, req.userDetails.id, req.headers["user-agent"]);
+        let result = await this.assessmentsHelper.details(req.params._id, req.query.assessmentId, req.userDetails.id, req.headers["user-agent"]);
+
+        return resolve({
+          result: result
+        });
 
       } catch (error) {
 
@@ -89,9 +91,6 @@ module.exports = class Assessment {
 
       }
 
-      return resolve({
-        result: result
-      });
 
     })
 

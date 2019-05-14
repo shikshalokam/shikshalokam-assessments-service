@@ -9,17 +9,17 @@ module.exports = class assessmentsHelper {
         return "assessmentsHelper";
     }
 
-    async list(query, userDetails) {
+    async list(type, subType, status, fromDate, toDate, userId, userRole) {
 
         try {
 
             let queryObject = {};
-            queryObject["type"] = query.type;
-            queryObject["subType"] = query.subType;
-            if (query.fromDate) queryObject["startDate"] = { $gte: new Date(query.fromDate) };
-            if (query.toDate) queryObject["endDate"] = { $lte: new Date(query.toDate) };
-            if (query.status) queryObject["status"] = query.status;
-
+            queryObject["type"] = type;
+            queryObject["subType"] = subType;
+            queryObject[`roles.${userRole}.users`] = userId;
+            if (fromDate) queryObject["startDate"] = { $gte: new Date(fromDate) };
+            if (toDate) queryObject["endDate"] = { $lte: new Date(toDate) };
+            if (status) queryObject["status"] = status;
 
             let solutionDocument = await database.models.solutions.aggregate([
                 {
@@ -98,10 +98,7 @@ module.exports = class assessmentsHelper {
                 themes: 1
             }).lean();
 
-            if (!solutionDocument) {
-                let responseMessage = 'No assessments found.';
-                return resolve({ status: 400, message: responseMessage })
-            }
+            if (!solutionDocument) throw { status: 400, message: 'No assessments found.' }
 
             let assessment = {};
 
@@ -220,7 +217,7 @@ module.exports = class assessmentsHelper {
             );
             assessment.submissionId = submissionDoc.result._id;
 
-            const parsedAssessment = await this.parseQuestionsByIndividual(
+            const parsedAssessment = await this.parseQuestions(
                 Object.values(evidenceMethodArray),
                 submissionDoc.result.evidences,
                 entityProfile.metaInformation.questionGroup
@@ -265,11 +262,11 @@ module.exports = class assessmentsHelper {
                 "entityAssessors"
             ].aggregate(entityAssessorsQueryObject);
 
-            let assessorElement = document.assessors.find(assessor => assessor.userId === userId)
-            if (assessorElement && assessorElement.externalId != "") {
-                assessorElement.assessmentStatus = "started"
-                assessorElement.userAgent = userAgent
-            }
+            // let assessorElement = document.assessors.find(assessor => assessor.userId === userId)
+            // if (assessorElement && assessorElement.externalId != "") {
+            //     assessorElement.assessmentStatus = "started"
+            //     assessorElement.userAgent = userAgent
+            // }
 
             submissionDocument = await database.models.submissions.create(
                 document
@@ -277,8 +274,8 @@ module.exports = class assessmentsHelper {
         } else {
             let assessorElement = submissionDocument.assessors.find(assessor => assessor.userId === userId)
             if (assessorElement && assessorElement.externalId != "") {
-                assessorElement.assessmentStatus = "started"
-                assessorElement.userAgent = userAgent
+                // assessorElement.assessmentStatus = "started"
+                // assessorElement.userAgent = userAgent
                 let updateObject = {}
                 updateObject.$set = {
                     assessors: submissionDocument.assessors
@@ -296,7 +293,7 @@ module.exports = class assessmentsHelper {
         };
     }
 
-    async parseQuestionsByIndividual(evidences, submissionDocEvidences, entityQuestionGroup) {
+    async parseQuestions(evidences, submissionDocEvidences, entityQuestionGroup) {
         let sectionQuestionArray = {};
         let questionArray = {};
         let submissionsObjects = {};
