@@ -1,10 +1,6 @@
-const csv = require("csvtojson");
 const assessmentsHelper = require(ROOT_PATH + "/module/assessments/helper");
 module.exports = class Assessment {
 
-  constructor() {
-    this.assessmentsHelper = new assessmentsHelper();
-  }
   /**
    * @apiDefine errorBody
    * @apiError {String} status 4XX,5XX
@@ -36,7 +32,7 @@ module.exports = class Assessment {
 
       try {
 
-        let result = await this.assessmentsHelper.list(req.query.type, req.query.subType, req.query.status, req.query.fromDate, req.query.toDate, req.userDetails.id, req.userDetails.userRole);
+        let result = await assessmentsHelper.list(req.query.type, req.query.subType, req.query.status, req.query.fromDate, req.query.toDate, req.userDetails.id, req.userDetails.userRole);
 
         return resolve({
           result: result
@@ -75,7 +71,7 @@ module.exports = class Assessment {
 
       try {
 
-        let result = await this.assessmentsHelper.details(req.params._id, req.query.assessmentId, req.userDetails.id, req.headers["user-agent"]);
+        let result = await assessmentsHelper.details(req.params._id, req.query.assessmentId, req.userDetails.id, req.headers["user-agent"]);
 
         return resolve({
           result: result
