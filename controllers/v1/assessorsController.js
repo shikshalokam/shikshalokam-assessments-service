@@ -4,16 +4,16 @@ let shikshalokam = require(ROOT_PATH + "/generics/helpers/shikshalokam");
 
 module.exports = class Assessors {
 
-  async entities(req) {
+  async schools(req) {
     return new Promise(async (resolve, reject) => {
       try {
 
-        let entities = new Array;
-        let responseMessage = "Not authorized to fetch entities for this user";
+        let schools = new Array
+        let responseMessage = "Not authorized to fetch schools for this user"
 
         if (_.includes(req.userDetails.allRoles, "ASSESSOR") || _.includes(req.userDetails.allRoles, "LEAD_ASSESSOR")) {
 
-          let entityAssessorQueryObject = [
+          let assessorSchoolsQueryObject = [
             {
               $match: {
                 userId: req.userDetails.userId
@@ -21,26 +21,32 @@ module.exports = class Assessors {
             },
             {
               $lookup: {
-                from: "entities",
-                localField: "entities",
+                from: "schools",
+                localField: "schools",
                 foreignField: "_id",
-                as: "entityDocuments"
+                as: "schoolDocuments"
               }
             },
             {
               $project: {
-                "entities": "$entities",
-                "programId":1,
-                "entityDocuments": "$entityDocuments"
+                "schools": 1,
+                "programId": 1,
+                "schoolDocuments._id": 1,
+                "schoolDocuments.externalId": 1,
+                "schoolDocuments.name": 1,
+                "schoolDocuments.addressLine1": 1,
+                "schoolDocuments.addressLine2": 1,
+                "schoolDocuments.city": 1,
+                "schoolDocuments.state": 1
               }
             }
           ];
 
-          const assessorsDocument = await database.models.entityAssessors.aggregate(entityAssessorQueryObject)
+          const assessorsDocument = await database.models.schoolAssessors.aggregate(assessorSchoolsQueryObject)
 
           let assessor
           let submissions
-          let entityPAISubmissionStatus = new Array
+          let schoolPAISubmissionStatus = new Array
 
           for (let pointerToAssessorDocumentArray = 0; pointerToAssessorDocumentArray < assessorsDocument.length; pointerToAssessorDocumentArray++) {
 
@@ -61,47 +67,36 @@ module.exports = class Assessors {
 
             submissions = await database.models.submissions.find(
               {
-                entityId: {
-                  $in: assessor.entities
+                schoolId: {
+                  $in: assessor.schools
                 },
                 "evidences.PAI.isSubmitted": true
               },
               {
-                "entityId": 1
+                "schoolId": 1
               }
             )
 
-            entityPAISubmissionStatus = submissions.reduce(
-              (ac, entity) => ({ ...ac, [entity.entityId.toString()]: true }), {})
+            schoolPAISubmissionStatus = submissions.reduce(
+              (ac, school) => ({ ...ac, [school.schoolId.toString()]: true }), {})
 
-            assessor.entityDocuments.forEach(assessorEntity => {
-
-              if (entityPAISubmissionStatus[assessorEntity._id.toString()]) {
-                assessorEntity.isParentInterviewCompleted = true
+            assessor.schoolDocuments.forEach(assessorSchool => {
+              if (schoolPAISubmissionStatus[assessorSchool._id.toString()]) {
+                assessorSchool.isParentInterviewCompleted = true
               } else {
-                assessorEntity.isParentInterviewCompleted = false
+                assessorSchool.isParentInterviewCompleted = false
               }
-
-              entities.push({
-                "_id": assessorEntity._id,
-                "externalId": assessorEntity.metaInformation.externalId,
-                "addressLine1": assessorEntity.metaInformation.addressLine1,
-                "addressLine2": assessorEntity.metaInformation.addressLine2,
-                "city": assessorEntity.metaInformation.city,
-                "name": assessorEntity.metaInformation.name,
-                "state": assessorEntity.metaInformation.state,
-                "isParentInterviewCompleted": false
-              })
+              schools.push(assessorSchool)
             })
 
           }
 
-          responseMessage = "Entity list fetched successfully"
+          responseMessage = "School list fetched successfully"
         }
 
         return resolve({
           message: responseMessage,
-          result: entities
+          result: schools
         });
 
       } catch (error) {
@@ -129,7 +124,7 @@ module.exports = class Assessors {
 
         let schoolQueryList = {};
         let programQueryList = {};
-        let solutionQueryList = {};
+        let evaluationFrameworkQueryList = {};
         let skippedDocumentCount = 0;
 
         assessorData.forEach(assessor => {
@@ -140,36 +135,36 @@ module.exports = class Assessors {
 
           programQueryList[assessor.externalId] = assessor.programId
 
-          solutionQueryList[assessor.externalId] = assessor.solutionId
+          evaluationFrameworkQueryList[assessor.externalId] = assessor.frameworkId
 
         });
 
 
-        let entitiesFromDatabase = await database.models.entities.find({
-          "metaInformation.externalId": { $in: Object.values(schoolQueryList) }
+        let schoolsFromDatabase = await database.models.schools.find({
+          externalId: { $in: Object.values(schoolQueryList) }
         }, {
-            "metaInformation.externalId": 1
+            externalId: 1
           });
 
 
         let programsFromDatabase = await database.models.programs.find({
           externalId: { $in: Object.values(programQueryList) }
-        }).lean();
+        });
 
-        let solutionsFromDatabase = await database.models.solutions.find({
-          externalId: { $in: Object.values(solutionQueryList) }
+        let evaluationFrameworksFromDatabase = await database.models.evaluationFrameworks.find({
+          externalId: { $in: Object.values(evaluationFrameworkQueryList) }
         }, {
             externalId: 1
-          }).lean();
+          });
 
 
-        const entitiesData = entitiesFromDatabase.reduce(
-          (ac, school) => ({ ...ac, [school.metaInformation.externalId]: school._id }), {})
+        const schoolsData = schoolsFromDatabase.reduce(
+          (ac, school) => ({ ...ac, [school.externalId]: school._id }), {})
 
         const programsData = programsFromDatabase.reduce(
           (ac, program) => ({ ...ac, [program.externalId]: program }), {})
 
-        const solutionData = solutionsFromDatabase.reduce(
+        const evaluationFrameworksData = evaluationFrameworksFromDatabase.reduce(
           (ac, evaluationFramework) => ({ ...ac, [evaluationFramework.externalId]: evaluationFramework._id }), {})
 
         const roles = {
@@ -185,9 +180,9 @@ module.exports = class Assessors {
           return new Promise(async (resolve, reject) => {
             try {
 
-              let schoolAssessorTrackerDocument = await database.models.entityAssessorsTrackers.find({ "assessorId": req.body.assessorId, "programId": req.body.programId }).sort({ "dateOfOperation": -1 }).limit(1).lean();
+              let schoolAssessorTrackerDocument = await database.models.assessorSchoolTrackers.find({ "assessorId": req.body.assessorId, "programId": req.body.programId }).sort({ "dateOfOperation": -1 }).limit(1).lean();
 
-              if (!schoolAssessorTrackerDocument.length) return resolve();
+              if(!schoolAssessorTrackerDocument.length) return resolve();
 
               let actions = ["APPEND", "OVERRIDE", "REMOVE"];
 
@@ -258,25 +253,25 @@ module.exports = class Assessors {
               queryObject.dateOfOperation["$gte"] = moment().startOf('day');
 
               queryObject.dateOfOperation["$lte"] = moment().endOf('day');
-
+              
               let trackerDocument = await database.models.assessorSchoolTrackers.findOneAndUpdate(queryObject, trackerObject, {
                 upsert: true,
                 new: true,
                 setDefaultsOnInsert: true,
                 returnNewDocument: true
               });
-
+              
               let lastDataDate = moment(schoolAssessorTrackerDocument[0].dateOfOperation).format("DD-MM-YYYY");
               let todayDate = moment().format("DD-MM-YYYY")
-
+              
               if (lastDataDate != todayDate) {
-
+                
                 let queryObject = {
                   assessorId: schoolAssessorTrackerDocument[0].assessorId,
                   programId: schoolAssessorTrackerDocument[0].programId,
                   dateOfOperation: schoolAssessorTrackerDocument[0].dateOfOperation
                 };
-
+                
                 schoolAssessorTrackerDocument[0].validTo = moment().endOf('day').subtract(1, 'days');
 
                 delete schoolAssessorTrackerDocument[0].createdAt
@@ -306,8 +301,8 @@ module.exports = class Assessors {
         assessorData = await Promise.all(assessorData.map(async (assessor) => {
           let assessorSchoolArray = new Array
           assessor.schools.split(",").forEach(assessorSchool => {
-            if (entitiesData[assessorSchool.trim()])
-              assessorSchoolArray.push(entitiesData[assessorSchool.trim()])
+            if (schoolsData[assessorSchool.trim()])
+              assessorSchoolArray.push(schoolsData[assessorSchool.trim()])
           })
 
           assessor.schools = assessorSchoolArray
@@ -357,18 +352,15 @@ module.exports = class Assessors {
           let indexOfComponents
 
           assessorCsvDataProgramId = programQueryList[assessor.externalId]
-          assessorCsvDataEvaluationFrameworkId = solutionQueryList[assessor.externalId]
-          assessorProgramComponents = programsData[assessorCsvDataProgramId] ? programsData[assessorCsvDataProgramId].solutions : []
+          assessorCsvDataEvaluationFrameworkId = evaluationFrameworkQueryList[assessor.externalId]
+          assessorProgramComponents = programsData[assessorCsvDataProgramId] ? programsData[assessorCsvDataProgramId].components : []
 
           indexOfComponents = assessorProgramComponents.findIndex(component => {
-            return component.toString() == solutionData[assessorCsvDataEvaluationFrameworkId].toString()
+            return component.id.toString() == evaluationFrameworksData[assessorCsvDataEvaluationFrameworkId].toString()
           });
 
           if (indexOfComponents >= 0) {
-
-            var solutions = await database.models.solutions.findOne({_id:assessorProgramComponents[indexOfComponents]})
-
-            programFrameworkRoles = solutions.roles
+            programFrameworkRoles = assessorProgramComponents[indexOfComponents].roles
             assessorRole = roles[assessor.role];
 
             //constructing program roles
@@ -394,8 +386,8 @@ module.exports = class Assessors {
             })
           }
 
-          if (programsData[assessorCsvDataProgramId] && programsData[assessorCsvDataProgramId].solutions.length) {
-            solutions.roles = programFrameworkRoles;
+          if (programsData[assessorCsvDataProgramId] && programsData[assessorCsvDataProgramId].components[indexOfComponents]) {
+            programsData[assessorCsvDataProgramId].components[indexOfComponents].roles = programFrameworkRoles;
           }
 
 
@@ -466,7 +458,7 @@ module.exports = class Assessors {
         }
 
         let programController = new programsBaseController;
-        let frameworkController = new frameworksBaseController
+        let evaluationFrameworkController = new evaluationFrameworksBaseController
 
         let programId = req.query.programId;
 
@@ -474,10 +466,10 @@ module.exports = class Assessors {
           throw "Program Id is missing"
         }
 
-        let solutionId = req.query.solutionId;
+        let componentId = req.query.componentId;
 
-        if (!solutionId) {
-          throw "Solution Id is missing"
+        if (!componentId) {
+          throw "Component Id is missing"
         }
 
         let programDocument = await programController.programDocument([programId]);
@@ -486,7 +478,7 @@ module.exports = class Assessors {
           throw "Bad request"
         }
 
-        let evaluationFrameworkDocument = await frameworkController.evaluationFrameworkDocument(new Array(solutionId), ["_id"])
+        let evaluationFrameworkDocument = await evaluationFrameworkController.evaluationFrameworkDocument(new Array(componentId), ["_id"])
 
         if (!evaluationFrameworkDocument) {
           throw "Bad request"
@@ -503,19 +495,19 @@ module.exports = class Assessors {
           })
         })
 
-        let entitiesDocument = await database.models.entities.find({
-          "metaInformation.externalId": { $in: Object.values(schoolQueryList) }
+        let schoolsDocument = await database.models.schools.find({
+          externalId: { $in: Object.values(schoolQueryList) }
         }, {
-          "metaInformation.externalId": 1
+            externalId: 1
           });
 
-        const entitiesData = entitiesDocument.reduce(
-          (ac, school) => ({ ...ac, [school.metaInformation.externalId]: school._id }), {})
+        const schoolsData = schoolsDocument.reduce(
+          (ac, school) => ({ ...ac, [school.externalId]: school._id }), {})
 
         const programsData = programDocument.reduce(
           (ac, program) => ({ ...ac, [program._id]: program }), {})
 
-        const solutionData = evaluationFrameworkDocument.reduce(
+        const evaluationFrameworksData = evaluationFrameworkDocument.reduce(
           (ac, evaluationFramework) => ({ ...ac, [evaluationFramework._id]: evaluationFramework._id }), {})
 
         const roles = {
@@ -539,14 +531,14 @@ module.exports = class Assessors {
             return
           }
 
-          let parentIdFromKeyCloakToken
+          let parentIdFromKeyCloakToken 
 
           if (assessor.parentId) {
             let parentIdByKeyCloakToken = await this.getInternalUserIdByExternalId(req.rspObj.userToken, assessor.parentId)
-
+  
             parentIdFromKeyCloakToken = parentIdByKeyCloakToken[assessor.parentId]
 
-            if (!(parentIdFromKeyCloakToken)) {
+            if(!(parentIdFromKeyCloakToken)){
               let errorMessage = `Skipped document of parentId ${assessor.parentId}`
               errorMessageArray.push({ errorMessage })
               return
@@ -556,95 +548,95 @@ module.exports = class Assessors {
           let assessorSchoolArray = new Array
 
           assessor.schools.split(",").forEach(assessorSchool => {
-            if (entitiesData[assessorSchool.trim()])
-              assessorSchoolArray.push(entitiesData[assessorSchool.trim()])
+              if (schoolsData[assessorSchool.trim()])
+                assessorSchoolArray.push(schoolsData[assessorSchool.trim()])
           })
-
+  
           assessor.schools = assessorSchoolArray
-
+  
           if (programsData[programId]) {
-            assessor.programId = programsData[programId]._id;
+              assessor.programId = programsData[programId]._id;
           } else {
-            assessor.programId = null;
-            skippedDocumentCount += 1;
+              assessor.programId = null;
+              skippedDocumentCount += 1;
           }
-
+  
           assessor.createdBy = assessor.updatedBy = creatorId
-
+  
           let fieldsWithOutSchool = {};
           Object.keys(database.models.schoolAssessors.schema.paths).forEach(fieldName => {
             if (fieldName != 'schools' && assessor[fieldName]) fieldsWithOutSchool[fieldName] = assessor[fieldName];
           })
-
+  
           let updateObject;
           if (fieldsWithOutSchool.parentId) {
             fieldsWithOutSchool.parentId = parentIdFromKeyCloakToken.userId
           }
-
-          if (assessor.schoolOperation == "OVERRIDE") {
-            updateObject = { $set: { schools: assessor.schools, ...fieldsWithOutSchool } }
-          }
-
-          else if (assessor.schoolOperation == "APPEND") {
-            updateObject = { $addToSet: { schools: assessor.schools }, $set: fieldsWithOutSchool };
-          }
-
-          else if (assessor.schoolOperation == "REMOVE") {
-            updateObject = { $pull: { schools: { $in: assessor.schools } }, $set: fieldsWithOutSchool };
-          }
-          let assessorCsvDataProgramId
-
-          let programFrameworkRoles;
-          let assessorRole;
-          let assessorCsvDataEvaluationFrameworkId
-          let assessorProgramComponents
-          let indexOfComponents
-
-          assessorCsvDataProgramId = programId
-          assessorCsvDataEvaluationFrameworkId = solutionId
-          assessorProgramComponents = programsData[assessorCsvDataProgramId] ? programsData[assessorCsvDataProgramId].components : []
-
-          indexOfComponents = assessorProgramComponents.findIndex(component => {
-            return component.id.toString() == solutionData[assessorCsvDataEvaluationFrameworkId].toString()
-          });
-
-          if (indexOfComponents >= 0) {
-            programFrameworkRoles = assessorProgramComponents[indexOfComponents].roles
-            assessorRole = roles[assessor.role];
-
-            Object.keys(programFrameworkRoles).forEach(role => {
-              let roleIndex = programFrameworkRoles[role].users.findIndex(user => user === userIdFromKeyCloakToken.userId);
-
-              if (role === assessorRole) {
-                if (roleIndex < 0) {
-                  programFrameworkRoles[role].users.push(userIdFromKeyCloakToken.userId);
+  
+            if (assessor.schoolOperation == "OVERRIDE") {
+              updateObject = { $set: { schools: assessor.schools, ...fieldsWithOutSchool } }
+            }
+  
+            else if (assessor.schoolOperation == "APPEND") {
+              updateObject = { $addToSet: { schools: assessor.schools }, $set: fieldsWithOutSchool };
+            }
+  
+            else if (assessor.schoolOperation == "REMOVE") {
+              updateObject = { $pull: { schools: { $in: assessor.schools } }, $set: fieldsWithOutSchool };
+            }
+            let assessorCsvDataProgramId
+  
+            let programFrameworkRoles;
+            let assessorRole;
+            let assessorCsvDataEvaluationFrameworkId
+            let assessorProgramComponents
+            let indexOfComponents
+  
+            assessorCsvDataProgramId = programId
+            assessorCsvDataEvaluationFrameworkId = componentId
+            assessorProgramComponents = programsData[assessorCsvDataProgramId] ? programsData[assessorCsvDataProgramId].components : []
+  
+            indexOfComponents = assessorProgramComponents.findIndex(component => {
+              return component.id.toString() == evaluationFrameworksData[assessorCsvDataEvaluationFrameworkId].toString()
+            });
+  
+            if (indexOfComponents >= 0) {
+              programFrameworkRoles = assessorProgramComponents[indexOfComponents].roles
+              assessorRole = roles[assessor.role];
+  
+              Object.keys(programFrameworkRoles).forEach(role => {
+                let roleIndex = programFrameworkRoles[role].users.findIndex(user => user === userIdFromKeyCloakToken.userId);
+  
+                if (role === assessorRole) {
+                  if (roleIndex < 0) {
+                    programFrameworkRoles[role].users.push(userIdFromKeyCloakToken.userId);
+                  }
                 }
-              }
-              else {
-                if ((roleIndex >= 0)) {
-                  programFrameworkRoles[role].users.splice(roleIndex, 1);
+                else {
+                  if ((roleIndex >= 0)) {
+                    programFrameworkRoles[role].users.splice(roleIndex, 1);
+                  }
+  
+                  if (!assessorRole || !programFrameworkRoles[assessorRole]) skippedDocumentCount += 1;
+  
+                  if (assessorRole && programFrameworkRoles[assessorRole] && !programFrameworkRoles[assessorRole].users.includes(userIdFromKeyCloakToken.userId))
+                    programFrameworkRoles[assessorRole].users.push(userIdFromKeyCloakToken.userId);
                 }
-
-                if (!assessorRole || !programFrameworkRoles[assessorRole]) skippedDocumentCount += 1;
-
-                if (assessorRole && programFrameworkRoles[assessorRole] && !programFrameworkRoles[assessorRole].users.includes(userIdFromKeyCloakToken.userId))
-                  programFrameworkRoles[assessorRole].users.push(userIdFromKeyCloakToken.userId);
-              }
-            })
-          }
-
-
-          if (programsData[assessorCsvDataProgramId] && programsData[assessorCsvDataProgramId].components[indexOfComponents]) {
-            programsData[assessorCsvDataProgramId].components[indexOfComponents].roles = programFrameworkRoles;
-          }
-
-          return database.models.schoolAssessors.findOneAndUpdate({ userId: userIdFromKeyCloakToken.userId }, updateObject, {
-            upsert: true,
-            new: true,
-            setDefaultsOnInsert: true,
-            returnNewDocument: true
-          });
-
+              })
+            }
+  
+  
+            if (programsData[assessorCsvDataProgramId] && programsData[assessorCsvDataProgramId].components[indexOfComponents]) {
+              programsData[assessorCsvDataProgramId].components[indexOfComponents].roles = programFrameworkRoles;
+            }
+  
+            return database.models.schoolAssessors.findOneAndUpdate({ userId: userIdFromKeyCloakToken.userId }, updateObject ,{
+              upsert: true,
+              new: true,
+              setDefaultsOnInsert: true,
+              returnNewDocument: true
+            });
+          
         })).catch(error => {
           throw error
         });
