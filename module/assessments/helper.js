@@ -1,6 +1,6 @@
 module.exports = class assessmentsHelper {
 
-    static list(type, subType, status, fromDate, toDate, userId, userRole) {
+    static list(type, subType, userId, userRole) {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -8,9 +8,10 @@ module.exports = class assessmentsHelper {
                 queryObject["type"] = type;
                 queryObject["subType"] = subType;
                 queryObject[`roles.${userRole}.users`] = userId;
-                if (fromDate) queryObject["startDate"] = { $gte: new Date(fromDate) };
-                if (toDate) queryObject["endDate"] = { $lte: new Date(toDate) };
-                if (status) queryObject["status"] = status;
+                //check status is active and current date is between start date and end date
+                queryObject["startDate"] = { $lte: new Date() };
+                queryObject["endDate"] = { $gte: new Date() };
+                queryObject["status"] = "active";
 
                 let solutionDocument = await database.models.solutions.aggregate([
                     {

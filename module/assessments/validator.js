@@ -10,7 +10,6 @@ module.exports = (req) => {
         list: function () {
             req.checkQuery('type').exists().withMessage("required type")
             req.checkQuery('subType').exists().withMessage("required sub type")
-            req.checkQuery('status').exists().withMessage("required status")
         }
 
     }

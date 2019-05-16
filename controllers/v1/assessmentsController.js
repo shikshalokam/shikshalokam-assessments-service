@@ -32,7 +32,7 @@ module.exports = class Assessments {
 
       try {
 
-        let result = await assessmentsHelper.list(req.query.type, req.query.subType, req.query.status, req.query.fromDate, req.query.toDate, req.userDetails.id, req.userDetails.userRole);
+        let result = await assessmentsHelper.list(req.query.type, req.query.subType, req.userDetails.id, req.userDetails.userRole);
 
         return resolve({
           result: result
