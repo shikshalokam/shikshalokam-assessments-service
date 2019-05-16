@@ -109,18 +109,7 @@ module.exports = class assessmentsHelper {
                     programExternalId: detailedAssessment.program.externalId,
                     entityExternalId: detailedAssessment.entityProfile.externalId,
                     programInformation: {
-                        name: detailedAssessment.program.name,
-                        externalId: detailedAssessment.program.externalId,
-                        description: detailedAssessment.program.description,
-                        owner: detailedAssessment.program.owner,
-                        createdBy: detailedAssessment.program.createdBy,
-                        updatedBy: detailedAssessment.program.updatedBy,
-                        resourceType: detailedAssessment.program.resourceType,
-                        language: detailedAssessment.program.language,
-                        keywords: detailedAssessment.program.keywords,
-                        concepts: detailedAssessment.program.concepts,
-                        createdFor: detailedAssessment.program.createdFor,
-                        imageCompression: detailedAssessment.program.imageCompression
+                        ...detailedAssessment.program
                     },
                     evidenceSubmissions: [],
                     status: "started"
@@ -231,139 +220,147 @@ module.exports = class assessmentsHelper {
 
     static updateSubmissionAssessors(document, userId, userAgent) {
         return new Promise(async (resolve, reject) => {
-            let queryObject = {
-                entityId: document.entityId,
-                programId: document.programId
-            };
+            try {
+                let queryObject = {
+                    entityId: document.entityId,
+                    programId: document.programId
+                };
 
-            let projectObject = {
-                assessors: 1
-            }
-
-            let submissionDocument = await database.models.submissions.findOne(
-                queryObject,
-                projectObject
-            ).lean();
-
-            if (!submissionDocument) {
-                let entityAssessorsQueryObject = [
-                    {
-                        $match: { userId: userId, programId: document.programId }
-                    }
-                ];
-
-                document.assessors = await database.models[
-                    "entityAssessors"
-                ].aggregate(entityAssessorsQueryObject);
-
-                let assessorElement = document.assessors.find(assessor => assessor.userId === userId)
-                if (assessorElement && assessorElement.externalId != "") {
-                    assessorElement.assessmentStatus = "started"
-                    assessorElement.userAgent = userAgent
+                let projectObject = {
+                    assessors: 1
                 }
 
-                submissionDocument = await database.models.submissions.create(
-                    document
-                );
-            } else {
-                let assessorElement = submissionDocument.assessors.find(assessor => assessor.userId === userId)
-                if (assessorElement && assessorElement.externalId != "") {
-                    assessorElement.assessmentStatus = "started"
-                    assessorElement.userAgent = userAgent
-                    let updateObject = {}
-                    updateObject.$set = {
-                        assessors: submissionDocument.assessors
+                let submissionDocument = await database.models.submissions.findOne(
+                    queryObject,
+                    projectObject
+                ).lean();
+
+                if (!submissionDocument) {
+                    let entityAssessorsQueryObject = [
+                        {
+                            $match: { userId: userId, programId: document.programId }
+                        }
+                    ];
+
+                    document.assessors = await database.models[
+                        "entityAssessors"
+                    ].aggregate(entityAssessorsQueryObject);
+
+                    let assessorElement = document.assessors.find(assessor => assessor.userId === userId)
+                    if (assessorElement && assessorElement.externalId != "") {
+                        assessorElement.assessmentStatus = "started"
+                        assessorElement.userAgent = userAgent
                     }
-                    submissionDocument = await database.models.submissions.findOneAndUpdate(
-                        queryObject,
-                        updateObject
+
+                    submissionDocument = await database.models.submissions.create(
+                        document
                     );
+                } else {
+                    let assessorElement = submissionDocument.assessors.find(assessor => assessor.userId === userId)
+                    if (assessorElement && assessorElement.externalId != "") {
+                        assessorElement.assessmentStatus = "started"
+                        assessorElement.userAgent = userAgent
+                        let updateObject = {}
+                        updateObject.$set = {
+                            assessors: submissionDocument.assessors
+                        }
+                        submissionDocument = await database.models.submissions.findOneAndUpdate(
+                            queryObject,
+                            updateObject
+                        );
+                    }
                 }
-            }
 
-            return resolve({
-                message: "Submission found",
-                result: submissionDocument
-            });
+                return resolve({
+                    message: "Submission found",
+                    result: submissionDocument
+                });
+            } catch (error) {
+                return reject(error)
+            }
         })
 
     }
 
     static parseQuestions(evidences, submissionDocEvidences, entityQuestionGroup) {
         return new Promise(async (resolve, reject) => {
+            try {
+                let sectionQuestionArray = {};
+                let questionArray = {};
+                let submissionsObjects = {};
+                evidences.sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
 
-            let sectionQuestionArray = {};
-            let questionArray = {};
-            let submissionsObjects = {};
-            evidences.sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
-
-            evidences.forEach(evidence => {
-                evidence.startTime =
-                    submissionDocEvidences[evidence.externalId].startTime;
-                evidence.endTime = submissionDocEvidences[evidence.externalId].endTime;
-                evidence.isSubmitted =
-                    submissionDocEvidences[evidence.externalId].isSubmitted;
-                if (submissionDocEvidences[evidence.externalId].submissions) {
-                    submissionDocEvidences[evidence.externalId].submissions.forEach(
-                        submission => {
-                            if (submission.isValid) {
-                                submissionsObjects[evidence.externalId] = submission;
+                evidences.forEach(evidence => {
+                    evidence.startTime =
+                        submissionDocEvidences[evidence.externalId].startTime;
+                    evidence.endTime = submissionDocEvidences[evidence.externalId].endTime;
+                    evidence.isSubmitted =
+                        submissionDocEvidences[evidence.externalId].isSubmitted;
+                    if (submissionDocEvidences[evidence.externalId].submissions) {
+                        submissionDocEvidences[evidence.externalId].submissions.forEach(
+                            submission => {
+                                if (submission.isValid) {
+                                    submissionsObjects[evidence.externalId] = submission;
+                                }
                             }
-                        }
-                    );
-                }
+                        );
+                    }
 
-                evidence.sections.forEach(section => {
-                    section.questions.forEach((question, index, section) => {
-                        //question filter based on entity question group
-                        if (!entityQuestionGroup || !entityQuestionGroup.length) entityQuestionGroup = ["A1"];
-                        if (_.intersection(question.questionGroup, entityQuestionGroup).length > 0) {
-                            question.evidenceMethod = evidence.externalId
-                            sectionQuestionArray[question._id] = section
-                            questionArray[question._id] = question
-                        }
+                    evidence.sections.forEach(section => {
+                        section.questions.forEach((question, index, section) => {
+                            //question filter based on entity question group
+                            if (!entityQuestionGroup || !entityQuestionGroup.length) entityQuestionGroup = ["A1"];
+                            if (_.intersection(question.questionGroup, entityQuestionGroup).length > 0) {
+                                question.evidenceMethod = evidence.externalId
+                                sectionQuestionArray[question._id] = section
+                                questionArray[question._id] = question
+                            }
+                        });
                     });
                 });
-            });
 
-            Object.entries(questionArray).forEach(questionArrayElm => {
-                questionArrayElm[1]["payload"] = {
-                    criteriaId: questionArrayElm[1]["criteriaId"],
-                    responseType: questionArrayElm[1]["responseType"],
-                    evidenceMethod: questionArrayElm[1].evidenceMethod
-                }
-                questionArrayElm[1]["startTime"] = ""
-                questionArrayElm[1]["endTime"] = ""
-                delete questionArrayElm[1]["criteriaId"]
+                Object.entries(questionArray).forEach(questionArrayElm => {
+                    questionArrayElm[1]["payload"] = {
+                        criteriaId: questionArrayElm[1]["criteriaId"],
+                        responseType: questionArrayElm[1]["responseType"],
+                        evidenceMethod: questionArrayElm[1].evidenceMethod
+                    }
+                    questionArrayElm[1]["startTime"] = ""
+                    questionArrayElm[1]["endTime"] = ""
+                    delete questionArrayElm[1]["criteriaId"]
 
-                if (questionArrayElm[1].responseType === "matrix") {
-                    let instanceQuestionArray = new Array()
-                    questionArrayElm[1].instanceQuestions.forEach(instanceQuestionId => {
-                        if (sectionQuestionArray[instanceQuestionId.toString()]) {
-                            let instanceQuestion = questionArray[instanceQuestionId.toString()];
-                            instanceQuestionArray.push(instanceQuestion);
-                            let sectionReferenceOfInstanceQuestion =
-                                sectionQuestionArray[instanceQuestionId.toString()];
-                            sectionReferenceOfInstanceQuestion.forEach(
-                                (questionInSection, index) => {
-                                    if (
-                                        questionInSection._id.toString() ===
-                                        instanceQuestionId.toString()
-                                    ) {
-                                        sectionReferenceOfInstanceQuestion.splice(index, 1);
+                    if (questionArrayElm[1].responseType === "matrix") {
+                        let instanceQuestionArray = new Array()
+                        questionArrayElm[1].instanceQuestions.forEach(instanceQuestionId => {
+                            if (sectionQuestionArray[instanceQuestionId.toString()]) {
+                                let instanceQuestion = questionArray[instanceQuestionId.toString()];
+                                instanceQuestionArray.push(instanceQuestion);
+                                let sectionReferenceOfInstanceQuestion =
+                                    sectionQuestionArray[instanceQuestionId.toString()];
+                                sectionReferenceOfInstanceQuestion.forEach(
+                                    (questionInSection, index) => {
+                                        if (
+                                            questionInSection._id.toString() ===
+                                            instanceQuestionId.toString()
+                                        ) {
+                                            sectionReferenceOfInstanceQuestion.splice(index, 1);
+                                        }
                                     }
-                                }
-                            );
-                        }
-                    });
-                    questionArrayElm[1]["instanceQuestions"] = instanceQuestionArray;
-                }
-            });
-            return resolve({
-                evidences: evidences,
-                submissions: submissionsObjects,
-            });
+                                );
+                            }
+                        });
+                        questionArrayElm[1]["instanceQuestions"] = instanceQuestionArray;
+                    }
+                });
+                return resolve({
+                    evidences: evidences,
+                    submissions: submissionsObjects,
+                });
+            } catch (error) {
+                return reject(error)
+            }
         })
+
 
     }
 }
