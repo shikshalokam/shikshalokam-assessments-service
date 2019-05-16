@@ -8,8 +8,8 @@ module.exports = class Assessors {
     return new Promise(async (resolve, reject) => {
       try {
 
-        let entities = new Array
-        let responseMessage = "Not authorized to fetch entities for this user"
+        let entities = new Array;
+        let responseMessage = "Not authorized to fetch entities for this user";
 
         if (_.includes(req.userDetails.allRoles, "ASSESSOR") || _.includes(req.userDetails.allRoles, "LEAD_ASSESSOR")) {
 
@@ -30,6 +30,7 @@ module.exports = class Assessors {
             {
               $project: {
                 "entities": "$entities",
+                "programId":1,
                 "entityDocuments": "$entityDocuments"
               }
             }
@@ -39,7 +40,7 @@ module.exports = class Assessors {
 
           let assessor
           let submissions
-          let schoolPAISubmissionStatus = new Array
+          let entityPAISubmissionStatus = new Array
 
           for (let pointerToAssessorDocumentArray = 0; pointerToAssessorDocumentArray < assessorsDocument.length; pointerToAssessorDocumentArray++) {
 
@@ -60,41 +61,42 @@ module.exports = class Assessors {
 
             submissions = await database.models.submissions.find(
               {
-                schoolId: {
+                entityId: {
                   $in: assessor.entities
                 },
                 "evidences.PAI.isSubmitted": true
               },
               {
-                "schoolId": 1
+                "entityId": 1
               }
             )
 
-            schoolPAISubmissionStatus = submissions.reduce(
-              (ac, school) => ({ ...ac, [school.schoolId.toString()]: true }), {})
+            entityPAISubmissionStatus = submissions.reduce(
+              (ac, entity) => ({ ...ac, [entity.entityId.toString()]: true }), {})
 
-            assessor.entityDocuments.forEach(assessorSchool => {
-              if (schoolPAISubmissionStatus[assessorSchool._id.toString()]) {
-                assessorSchool.isParentInterviewCompleted = true
+            assessor.entityDocuments.forEach(assessorEntity => {
+
+              if (entityPAISubmissionStatus[assessorEntity._id.toString()]) {
+                assessorEntity.isParentInterviewCompleted = true
               } else {
-                assessorSchool.isParentInterviewCompleted = false
+                assessorEntity.isParentInterviewCompleted = false
               }
-              let schoolData = {
-                "_id": assessorSchool._id,
-                "externalId": assessorSchool.metaInformation.externalId,
-                "addressLine1": assessorSchool.metaInformation.addressLine1,
-                "addressLine2": assessorSchool.metaInformation.addressLine2,
-                "city": assessorSchool.metaInformation.city,
-                "name": assessorSchool.metaInformation.name,
-                "state": assessorSchool.metaInformation.state,
+
+              entities.push({
+                "_id": assessorEntity._id,
+                "externalId": assessorEntity.metaInformation.externalId,
+                "addressLine1": assessorEntity.metaInformation.addressLine1,
+                "addressLine2": assessorEntity.metaInformation.addressLine2,
+                "city": assessorEntity.metaInformation.city,
+                "name": assessorEntity.metaInformation.name,
+                "state": assessorEntity.metaInformation.state,
                 "isParentInterviewCompleted": false
-              }
-              entities.push(schoolData)
+              })
             })
 
           }
 
-          responseMessage = "School list fetched successfully"
+          responseMessage = "Entity list fetched successfully"
         }
 
         return resolve({
