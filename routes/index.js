@@ -27,7 +27,7 @@ module.exports = function (app) {
     else {
 
       try {
-        
+
         let validationError = req.validationErrors();
 
         if (validationError.length)
