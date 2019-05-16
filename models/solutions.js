@@ -31,7 +31,6 @@ module.exports = {
     status: String,
     evidenceMethods: Object,
     sections: Object,
-    roles: Object,
     registry : Array,
     frameworkId: "ObjectId",
     frameworkExternalId: String,

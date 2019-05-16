@@ -1,5 +1,5 @@
 const assessmentsHelper = require(ROOT_PATH + "/module/assessments/helper");
-module.exports = class Assessment {
+module.exports = class Assessments {
 
   /**
    * @apiDefine errorBody
