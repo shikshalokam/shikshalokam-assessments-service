@@ -3,7 +3,6 @@ module.exports = {
   schema: {
     entityId: "ObjectId",
     observationId: "ObjectId",
-    assessors: Array,
     status: "String",
     evidencesStatus: Array,
     evidences: Object,
@@ -20,6 +19,7 @@ module.exports = {
     solutionExternalId: String,
     submissionsUpdatedHistory: Array,
     entityTypeId: "ObjectId",
-    entityType: "String"
+    entityType: "String",
+    createdBy: "String"
   }
 };

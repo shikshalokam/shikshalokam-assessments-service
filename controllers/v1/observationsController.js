@@ -1,7 +1,7 @@
 const observationsHelper = require(ROOT_PATH + "/module/observations/helper")
 const entitiesHelper = require(ROOT_PATH + "/module/entities/helper")
 const assessmentsHelper = require(ROOT_PATH + "/module/assessments/helper")
-const submissionsHelper = require(ROOT_PATH + "/module/submissions/helper")
+// const observationsHelper = require(ROOT_PATH + "/module/submissions/helper")
 
 module.exports = class Observations extends Abstract {
 
@@ -580,8 +580,9 @@ module.exports = class Observations extends Abstract {
                     entityType: solutionDocument.entityType,
                     observationId: observationDocument._id,
                     observationInformation: {
-                        ..._.omit(observationDocument, ["_id", "entities"])
+                        ..._.omit(observationDocument, ["_id", "entities", "deleted", "__v"])
                     },
+                    createdBy: observationDocument.createdBy,
                     evidenceSubmissions: [],
                     entityProfile: {},
                     status: "started"
@@ -689,10 +690,8 @@ module.exports = class Observations extends Abstract {
                 submissionDocument.evidencesStatus = Object.values(submissionDocumentEvidences);
                 submissionDocument.criteria = submissionDocumentCriterias;
 
-                let submissionDoc = await submissionsHelper.findSubmission(
-                    submissionDocument,
-                    req,
-                    "observationSubmissions"
+                let submissionDoc = await observationsHelper.findSubmission(
+                    submissionDocument
                 );
 
                 assessment.submissionId = submissionDoc.result._id;
