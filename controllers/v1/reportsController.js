@@ -2411,7 +2411,7 @@ module.exports = class Reports {
           {
             _id: 1
           }
-        );
+        ).lean();
 
         const fileName = `Generate Feedback For Submission`;
         let fileStream = new FileStream(fileName);
