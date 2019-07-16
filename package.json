@@ -57,6 +57,8 @@
     "nodemon": "^1.18.8",
     "p-each-series": "^2.1.0",
     "path": "^0.12.7",
+    "pdfkit": "^0.10.0",
+    "pdfmake": "^0.1.57",
     "request": "^2.88.0",
     "require-all": "^2.2.0",
     "uuid": "^3.3.2",

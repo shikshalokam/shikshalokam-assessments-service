@@ -274,201 +274,46 @@ module.exports = class ObservationSubmissions extends Abstract {
             "observationInformation.name": 1,
             "observationInformation.createdBy": 1,
             "answers": 1,
-            "solutionExternalId": 1
+            "solutionExternalId": 1,
           }).lean()
 
-        let solutionData = await database.models.solutions.findOne({
-          externalId: observationSubmissionsDocument.solutionExternalId
-        }, { themes: 1 }).lean()
+        let answerData = Object.values(observationSubmissionsDocument.answers)
+        let questionIds = []
 
-        let criteriaIds = gen.utils.getCriteriaIds(solutionData.themes);
-
-        let allCriteriaDocument = await database.models.criteria.find({ _id: { $in: criteriaIds } }, { evidences: 1 }).lean();
-        let questionIds = gen.utils.getAllQuestionId(allCriteriaDocument)
+        for (let pointerToAnswer = 0; pointerToAnswer < answerData.length; pointerToAnswer++) {
+          questionIds.push(answerData[pointerToAnswer].qid)
+        }
 
         let questionDocument = await database.models.questions.find({
           _id: { $in: questionIds }
-        }, { options: 1 }).lean();
+        }, { options: 1, question: 1, responseType: 1, validation: 1 }).lean();
+
 
         let questionData = questionDocument.reduce((acc, currentData) => {
           if (currentData.options && currentData.options.length > 0) {
             acc[currentData._id.toString()] = {
-              questionOptions: currentData.options
+              questionOptions: currentData.options,
+              questionName: currentData.question
+            }
+          } else if (currentData.responseType === "slider") {
+            let splitMaximumValue = currentData.validation.regex.split("[")[1].split("s]")[0]
+            let maximum = splitMaximumValue.split("-")[1]
+            acc[currentData._id.toString()] = {
+              maximumValue: maximum
             }
           }
           return acc
-          // console.log(currentData)
         }, {})
 
-
-        let observations = []
-
-        observations.push({
-          "textName": "General Information",
-          "School Name": observationSubmissionsDocument.entityInformation.schoolName,
+        let generalInfo = {
+          "School Name": observationSubmissionsDocument.entityInformation.schoolName ? observationSubmissionsDocument.entityInformation.schoolName : observationSubmissionsDocument.entityInformation.name,
           "Observation Name": observationSubmissionsDocument.observationInformation.name,
           "Assessors Name": observationSubmissionsDocument.observationInformation.createdBy,
           "Entity Name": observationSubmissionsDocument.entityInformation.name
-        })
-
-        let pdfData = {}
-        pdfData["header"] = {}
-        pdfData["header"]["margin"] = 10
-        pdfData["header"]["columns"] = []
-        pdfData["header"]["columns"].push({
-          image: ROOT_PATH + '/roboto/shikshalokam.png',
-          width: 30,
-          marginLeft: 10
-        },
-          {
-            margin: [10, 0, 0, 0],
-            text: 'Here goes the rest'
-          }
-        )
-        pdfData["footer"] = {}
-
-        pdfData.footer = function (currentPage, pageCount) {
-          return {
-            margin: 10,
-            columns: [
-              {
-                fontSize: 9,
-                text: [
-                  {
-                    text: '--------------------------------------------------------------------------' +
-                      '\n',
-                    margin: [0, 20]
-                  },
-                  {
-                    text: '© shikshalokam,' + currentPage.toString() + ' of ' + pageCount,
-                  }
-                ],
-                alignment: 'center'
-              }
-            ]
-          };
-
         }
 
-        pdfData["content"] = []
-        pdfData["styles"] = {}
+        let observationData = await observationsHelper.observationData(observationSubmissionsDocument, generalInfo, questionData)
 
-        let TextAnswer = {}
-        TextAnswer["ol"] = []
-
-        pdfData["styles"]["tableExample"] = {
-          borderRadius: 4,
-          fillColor: '#b0b6bf',
-          dontBreakRows: true,
-          fontSize: 15,
-          margin: [10, 10, 10, 10]
-        }
-
-        let generalInformation = {}
-
-        let tableData = {
-          style: ['tableExample'],
-          table: {
-            "headerRows": 0,
-            // widths: ['50%', '50%'],
-            body: []
-          }
-        }
-
-        let textAnswer = JSON.parse(JSON.stringify(tableData))
-        let generalInformationTable = JSON.parse(JSON.stringify(tableData))
-
-        for (let pointerToObservations = 0; pointerToObservations < observations.length; pointerToObservations++) {
-          generalInformationTable["table"]["widths"] = ['50%', '50%']
-          generalInformation["text"] = observations[pointerToObservations].textName;
-          generalInformation["fontSize"] = 18;
-          generalInformation["background"] = "gray";
-          generalInformation["width"] = "auto";
-          generalInformation["fillColor"] = "#dedede";
-
-          if (observations[pointerToObservations].textName === "General Information") {
-
-            Object.keys(observations[pointerToObservations]).forEach(eachObservation => {
-              generalInformationTable.table.body.push([
-                {
-                  text: eachObservation,
-                  margin: 8
-                }, {
-                  text: observations[pointerToObservations][eachObservation],
-                  margin: 8
-                }
-              ])
-            })
-          }
-
-          generalInformationTable["layout"] = {
-            hLineColor: function (i, node) {
-              console.log(node.table)
-              console.log(i)
-              return (i === 0 || i === node.table.body.length) ? "black" : "#b0b6bf";
-            },
-
-            vLineColor: function (i, node) {
-              console.log(node.table)
-              console.log(i)
-              console.log(i.widths)
-
-              return (i === 0 || i === node.table.widths.length) ? "black" : "#b0b6bf";
-            }
-          }
-
-          pdfData["content"].push(generalInformation, generalInformationTable)
-
-        }
-
-        let answerDocument = Object.values(observationSubmissionsDocument.answers)
-
-        for (let pointerToAnswer = 0; pointerToAnswer < answerDocument.length; pointerToAnswer++) {
-
-          if (answerDocument[pointerToAnswer].responseType === "text") {
-
-
-            TextAnswer.ol.push(
-              { text: `Q.NO${pointerToAnswer + 1} ${answerDocument[pointerToAnswer].payload.question[0]}`, listType: 'none' },
-              {
-                ul: [
-                  `${answerDocument[pointerToAnswer].payload.labels[0]}`
-                ]
-              }
-            )
-            textAnswer["table"]["widths"] = ['100%']
-
-            textAnswer.table.body.push([TextAnswer])
-
-            textAnswer["layout"] = {
-              hLineColor: function (i, node) {
-                console.log(node.table)
-                console.log(i)
-                return (i === 0 || i === node.table.body.length) ? "black" : "#b0b6bf";
-              },
-
-              vLineColor: function (i, node) {
-                console.log(node.table)
-                console.log(i)
-                console.log(i.widths)
-
-                return (i === 0 || i === node.table.widths.length) ? "black" : "#b0b6bf";
-              }
-            }
-          }
-        }
-
-        if (TextAnswer.ol.length > 0) {
-          pdfData["content"].push({
-            "text": "Text",
-            "fontSize": 18,
-            "background": "gray",
-            "width": "auto",
-            "fillColor": "#dedede",
-          }, textAnswer)
-        }
-
-        let generatePdf = observationsHelper.generatePdf(pdfData)
         console.log("here")
       } catch (error) {
         return reject({
