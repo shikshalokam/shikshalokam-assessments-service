@@ -285,11 +285,11 @@ module.exports = class ObservationSubmissions extends Abstract {
         let message = "Observation submission deleted successfully";
 
         let submissionDocument = await database.models.observationSubmissions.deleteOne(
-          { 
+          {
             "_id": req.params._id,
             status: "started",
             createdBy: req.userDetails.userId
-         }
+          }
         );
 
         if (!submissionDocument.n) {
@@ -374,7 +374,7 @@ module.exports = class ObservationSubmissions extends Abstract {
         if (!submissionDocument || !submissionDocument._id) {
           message = "PDF not available."
         } else {
-          result.url = "https://storage.googleapis.com/sl-" +(process.env.NODE_ENV == "production" ? "prod" : "dev") +"-storage/"+ submissionDocument.pdfFileUrl
+          result.url = "https://storage.googleapis.com/sl-" + (process.env.NODE_ENV == "production" ? "prod" : "dev") + "-storage/" + submissionDocument.pdfFileUrl
         }
 
         let response = {
@@ -397,7 +397,72 @@ module.exports = class ObservationSubmissions extends Abstract {
   }
 
 
+  async highCharts(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
 
+        let data = []
+        let responseArray = []
 
+        data.push({
+          "infile": {
+            "title":
+              { "text": "pie" },
+            "chart": {
+              "type": "pie"
+            },
+            "xAxis": {
+              "categories": ["Jan", "Feb", "Mar"]
+            },
+            "series": [{
+              "data": [{
+                "name": "a",
+                "y": 29.9
+              }, {
+                "name": "b",
+                "y": 71.5
+              }, {
+                "name": "c",
+                "y": 106.4
+              }]
+            }]
+          }
+        }, {
+            "infile": {
+              "title":
+                { "text": "Line" },
+              "xAxis": {
+                "categories": ["Jan", "Feb", "Mar"]
+              },
+              "series": [{
+                "data": [{
+                  "name": "a",
+                  "y": 29.9
+                }, {
+                  "name": "b",
+                  "y": 71.5
+                }, {
+                  "name": "c",
+                  "y": 106.4
+                }]
+              }]
+            }
+          })
+
+        for (let pointerToData = 0; pointerToData < data.length; pointerToData++) {
+          let HighCharts = await observationSubmissionsHelper.highCharts(data[pointerToData], pointerToData + 1)
+          responseArray.push(HighCharts.image)
+        }
+
+        return resolve(responseArray);
+
+      } catch (error) {
+        return reject({
+          status: 500,
+          message: error
+        });
+      }
+    })
+  }
 };
 

@@ -97,9 +97,37 @@ module.exports = class observationSubmissionsHelper {
                     return date
                 }
 
-                function radio(answer) {
+                async function radio(answer) {
                     let radioResponse = {}
                     radioResponse["options"] = new Array
+
+                    let data = {
+                        "infile": {
+                            "title":
+                                { "text": "pie" },
+                            "chart": {
+                                "type": "pie"
+                            },
+                            "xAxis": {
+                                "categories": ["Jan", "Feb", "Mar"]
+                            },
+                            "series": [{
+                                "data": [{
+                                    "name": "a",
+                                    "y": 29.9
+                                }, {
+                                    "name": "b",
+                                    "y": 71.5
+                                }, {
+                                    "name": "c",
+                                    "y": 106.4
+                                }]
+                            }]
+                        }
+                    }
+
+                    let a = await observationSubmissionsHelper.highCharts(data, 9)
+                    console.log(a)
 
                     questionData[answer.qid] !== undefined && questionData[answer.qid].questionOptions.forEach(eachDataOption => {
                         let radioItems = {}
@@ -373,6 +401,30 @@ module.exports = class observationSubmissionsHelper {
             }
         })
 
+    }
+
+    static highCharts(data, pointer) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let a = request.post("http://127.0.0.1:7801", {
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    encoding: "binary",
+                    json: data
+                }, (err, res, body) => {
+                    fs.writeFileSync(pointer + ".png", res.body, "binary", function (err) {
+                        if (err) console.log(err);
+                    });
+                    return resolve({
+                        image: pointer + ".png"
+                    })
+                });
+            }
+            catch (error) {
+                return reject(error);
+            }
+        })
     }
 
 };
