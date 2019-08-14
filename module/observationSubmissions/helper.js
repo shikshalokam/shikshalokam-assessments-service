@@ -97,37 +97,9 @@ module.exports = class observationSubmissionsHelper {
                     return date
                 }
 
-                async function radio(answer) {
+                function radio(answer) {
                     let radioResponse = {}
                     radioResponse["options"] = new Array
-
-                    let data = {
-                        "infile": {
-                            "title":
-                                { "text": "pie" },
-                            "chart": {
-                                "type": "pie"
-                            },
-                            "xAxis": {
-                                "categories": ["Jan", "Feb", "Mar"]
-                            },
-                            "series": [{
-                                "data": [{
-                                    "name": "a",
-                                    "y": 29.9
-                                }, {
-                                    "name": "b",
-                                    "y": 71.5
-                                }, {
-                                    "name": "c",
-                                    "y": 106.4
-                                }]
-                            }]
-                        }
-                    }
-
-                    let a = await observationSubmissionsHelper.highCharts(data, 9)
-                    console.log(a)
 
                     questionData[answer.qid] !== undefined && questionData[answer.qid].questionOptions.forEach(eachDataOption => {
                         let radioItems = {}
