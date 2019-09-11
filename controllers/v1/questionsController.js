@@ -85,6 +85,7 @@ module.exports = class Questions extends Abstract {
   upload(req) {
     return new Promise(async (resolve, reject) => {
       try {
+
         if (!req.files || !req.files.questions) {
           let responseMessage = "Bad request.";
           return resolve({ status: 400, message: responseMessage });
@@ -119,7 +120,7 @@ module.exports = class Questions extends Abstract {
         questionData.forEach(eachQuestionData => {
           let parsedQuestion = gen.utils.valueParser(eachQuestionData);
 
-          if (!criteriaIds.includes(parsedQuestion["criteriaExternalId"])) {
+          if (parsedQuestion["criteriaExternalId"] && parsedQuestion["criteriaExternalId"] != "" && !criteriaIds.includes(parsedQuestion["criteriaExternalId"])) {
             criteriaIds.push(parsedQuestion["criteriaExternalId"]);
           }
 
