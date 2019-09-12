@@ -1,9 +1,76 @@
 
 module.exports = class questionsHelper {
 
+  // static questionTemplate(questions){
+  //   return new Promise(async (resolve, reject) => {
+  //     try{
+
+  //       let criteriaIds = new Array();
+
+
+  //       let solutionDocument = await database.models.solutions
+  //         .findOne(
+  //           { externalId: questionData[0]["solutionId"] },
+  //           { evidenceMethods: 1, sections: 1, themes: 1 }
+  //         )
+  //         .lean();
+
+  //       let criteriasIdArray = gen.utils.getCriteriaIds(
+  //         solutionDocument.themes
+  //       );
+
+  //       let criteriasArray = new Array();
+
+  //       criteriasIdArray.forEach(eachCriteriaIdArray => {
+  //         criteriasArray.push(eachCriteriaIdArray._id.toString());
+  //       });
+
+  //       // No changes required here.
+  //       questions.forEach(eachQuestionData => {
+  //         let parsedQuestion = gen.utils.valueParser(eachQuestionData);
+
+  //         if (parsedQuestion["criteriaExternalId"] && parsedQuestion["criteriaExternalId"] != "" && !criteriaIds.includes(parsedQuestion["criteriaExternalId"])) {
+  //           criteriaIds.push(parsedQuestion["criteriaExternalId"]);
+  //         }
+
+  //         if (!questionIds.includes(parsedQuestion["externalId"]))
+  //           questionIds.push(parsedQuestion["externalId"]);
+
+  //         if (
+  //           parsedQuestion["hasAParentQuestion"] !== "NO" &&
+  //           !questionIds.includes(parsedQuestion["parentQuestionId"])
+  //         ) {
+  //           questionIds.push(parsedQuestion["parentQuestionId"]);
+  //         }
+
+  //         if (
+  //           parsedQuestion["instanceParentQuestionId"] !== "NA" &&
+  //           !questionIds.includes(parsedQuestion["instanceParentQuestionId"])
+  //         ) {
+  //           questionIds.push(parsedQuestion["instanceParentQuestionId"]);
+  //         }
+  //       });
+
+  //       let criteriaDocument = await database.models.criteria
+  //       .find({
+  //         externalId: { $in: criteriaIds }
+  //       })
+  //       .lean();
+
+  //       if (!criteriaDocument.length > 0) {
+  //         throw "No criteria found for the given solution"
+  //       }
+
+
+  //     } catch (error) {
+  //       return reject(error);
+  //     }
+  //   })
+  // }
+
   static createQuestions(parsedQuestion, questionCollection, criteriaObject, evidenceCollectionMethodObject, questionSection) {
 
-    let csvArray = new Array
+    // let csvArray = new Array
 
     return new Promise(async (resolve, reject) => {
 
@@ -31,6 +98,7 @@ module.exports = class questionsHelper {
 
         if (questionCollection && questionCollection[parsedQuestion["externalId"]]) {
           csvResult["internal id"] = "Question already exists"
+          csvResult["status"] = "Cannot create"
         } else {
 
           let allValues = {}
@@ -153,9 +221,11 @@ module.exports = class questionsHelper {
 
           if (!createQuestion._id) {
             csvResult["_SYSTEM_ID"] = "Not Created"
+            csvResult["status"] = "Failure"
           } else {
             resultQuestion = createQuestion
             csvResult["_SYSTEM_ID"] = createQuestion._id
+            csvResult["status"] = "success"
 
             if (parsedQuestion["parentQuestionId"] != "") {
 
@@ -239,12 +309,12 @@ module.exports = class questionsHelper {
 
         }
 
-        csvResult["Question External Id"] = parsedQuestion["externalId"]
-        csvResult["Question Name"] = parsedQuestion["question0"]
-        csvArray.push(csvResult)
+        // csvResult["Question External Id"] = parsedQuestion["externalId"]
+        // csvResult["Question Name"] = parsedQuestion["question0"]
+        // csvArray.push(csvResult)
 
         return resolve({
-          total: csvArray,
+          csvResult: csvResult,
           result: resultQuestion
         })
 
