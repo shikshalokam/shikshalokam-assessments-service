@@ -93,23 +93,23 @@ module.exports = class questionsHelper {
           });
         }
 
-        function parentQuestionInCsv(parsedQuestionData) {
+        function parentQuestionInCsv(parentQuestion) {
           let question = {};
 
           if (
-            parsedQuestionData["instanceParentQuestionId"] !== "NA" &&
-            questionCollection[parsedQuestionData["instanceParentQuestionId"]]
+            parentQuestion["instanceParentQuestionId"] !== "NA" &&
+            questionCollection[parentQuestion["instanceParentQuestionId"]]
           ) {
-            question[parsedQuestionData["instanceParentQuestionId"]] =
-              questionCollection[parsedQuestionData["instanceParentQuestionId"]];
+            question[parentQuestion["instanceParentQuestionId"]] =
+              questionCollection[parentQuestion["instanceParentQuestionId"]];
           }
 
           if (
-            parsedQuestionData["hasAParentQuestion"] == "YES" &&
-            questionCollection[parsedQuestionData["parentQuestionId"]]
+            parentQuestion["hasAParentQuestion"] == "YES" &&
+            questionCollection[parentQuestion["parentQuestionId"]]
           ) {
-            question[parsedQuestionData["parentQuestionId"]] =
-              questionCollection[parsedQuestionData["parentQuestionId"]];
+            question[parentQuestion["parentQuestionId"]] =
+              questionCollection[parentQuestion["parentQuestionId"]];
           }
           return question
         }
@@ -136,6 +136,7 @@ module.exports = class questionsHelper {
 
           if (questionCollection[parsedQuestion["externalId"]]) {
             csv["UPLOAD_STATUS"] = "Question already exists"
+            csv["_SYSTEM_ID"] = "Not Created"
             csvArray.push(csv)
             continue
           }
@@ -149,6 +150,7 @@ module.exports = class questionsHelper {
           } else {
 
             csv["UPLOAD_STATUS"] = "Ecm is not found in the given solution"
+            csv["_SYSTEM_ID"] = "Not Created"
             csvArray.push(csv)
             continue
           }
@@ -159,6 +161,7 @@ module.exports = class questionsHelper {
           } else {
 
             csv["UPLOAD_STATUS"] = "Criteria is not found in the given solution"
+            csv["_SYSTEM_ID"] = "Not Created"
             csvArray.push(csv)
             continue
           }
@@ -170,25 +173,28 @@ module.exports = class questionsHelper {
           } else {
 
             csv["UPLOAD_STATUS"] = "section is not found in the given solution"
+            csv["_SYSTEM_ID"] = "Not Created"
             csvArray.push(csv)
             continue
           }
 
           if (parsedQuestion["hasAParentQuestion"] === "") {
             csv["UPLOAD_STATUS"] = "hasAParentQuestion should be either YES or NO"
+            csv["_SYSTEM_ID"] = "Not Created"
             csvArray.push(csv)
             continue
           }
 
           if (parsedQuestion["instanceParentQuestionId"] === "") {
             csv["UPLOAD_STATUS"] = "instanceParentQuestionId should be either NA or parent question id"
+            csv["_SYSTEM_ID"] = "Not Created"
             csvArray.push(csv)
             continue
           }
 
           let parentQuestion = {}
 
-          if (parsedQuestion["hasAParentQuestion"] == "YES" || parsedQuestionData["instanceParentQuestionId"] !== "NA") {
+          if (parsedQuestion["hasAParentQuestion"] == "YES" || parsedQuestion["instanceParentQuestionId"] !== "NA") {
             parentQuestion = parentQuestionInCsv(_.pick(parsedQuestion, ["instanceParentQuestionId", "hasAParentQuestion", "parentQuestionId"]))
 
           }
