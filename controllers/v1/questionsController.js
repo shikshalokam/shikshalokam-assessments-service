@@ -12,68 +12,6 @@ module.exports = class Questions extends Abstract {
   }
 
   /**
-   * @api {post} /assessment/api/v1/questions/setGeneralQuestions Upload General Questions
-   * @apiVersion 0.0.1
-   * @apiName Upload General Questions
-   * @apiGroup Questions
-   * @apiParam {File} questions     Mandatory questions file of type CSV.
-   * @apiUse successBody
-   * @apiUse errorBody
-   */
-
-  async setGeneralQuestions(req) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        let questionData = await csv().fromString(
-          req.files.questions.data.toString()
-        );
-
-        questionData = await Promise.all(
-          questionData.map(async question => {
-            if (question.externalId && question.isAGeneralQuestion) {
-              question = await database.models.questions.findOneAndUpdate(
-                { externalId: question.externalId },
-                {
-                  $set: {
-                    isAGeneralQuestion:
-                      question.isAGeneralQuestion === "TRUE" ? true : false
-                  }
-                },
-                {
-                  returnNewDocument: true
-                }
-              );
-              return question;
-            } else {
-              return;
-            }
-          })
-        );
-
-        if (
-          questionData.findIndex(
-            question => question === undefined || question === null
-          ) >= 0
-        ) {
-          throw "Something went wrong, not all records were inserted/updated.";
-        }
-
-        let responseMessage = "Questions updated successfully.";
-
-        let response = { message: responseMessage };
-
-        return resolve(response);
-      } catch (error) {
-        return reject({
-          status: 500,
-          message: error,
-          errorObject: error
-        });
-      }
-    });
-  }
-
-  /**
    * @api {post} /assessment/api/v1/questions/upload Upload Questions CSV
    * @apiVersion 0.0.1
    * @apiName Upload Questions CSV
@@ -103,15 +41,245 @@ module.exports = class Questions extends Abstract {
           return resolve({ status: 400, message: responseMessage });
         }
 
-        let questionData = await csv().fromString(
+        let questions = await csv().fromString(
           req.files.questions.data.toString()
         );
 
-        let allQuestion = await questionsHelper.upload(questionData)
+        let criteriaIds = new Array();
 
-        allQuestion.csvData.forEach(eachCsvData => {
-          input.push(eachCsvData)
-        })
+        let solutionDocument = await database.models.solutions
+          .findOne(
+            { externalId: questions[0]["solutionId"] },
+            { evidenceMethods: 1, sections: 1, themes: 1 }
+          )
+          .lean();
+
+        let allCriteriasInSolutions = gen.utils.getCriteriaIds(
+          solutionDocument.themes
+        );
+
+        let criteriasArray = allCriteriasInSolutions.map(eachCriteriaIdArray => {
+          return eachCriteriaIdArray._id.toString()
+        });
+
+
+        let questionIds = new Array();
+
+        questions.forEach(eachQuestionData => {
+          let parsedQuestion = gen.utils.valueParser(eachQuestionData);
+
+          if (parsedQuestion["criteriaExternalId"] && parsedQuestion["criteriaExternalId"] != "" && !criteriaIds.includes(parsedQuestion["criteriaExternalId"])) {
+            criteriaIds.push(parsedQuestion["criteriaExternalId"]);
+          }
+
+          if (!questionIds.includes(parsedQuestion["externalId"])) {
+            questionIds.push(parsedQuestion["externalId"]);
+          }
+
+          if (
+            parsedQuestion["hasAParentQuestion"] !== "NO" &&
+            !questionIds.includes(parsedQuestion["parentQuestionId"])
+          ) {
+            questionIds.push(parsedQuestion["parentQuestionId"]);
+          }
+
+          if (
+            parsedQuestion["instanceParentQuestionId"] !== "NA" &&
+            !questionIds.includes(parsedQuestion["instanceParentQuestionId"])
+          ) {
+            questionIds.push(parsedQuestion["instanceParentQuestionId"]);
+          }
+        });
+
+        let criteriaDocument = await database.models.criteria
+          .find({
+            externalId: { $in: criteriaIds },
+            frameworkCriteriaId: { $exists: true }
+          }, {
+              externalId: 1,
+              _id: 1
+            })
+          .lean();
+
+        if (!criteriaDocument.length > 0) {
+          throw "No criteria found for the given solution"
+        }
+
+        let criteriaObject = {}
+
+        criteriaDocument.forEach(eachCriteriaDocument => {
+
+          if (criteriasArray.includes(eachCriteriaDocument._id.toString())) {
+
+            criteriaObject[eachCriteriaDocument.externalId] = eachCriteriaDocument;
+          }
+        });
+
+        let questionsFromDatabase = await database.models.questions
+          .find({
+            externalId: { $in: questionIds }
+          }, {
+              externalId: 1,
+              _id: 1
+            })
+          .lean();
+
+
+        let questionCollection = {};
+
+        if (questionsFromDatabase.length > 0) {
+          questionsFromDatabase.forEach(question => {
+            questionCollection[question.externalId] = question;
+          });
+        }
+
+        function parentQuestionInCsv(parentQuestion) {
+          let question = {};
+
+          if (
+            parentQuestion["instanceParentQuestionId"] !== "NA" &&
+            questionCollection[parentQuestion["instanceParentQuestionId"]]
+          ) {
+            question[parentQuestion["instanceParentQuestionId"]] =
+              questionCollection[parentQuestion["instanceParentQuestionId"]];
+          }
+
+          if (
+            parentQuestion["hasAParentQuestion"] == "YES" &&
+            questionCollection[parentQuestion["parentQuestionId"]]
+          ) {
+            question[parentQuestion["parentQuestionId"]] =
+              questionCollection[parentQuestion["parentQuestionId"]];
+          }
+          return question
+        }
+
+        let pendingItems = new Array();
+
+        for (
+          let pointerToQuestionData = 0;
+          pointerToQuestionData < questions.length;
+          pointerToQuestionData++
+        ) {
+
+          let parsedQuestion = gen.utils.valueParser(
+            questions[pointerToQuestionData]
+          );
+
+          let criteria = {};
+          let ecm = {};
+          let csv = {}
+
+          csv["Question External Id"] = parsedQuestion.externalId
+          csv["Question Name"] = parsedQuestion["question0"]
+
+          if (questionCollection[parsedQuestion["externalId"]]) {
+            csv["UPLOAD_STATUS"] = "Question already exists"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          if (solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]]) {
+            ecm[parsedQuestion["evidenceMethod"]] = {
+              code:
+                solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]]
+                  .externalId
+            };
+          } else {
+
+            csv["UPLOAD_STATUS"] = "Ecm is not found in the given solution"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          if (criteriaObject[parsedQuestion.criteriaExternalId]) {
+            criteria[parsedQuestion.criteriaExternalId] =
+              criteriaObject[parsedQuestion.criteriaExternalId];
+          } else {
+
+            csv["UPLOAD_STATUS"] = "Criteria is not found in the given solution"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          let section
+
+          if (solutionDocument.sections[parsedQuestion.section]) {
+            section = parsedQuestion.section;
+          } else {
+
+            csv["UPLOAD_STATUS"] = "section is not found in the given solution"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          if (parsedQuestion["hasAParentQuestion"] === "") {
+            csv["UPLOAD_STATUS"] = "hasAParentQuestion should be either YES or NO"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          if (parsedQuestion["instanceParentQuestionId"] === "") {
+            csv["UPLOAD_STATUS"] = "instanceParentQuestionId should be either NA or parent question id"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          let parentQuestion = {}
+
+          if (parsedQuestion["hasAParentQuestion"] == "YES" || parsedQuestion["instanceParentQuestionId"] !== "NA") {
+            parentQuestion = parentQuestionInCsv(_.pick(parsedQuestion, ["instanceParentQuestionId", "hasAParentQuestion", "parentQuestionId"]))
+
+          }
+          if (
+            (parsedQuestion["hasAParentQuestion"] == "YES" &&
+              !questionCollection[parsedQuestion["parentQuestionId"]]) ||
+            (parsedQuestion["instanceParentQuestionId"] !== "NA" &&
+              !questionCollection[parsedQuestion["instanceParentQuestionId"]])
+          ) {
+            pendingItems.push({
+              csvResponse: csv,
+              parsedQuestion: parsedQuestion,
+              parentQuestion: parentQuestion,
+              criteriaToBeSent: criteria,
+              evaluationFrameworkMethod: ecm,
+              section: section
+            });
+          } else {
+
+            let resultFromCreateQuestions = await questionsHelper.createQuestions(parsedQuestion, parentQuestion, criteria, ecm, section)
+
+            if (resultFromCreateQuestions.result) {
+              questionCollection[resultFromCreateQuestions.result.externalId] =
+                resultFromCreateQuestions.result;
+            }
+
+            csv = _.merge(csv, resultFromCreateQuestions.csvResult)
+            input.push(csv)
+          }
+
+        }
+
+        if (pendingItems) {
+          for (
+            let pointerToPendingData = 0;
+            pointerToPendingData < pendingItems.length;
+            pointerToPendingData++
+          ) {
+
+            let csvQuestionData = await questionsHelper.createQuestions(pendingItems[pointerToPendingData].parsedQuestion, pendingItems[pointerToPendingData].parentQuestion, pendingItems[pointerToPendingData].criteriaToBeSent, pendingItems[pointerToPendingData].evaluationFrameworkMethod, pendingItems[pointerToPendingData].section)
+
+            csvQuestionData.csvResult = _.merge(csvQuestionData.csvResult, pendingItems[pointerToPendingData].csvResponse)
+
+            input.push(csvQuestionData.csvResult);
+          }
+        }
 
         input.push(null);
       } catch (error) {

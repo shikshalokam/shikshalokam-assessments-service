@@ -449,4 +449,102 @@ module.exports = class Solutions extends Abstract {
     })
   }
 
+  /**
+   * @api {post} /assessment/api/v1/solutions/importFromSolution?solutionId:solutionExternalId Create duplicate solution.
+   * @apiVersion 0.0.1
+   * @apiName Create duplicate solution.
+   * @apiGroup Solutions
+   * @apiHeader {String} X-authenticated-user-token Authenticity token
+   * @apiParam {String} solutionId Solution External ID.
+   * @apiParamExample {json} Request-Body:
+   * {
+   * "externalId": ""
+   * "name": "",
+   * "description": ""
+   * "programExternalId": ""
+   * }
+   * @apiSampleRequest /assessment/api/v1/solutions/importFromSolution?solutionId=Mantra-STL-2019-001
+   * @apiUse successBody
+   * @apiUse errorBody
+   */
+
+  async importFromSolution(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        if (!(req.body)) {
+          let responseMessage = "Body should not be empty.";
+          return resolve({ status: 400, message: responseMessage });
+        }
+
+        let solutionDocument = await database.models.solutions.findOne({
+          externalId: req.query.solutionId
+        }).lean()
+
+        if (!solutionDocument._id) {
+          throw "Solution is not present"
+        }
+
+        let programDocument = await database.models.programs.findOne({
+          externalId: req.body.programExternalId
+        }, {
+            _id: 1,
+            externalId: 1,
+            name: 1,
+            description: 1
+          }).lean()
+
+        if (!programDocument._id) {
+          throw "program is not present"
+        }
+
+
+        let newSolutionDocument = _.cloneDeep(solutionDocument)
+        let startDate = new Date()
+        let endDate = new Date()
+        endDate.setFullYear(endDate.getFullYear() + 1);
+
+        newSolutionDocument.externalId = req.body.externalId
+        newSolutionDocument.name = req.body.name
+        newSolutionDocument.description = req.body.description
+        newSolutionDocument.programId = programDocument._id
+        newSolutionDocument.programExternalId = programDocument.externalId
+        newSolutionDocument.programName = programDocument.name
+        newSolutionDocument.programDescription = programDocument.description
+        newSolutionDocument.author = req.userDetails.id ? req.userDetails.id : "e97b5582-471c-4649-8401-3cc4249359bb"
+        newSolutionDocument.createdBy = req.userDetails.id ? req.userDetails.id : "e97b5582-471c-4649-8401-3cc4249359bb"
+        newSolutionDocument.entities = []
+        newSolutionDocument.parentSolutionId = solutionDocument._id
+        newSolutionDocument.startDate = startDate
+        newSolutionDocument.endDate = endDate
+        newSolutionDocument.createdAt = startDate
+        newSolutionDocument.updatedAt = startDate
+
+        let duplicateSolutionDocument = await database.models.solutions.create(_.omit(newSolutionDocument, ["_id"]))
+
+        if (duplicateSolutionDocument._id) {
+
+          await database.models.programs.updateOne({ _id: programDocument._id }, { $addToSet: { components: duplicateSolutionDocument._id } })
+
+          let response = {
+            message: "Duplicate Solution generated.",
+            result: duplicateSolutionDocument._id
+          };
+
+          return resolve(response);
+
+        } else {
+          throw "Some error while creating duplicate solution."
+        }
+
+      } catch (error) {
+        return reject({
+          status: 500,
+          message: error,
+          errorObject: error
+        });
+      }
+    });
+  }
+
 };

@@ -6,6 +6,14 @@ module.exports = (req) => {
         },
         update: function () {
             req.checkQuery('solutionExternalId').exists().withMessage("required solution externalId");
+        },
+
+        importFromSolution: function () {
+            req.checkQuery('solutionId').exists().withMessage("required solution externalId");
+            req.checkBody('externalId').exists().withMessage("required new solution externalId")
+            req.checkBody('name').exists().withMessage("required new solution name")
+            req.checkBody('description').exists().withMessage("required new solution description")
+            req.checkBody('programExternalId').exists().withMessage("required programExternalId")
         }
     }
 
