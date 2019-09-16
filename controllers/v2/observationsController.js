@@ -1,65 +1,122 @@
+const userExtensionHelper = require(ROOT_PATH + "/module/userExtension/helper")
+const entitiesHelper = require(ROOT_PATH + "/module/entities/helper")
+const observationsHelper = require(ROOT_PATH + "/module/observations/helper")
+const solutionsHelper = require(ROOT_PATH + "/module/solutions/helper")
+const v1Observation = require(ROOT_PATH + "/controllers/v1/observationsController")
 const assessmentsHelper = require(ROOT_PATH + "/module/assessments/helper")
-const submissionsHelper = require(ROOT_PATH + "/module/submissions/helper")
 
-module.exports = class Assessments {
+module.exports = class Observations extends v1Observation {
 
-    constructor() {
-    }
 
     /**
-    * @api {get} /assessment/api/v1/assessments/details/{programID}?solutionId={solutionId}&entityId={entityId} Detailed assessments
-    * @apiVersion 0.0.1
-    * @apiName Assessment details
-    * @apiGroup Assessments
-    * @apiParam {String} solutionId Solution ID.
-    * @apiParam {String} entityId Entity ID.
-    * @apiHeader {String} X-authenticated-user-token Authenticity token
-    * @apiSampleRequest /assessment/api/v1/assessments/details/5c56942d28466d82967b9479?solutionId=5c5693fd28466d82967b9429&entityId=5c5694be52600a1ce8d24dc7
-    * @apiUse successBody
-    * @apiUse errorBody
-    */
-    async details(req) {
+     * @api {get} /assessment/api/v2/observations/searchEntities?solutionId=:solutionId&search=:searchText&limit=1&page=1 Search Entities based on observationId or solutionId
+     * @apiVersion 0.0.2
+     * @apiName Search Entities
+     * @apiGroup Observations
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
+     * @apiSampleRequest /assessment/api/v1/observations/searchEntities?observationId=5d4bdcab44277a08145d7258&search=a&limit=10&page=1
+     * @apiUse successBody
+     * @apiUse errorBody
+     */
+
+    async searchEntities(req) {
+
         return new Promise(async (resolve, reject) => {
+
             try {
-                req.body = req.body || {};
+
+                let response = {
+                    result: {}
+                };
+
+                let userId = req.userDetails.userId
+                let result
+
+                let projection = []
+
+                if (req.query.observationId) {
+                    let findObject = {}
+                    findObject["_id"] = req.query.observationId
+                    findObject["createdBy"] = userId
+
+                    projection.push("entityTypeId", "entities")
+
+                    let observationDocument = await observationsHelper.observationDocument(findObject, projection)
+                    result = observationDocument[0]
+                }
+
+                if (req.query.solutionId) {
+                    let findQuery = []
+                    findQuery.push(req.query.solutionId)
+                    projection.push("entityTypeId")
+
+                    let solutionDocument = await solutionsHelper.solutionDocument(findQuery, projection)
+                    result = _.merge(solutionDocument[0])
+                }
+
+                let userAllowedEntities = await userExtensionHelper.getUserEntities(userId)
+
+                let entityDocuments = await entitiesHelper.search(result.entityTypeId, req.searchText, req.pageSize, req.pageNo, userAllowedEntities && userAllowedEntities.length > 0 ? userAllowedEntities : false);
+
+                if (result.entities && result.entities.length > 0) {
+                    let observationEntityIds = result.entities.map(entity => entity.toString());
+
+                    entityDocuments[0].data.forEach(eachMetaData => {
+                        eachMetaData.selected = (observationEntityIds.includes(eachMetaData._id.toString())) ? true : false;
+                    })
+                }
+
+                let messageData = "Entities fetched successfully"
+                if (!entityDocuments[0].count) {
+                    entityDocuments[0].count = 0
+                    messageData = "No entity found"
+                }
+                response.result = entityDocuments
+                response["message"] = messageData
+
+                return resolve(response);
+
+            } catch (error) {
+                return reject({
+                    status: error.status || 500,
+                    message: error.message || error,
+                    errorObject: error
+                });
+            }
+
+        });
+
+    }
+
+       /**
+     * @api {get} /assessment/api/v2/observations/assessment/:observationId?entityId=:entityId&submissionNumber=submissionNumber Assessments
+     * @apiVersion 0.0.2
+     * @apiName Assessments
+     * @apiGroup Observations
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
+     * @apiParam {String} entityId Entity ID.
+     * @apiParam {Int} submissionNumber Submission Number.
+     * @apiSampleRequest /assessment/api/v2/observations/assessment/5d286eace3cee10152de9efa?entityId=5d286b05eb569501488516c4&submissionNumber=1
+     * @apiUse successBody
+     * @apiUse errorBody
+     */
+    async assessment(req) {
+
+        return new Promise(async (resolve, reject) => {
+
+            try {
 
                 let response = {
                     message: "Assessment fetched successfully",
                     result: {}
                 };
 
+                let observationDocument = await database.models.observations.findOne({ _id: req.params._id, createdBy: req.userDetails.userId, entities: ObjectId(req.query.entityId) }).lean();
 
-                let programQueryObject = {
-                    _id: req.params._id,
-                    status: "active",
-                    components: { $in: [ObjectId(req.query.solutionId)] }
-                };
-                let programDocument = await database.models.programs.findOne(programQueryObject).lean();
+                if (!observationDocument) return resolve({ status: 400, message: 'No observation found.' })
 
 
-                if (!programDocument) {
-                    let responseMessage = 'No program found.';
-                    return resolve({ status: 400, message: responseMessage })
-                }
-
-                let entityAssessorObject = {
-                    userId: req.userDetails.userId,
-                    programId: req.params._id,
-                    solutionId: req.query.solutionId,
-                    entities: { $in: [ObjectId(req.query.entityId)] }
-                };
-                let entityAssessorDocument = await database.models.entityAssessors.findOne(
-                    entityAssessorObject
-                ).lean();
-
-                if (!entityAssessorDocument) {
-                    let responseMessage = 'Unauthorized.';
-                    return resolve({ status: 400, message: responseMessage })
-                }
-
-                const isRequestForOncallOrOnField = req.query.oncall && req.query.oncall == 1 ? "oncall" : "onfield";
-
-                let entityQueryObject = { _id: ObjectId(req.query.entityId) };
+                let entityQueryObject = { _id: req.query.entityId, entityType: observationDocument.entityType };
                 let entityDocument = await database.models.entities.findOne(
                     entityQueryObject,
                     {
@@ -74,11 +131,11 @@ module.exports = class Assessments {
                     return resolve({ status: 400, message: responseMessage })
                 }
 
+                const submissionNumber = req.query.submissionNumber && req.query.submissionNumber > 1 ? parseInt(req.query.submissionNumber) : 1;
+
                 let solutionQueryObject = {
-                    _id: req.query.solutionId,
-                    programId: req.params._id,
+                    _id: observationDocument.solutionId,
                     status: "active",
-                    entities: { $in: [ObjectId(req.query.entityId)] }
                 };
 
                 let solutionDocument = await database.models.solutions.findOne(
@@ -101,14 +158,13 @@ module.exports = class Assessments {
                     }
                 ).lean();
 
-
                 if (!solutionDocument) {
                     let responseMessage = 'No solution found.';
                     return resolve({ status: 400, message: responseMessage })
                 }
 
-                let currentUserAssessmentRole = await assessmentsHelper.getUserRole([entityAssessorDocument.role])
-                let profileFieldAccessibility = (solutionDocument.roles[currentUserAssessmentRole] && solutionDocument.roles[currentUserAssessmentRole].acl && solutionDocument.roles[currentUserAssessmentRole].acl.entityProfile) ? solutionDocument.roles[currentUserAssessmentRole].acl.entityProfile : {};
+                let currentUserAssessmentRole = await assessmentsHelper.getUserRole(req.userDetails.allRoles)
+                let profileFieldAccessibility = (solutionDocument.roles && solutionDocument.roles[currentUserAssessmentRole] && solutionDocument.roles[currentUserAssessmentRole].acl && solutionDocument.roles[currentUserAssessmentRole].acl.entityProfile) ? solutionDocument.roles[currentUserAssessmentRole].acl.entityProfile : "";
 
                 let entityProfileForm = await database.models.entityTypes.findOne(
                     solutionDocument.entityTypeId,
@@ -139,8 +195,8 @@ module.exports = class Assessments {
                 entityProfileForm.profileForm.forEach(profileFormField => {
                     if (filteredFieldsToBeShown.includes(profileFormField.field)) {
                         profileFormField.value = (entityDocument.metaInformation[profileFormField.field]) ? entityDocument.metaInformation[profileFormField.field] : ""
-                        profileFormField.visible = profileFieldAccessibility.visible.indexOf("all") > -1 || profileFieldAccessibility.visible.indexOf(profileFormField.field) > -1
-                        profileFormField.editable = profileFieldAccessibility.editable.indexOf("all") > -1 || profileFieldAccessibility.editable.indexOf(profileFormField.field) > -1
+                        profileFormField.visible = profileFieldAccessibility ? (profileFieldAccessibility.visible.indexOf("all") > -1 || profileFieldAccessibility.visible.indexOf(profileFormField.field) > -1) : true;
+                        profileFormField.editable = profileFieldAccessibility ? (profileFieldAccessibility.editable.indexOf("all") > -1 || profileFieldAccessibility.editable.indexOf(profileFormField.field) > -1) : true;
                         form.push(profileFormField)
                     }
                 })
@@ -151,14 +207,6 @@ module.exports = class Assessments {
                     entityType: entityDocument.entityType,
                     form: form
                 };
-
-                response.result.program = await _.pick(programDocument, [
-                    "_id",
-                    "externalId",
-                    "name",
-                    "description",
-                    "imageCompression"
-                ]);
 
                 response.result.solution = await _.pick(solutionDocument, [
                     "_id",
@@ -178,11 +226,11 @@ module.exports = class Assessments {
                     frameworkExternalId: solutionDocument.frameworkExternalId,
                     entityTypeId: solutionDocument.entityTypeId,
                     entityType: solutionDocument.entityType,
-                    programId: programDocument._id,
-                    programExternalId: programDocument.externalId,
-                    programInformation: {
-                        ..._.omit(programDocument, ["_id", "components"])
+                    observationId: observationDocument._id,
+                    observationInformation: {
+                        ..._.omit(observationDocument, ["_id", "entities", "deleted", "__v"])
                     },
+                    createdBy: observationDocument.createdBy,
                     evidenceSubmissions: [],
                     entityProfile: {},
                     status: "started"
@@ -219,7 +267,6 @@ module.exports = class Assessments {
                 let evidenceMethodArray = {};
                 let submissionDocumentEvidences = {};
                 let submissionDocumentCriterias = [];
-
                 Object.keys(solutionDocument.evidenceMethods).forEach(solutionEcm => {
                     solutionDocument.evidenceMethods[solutionEcm].startTime = ""
                     solutionDocument.evidenceMethods[solutionEcm].endTime = ""
@@ -240,7 +287,7 @@ module.exports = class Assessments {
 
                     criteria.evidences.forEach(evidenceMethod => {
 
-                        if (submissionDocumentEvidences[evidenceMethod.code].modeOfCollection === isRequestForOncallOrOnField) {
+                        if (evidenceMethod.code) {
 
                             if (!evidenceMethodArray[evidenceMethod.code]) {
 
@@ -251,9 +298,6 @@ module.exports = class Assessments {
                                 evidenceMethodArray[evidenceMethod.code] = evidenceMethod;
 
                             } else {
-
-                                // Evidence method already exists
-                                // Loop through all sections reading evidence method
 
                                 evidenceMethod.sections.forEach(evidenceMethodSection => {
 
@@ -293,18 +337,15 @@ module.exports = class Assessments {
                 submissionDocument.evidences = submissionDocumentEvidences;
                 submissionDocument.evidencesStatus = Object.values(submissionDocumentEvidences);
                 submissionDocument.criteria = submissionDocumentCriterias;
+                submissionDocument.submissionNumber = submissionNumber;
 
-                let submissionDoc = await submissionsHelper.findSubmissionByEntityProgram(
-                    submissionDocument,
-                    req
+                let submissionDoc = await observationsHelper.findSubmission(
+                    submissionDocument
                 );
+
                 assessment.submissionId = submissionDoc.result._id;
 
-                if (isRequestForOncallOrOnField == "oncall" && submissionDoc.result.parentInterviewResponses && submissionDoc.result.parentInterviewResponses.length > 0) {
-                    assessment.parentInterviewResponses = submissionDoc.result.parentInterviewResponses;
-                }
-
-                const parsedAssessment = await assessmentsHelper.parseQuestions(
+                const parsedAssessment = await assessmentsHelper.parseQuestionsV2(
                     Object.values(evidenceMethodArray),
                     entityDocumentQuestionGroup,
                     submissionDoc.result.evidences,
@@ -320,14 +361,17 @@ module.exports = class Assessments {
                 response.result.assessment = assessment;
 
                 return resolve(response);
+
+
             } catch (error) {
                 return reject({
-                    status: 500,
-                    message: "Oops! Something went wrong!",
+                    status: error.status || 500,
+                    message: error.message || error,
                     errorObject: error
                 });
             }
-        });
-    }
 
+        });
+
+    }
 }

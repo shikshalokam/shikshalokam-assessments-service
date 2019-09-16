@@ -1,4 +1,4 @@
-
+const questionHelper = require(ROOT_PATH + "/module/questions/helper");
 module.exports = class assessmentsHelper {
 
     static getUserRole(roles) {
@@ -24,6 +24,7 @@ module.exports = class assessmentsHelper {
                 let generalQuestions = [];
                 let questionArray = {};
                 let submissionsObjects = {};
+                let pageQuestionsEnabled = {}
 
                 let checkEcmSequenceExists = evidences.every(ecm => {
                     return ecm["sequenceNo"] != undefined
@@ -52,11 +53,19 @@ module.exports = class assessmentsHelper {
                     }
 
                     evidence.sections.forEach(section => {
+                       let sectionCode = section.code
+                        
                         section.questions.forEach((question, index, section) => {
                             question.evidenceMethod = evidence.externalId
+
                             if (_.difference(question.questionGroup, questionGroup).length < question.questionGroup.length) {
                                 sectionQuestionArray[question._id] = section
                                 questionArray[question._id] = question
+                                if(question.page && question.page != "") {
+                                    pageQuestionsEnabled[evidence.externalId] = {
+                                        [sectionCode]: true
+                                    }
+                                }
                             } else {
                                 entityFilterQuestionArray[question._id] = section;
                             }
@@ -140,11 +149,11 @@ module.exports = class assessmentsHelper {
                     })
                 }
 
-
                 return resolve({
                     evidences: evidences,
                     submissions: submissionsObjects,
-                    generalQuestions: generalQuestions
+                    generalQuestions: generalQuestions,
+                    pageQuestionsEnabled:pageQuestionsEnabled
                 })
 
 
@@ -156,4 +165,89 @@ module.exports = class assessmentsHelper {
 
     }
 
-};
+    static parseQuestionsV2(evidences, questionGroup, submissionDocEvidences, questionSequenceByEcm = false) {
+        return new Promise(async (resolve, reject) => {
+            try {
+
+                let parseQuestionV1 = await this.parseQuestions(evidences, questionGroup, submissionDocEvidences, questionSequenceByEcm)
+
+
+                    let defaultQuestion = {}
+    
+                    parseQuestionV1.evidences.forEach(eachEvidence=>{
+
+                        if(parseQuestionV1.pageQuestionsEnabled[eachEvidence.externalId]){
+                            
+                            eachEvidence.sections.forEach(eachSection=>{
+
+                                if(parseQuestionV1.pageQuestionsEnabled[eachEvidence.externalId][eachSection.code]){
+                                    let pageQuestionsObj = {}
+            
+                                    for(let pointerToEachSectionQuestion = 0;pointerToEachSectionQuestion<eachSection.questions.length;pointerToEachSectionQuestion++){
+                                        
+                                        let eachQuestion = eachSection.questions[pointerToEachSectionQuestion]
+            
+                                        if(eachQuestion.page && eachQuestion.page !== ""){
+                                            if(!pageQuestionsObj[eachQuestion.page]) {
+
+                                                if(!(Object.keys(defaultQuestion).length > 0)) {
+                                                    Object.keys(eachQuestion).forEach(questionModelKey => {
+                                                        if(questionModelKey ===  "updatedAt" || questionModelKey ===  "createdAt" || questionModelKey === "_id"){
+                                                            defaultQuestion[questionModelKey] = ""
+                                                        } else if(Array.isArray(defaultQuestion[questionModelKey])){
+                                                            defaultQuestion[questionModelKey] = []
+                                                        } else if(typeof defaultQuestion[questionModelKey] === 'boolean'){
+                                                            defaultQuestion[questionModelKey] = false
+                                                        } else if(typeof defaultQuestion[questionModelKey] === 'object'){
+                                                            defaultQuestion[questionModelKey] = {}
+                                                        } else {
+                                                            defaultQuestion[questionModelKey] = ""
+                                                        }
+                                                    })
+                                                }
+                                                pageQuestionsObj[eachQuestion.page]= {}
+                                                pageQuestionsObj[eachQuestion.page] = _.merge(pageQuestionsObj[eachQuestion.page],defaultQuestion)
+            
+                                                pageQuestionsObj[eachQuestion.page]["responseType"] = "pageQuestions"
+                                                pageQuestionsObj[eachQuestion.page]["page"] = eachQuestion.page
+                                                pageQuestionsObj[eachQuestion.page]["pageQuestions"] = []
+                                            }
+
+                                            pageQuestionsObj[eachQuestion.page].pageQuestions.push(eachQuestion)
+
+                                            delete eachSection.questions[pointerToEachSectionQuestion]
+                                        }
+            
+                                    }
+            
+                                    if(!_.isEmpty(pageQuestionsObj)){
+                                        
+                                        let filteredQuestion = eachSection.questions.filter(eachQuestion=>{
+                                            return eachQuestion != null
+                                        })
+        
+                                        eachSection.questions = _.concat(filteredQuestion,Object.values(pageQuestionsObj))
+                                    }
+
+                                }
+
+                            })
+                        }
+
+                    })
+
+                return resolve({
+                    evidences: parseQuestionV1.evidences,
+                    submissions: parseQuestionV1.submissions,
+                    generalQuestions: parseQuestionV1.generalQuestions
+                })
+
+
+            } catch (error) {
+                return reject(error);
+            }
+
+        })
+
+    }
+}
