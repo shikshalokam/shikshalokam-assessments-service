@@ -1,3 +1,5 @@
+const criteriaHelper = require(ROOT_PATH + "/module/criteria/helper");
+const questionsHelper = require(ROOT_PATH + "/module/questions/helper");
 
 module.exports = class solutionsHelper {
   static solutionDocument(solutionIds = "all", fields = "all") {
@@ -387,5 +389,28 @@ module.exports = class solutionsHelper {
 
     return mandatoryFields
 
+  }
+
+  static getCriteriasAndQuestions(themes) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        let criteriaIds = criteriaHelper.getCriteriaIds(themes)
+
+        let allCriteriaDocument = await database.models.criteria
+          .find({ _id: { $in: criteriaIds } }, { evidences: 1 })
+          .lean();
+
+        let questionIds = questionsHelper.getAllQuestionId(allCriteriaDocument)
+
+        return resolve({
+          criteriaIds: criteriaIds,
+          questionIds: questionIds,
+        })
+
+      } catch (error) {
+        return reject(error);
+      }
+    })
   }
 };
