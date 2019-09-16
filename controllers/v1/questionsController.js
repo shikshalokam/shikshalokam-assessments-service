@@ -1,5 +1,6 @@
 const csv = require("csvtojson");
 const questionsHelper = require(ROOT_PATH + "/module/questions/helper");
+const solutionsHelper = require(ROOT_PATH + "/module/solutions/helper");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
 
 module.exports = class Questions extends Abstract {
@@ -45,8 +46,6 @@ module.exports = class Questions extends Abstract {
           req.files.questions.data.toString()
         );
 
-        let criteriaIds = new Array();
-
         let solutionDocument = await database.models.solutions
           .findOne(
             { externalId: questions[0]["solutionId"] },
@@ -54,22 +53,19 @@ module.exports = class Questions extends Abstract {
           )
           .lean();
 
-        let allCriteriasInSolutions = gen.utils.getCriteriaIds(
-          solutionDocument.themes
-        );
-
-        let criteriasArray = allCriteriasInSolutions.map(eachCriteriaIdArray => {
-          return eachCriteriaIdArray._id.toString()
-        });
-
+        let solutionCriteriaIdsAndQuestionIds = await solutionsHelper.getCriteriasAndQuestions(solutionDocument.themes)
 
         let questionIds = new Array();
+        let parsedQuestionArray = new Array()
+        let criteriaInCsv = new Array()
 
         questions.forEach(eachQuestionData => {
           let parsedQuestion = gen.utils.valueParser(eachQuestionData);
 
-          if (parsedQuestion["criteriaExternalId"] && parsedQuestion["criteriaExternalId"] != "" && !criteriaIds.includes(parsedQuestion["criteriaExternalId"])) {
-            criteriaIds.push(parsedQuestion["criteriaExternalId"]);
+          parsedQuestionArray.push(parsedQuestion)
+
+          if (!criteriaInCsv.includes(parsedQuestion.criteriaExternalId)) {
+            criteriaInCsv.push(parsedQuestion.criteriaExternalId)
           }
 
           if (!questionIds.includes(parsedQuestion["externalId"])) {
@@ -91,32 +87,9 @@ module.exports = class Questions extends Abstract {
           }
         });
 
-        let criteriaDocument = await database.models.criteria
-          .find({
-            externalId: { $in: criteriaIds },
-            frameworkCriteriaId: { $exists: true }
-          }, {
-              externalId: 1,
-              _id: 1
-            })
-          .lean();
-
-        if (!criteriaDocument.length > 0) {
-          throw "No criteria found for the given solution"
-        }
-
-        let criteriaObject = {}
-
-        criteriaDocument.forEach(eachCriteriaDocument => {
-
-          if (criteriasArray.includes(eachCriteriaDocument._id.toString())) {
-
-            criteriaObject[eachCriteriaDocument.externalId] = eachCriteriaDocument;
-          }
-        });
-
         let questionsFromDatabase = await database.models.questions
           .find({
+            _id: { $in: solutionCriteriaIdsAndQuestionIds.questionIds },
             externalId: { $in: questionIds }
           }, {
               externalId: 1,
@@ -124,6 +97,23 @@ module.exports = class Questions extends Abstract {
             })
           .lean();
 
+
+        let criteriaDocument = await database.models.criteria.find(
+          {
+            _id: { $in: solutionCriteriaIdsAndQuestionIds.criteriaIds },
+            externalId: { $in: criteriaInCsv }
+          },
+          {
+            externalId: 1,
+            evidences: 1
+          }
+        ).lean()
+
+        if (!criteriaDocument.length > 0) {
+          throw { status: 400, message: "Criterias not found." }
+        }
+
+        let criteriaObject = _.keyBy(criteriaDocument, 'externalId')
 
         let questionCollection = {};
 
@@ -158,15 +148,12 @@ module.exports = class Questions extends Abstract {
 
         for (
           let pointerToQuestionData = 0;
-          pointerToQuestionData < questions.length;
+          pointerToQuestionData < parsedQuestionArray.length;
           pointerToQuestionData++
         ) {
 
-          let parsedQuestion = gen.utils.valueParser(
-            questions[pointerToQuestionData]
-          );
+          let parsedQuestion = parsedQuestionArray[pointerToQuestionData]
 
-          let criteria = {};
           let ecm = {};
           let csv = {}
 
@@ -175,6 +162,13 @@ module.exports = class Questions extends Abstract {
 
           if (questionCollection[parsedQuestion["externalId"]]) {
             csv["UPLOAD_STATUS"] = "Question already exists"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          if (!criteriaObject[parsedQuestion.criteriaExternalId]) {
+            csv["UPLOAD_STATUS"] = "Criteria not found"
             csv["_SYSTEM_ID"] = "Not Created"
             input.push(csv)
             continue
@@ -189,17 +183,6 @@ module.exports = class Questions extends Abstract {
           } else {
 
             csv["UPLOAD_STATUS"] = "Ecm is not found in the given solution"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
-            continue
-          }
-
-          if (criteriaObject[parsedQuestion.criteriaExternalId]) {
-            criteria[parsedQuestion.criteriaExternalId] =
-              criteriaObject[parsedQuestion.criteriaExternalId];
-          } else {
-
-            csv["UPLOAD_STATUS"] = "Criteria is not found in the given solution"
             csv["_SYSTEM_ID"] = "Not Created"
             input.push(csv)
             continue
@@ -245,15 +228,15 @@ module.exports = class Questions extends Abstract {
           ) {
             pendingItems.push({
               csvResponse: csv,
+              criteria: criteriaObject[parsedQuestion.criteriaExternalId],
               parsedQuestion: parsedQuestion,
               parentQuestion: parentQuestion,
-              criteriaToBeSent: criteria,
               evaluationFrameworkMethod: ecm,
               section: section
             });
           } else {
 
-            let resultFromCreateQuestions = await questionsHelper.createQuestions(parsedQuestion, parentQuestion, criteria, ecm, section)
+            let resultFromCreateQuestions = await questionsHelper.createQuestions(parsedQuestion, parentQuestion, criteriaObject[parsedQuestion.criteriaExternalId], ecm, section)
 
             if (resultFromCreateQuestions.result) {
               questionCollection[resultFromCreateQuestions.result.externalId] =
@@ -273,7 +256,7 @@ module.exports = class Questions extends Abstract {
             pointerToPendingData++
           ) {
 
-            let csvQuestionData = await questionsHelper.createQuestions(pendingItems[pointerToPendingData].parsedQuestion, pendingItems[pointerToPendingData].parentQuestion, pendingItems[pointerToPendingData].criteriaToBeSent, pendingItems[pointerToPendingData].evaluationFrameworkMethod, pendingItems[pointerToPendingData].section)
+            let csvQuestionData = await questionsHelper.createQuestions(pendingItems[pointerToPendingData].parsedQuestion, pendingItems[pointerToPendingData].parentQuestion, pendingItems[pointerToPendingData].criteria, pendingItems[pointerToPendingData].evaluationFrameworkMethod, pendingItems[pointerToPendingData].section)
 
             csvQuestionData.csvResult = _.merge(csvQuestionData.csvResult, pendingItems[pointerToPendingData].csvResponse)
 

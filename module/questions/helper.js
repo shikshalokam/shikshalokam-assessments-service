@@ -1,7 +1,7 @@
 
 module.exports = class questionsHelper {
 
-  static createQuestions(parsedQuestion, parentQuestion, criteriaObject, evidenceCollectionMethodObject, questionSection) {
+  static createQuestions(parsedQuestion, parentQuestion, criteria, evidenceCollectionMethodObject, questionSection) {
 
     return new Promise(async (resolve, reject) => {
 
@@ -129,7 +129,6 @@ module.exports = class questionsHelper {
           }
         }
 
-
         Object.keys(parsedQuestion).forEach(parsedQuestionData => {
           if (!fieldNotIncluded.includes(parsedQuestionData) && !allValues[parsedQuestionData] && questionDataModel.includes(parsedQuestionData)) {
             if (this.booleanData().includes(parsedQuestionData)) {
@@ -139,7 +138,6 @@ module.exports = class questionsHelper {
             }
           }
         })
-
 
         let createQuestion = await database.models.questions.create(
           allValues
@@ -198,17 +196,8 @@ module.exports = class questionsHelper {
 
           }
 
-          let newCriteria = await database.models.criteria.findOne(
-            {
-              _id: criteriaObject[parsedQuestion["criteriaExternalId"]]._id
-            },
-            {
-              evidences: 1
-            }
-          )
-
           let evidenceMethod = parsedQuestion["evidenceMethod"]
-          let criteriaEvidences = newCriteria.evidences
+          let criteriaEvidences = criteria.evidences
 
           let indexOfEvidenceMethodInCriteria = criteriaEvidences.findIndex(evidence => evidence.code === evidenceMethod);
 
@@ -228,7 +217,7 @@ module.exports = class questionsHelper {
           criteriaEvidences[indexOfEvidenceMethodInCriteria].sections[indexOfSectionInEvidenceMethod].questions.push(createQuestion._id)
 
           let queryCriteriaObject = {
-            _id: newCriteria._id
+            _id: criteria._id
           }
 
           let updateCriteriaObject = {}
@@ -557,6 +546,20 @@ module.exports = class questionsHelper {
 
     return fileTypes
 
+  }
+
+  static getAllQuestionId(criteria) {
+    let questionIds = [];
+    criteria.forEach(eachCriteria => {
+      eachCriteria.evidences.forEach(eachEvidence => {
+        eachEvidence.sections.forEach(eachSection => {
+          eachSection.questions.forEach(eachQuestion => {
+            questionIds.push(eachQuestion)
+          })
+        })
+      })
+    })
+    return questionIds
   }
 
 };
