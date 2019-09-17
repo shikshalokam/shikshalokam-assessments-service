@@ -369,29 +369,8 @@ module.exports = class Questions extends Abstract {
           });
         })();
 
-
-        // function parentQuestionInCsv(parentQuestion) {
-        //   let question = {};
-
-        //   if (
-        //     parentQuestion["instanceParentQuestionId"] !== "NA" &&
-        //     questionCollection[parentQuestion["instanceParentQuestionId"]]
-        //   ) {
-        //     question[parentQuestion["instanceParentQuestionId"]] =
-        //       questionCollection[parentQuestion["instanceParentQuestionId"]];
-        //   }
-
-        //   if (
-        //     parentQuestion["hasAParentQuestion"] == "YES" &&
-        //     questionCollection[parentQuestion["parentQuestionId"]]
-        //   ) {
-        //     question[parentQuestion["parentQuestionId"]] =
-        //       questionCollection[parentQuestion["parentQuestionId"]];
-        //   }
-        //   return question
-        // }
-
         let pendingItems = new Array();
+        let pushToPendingItems = false
 
         for (
           let pointerToQuestionData = 0;
@@ -403,117 +382,185 @@ module.exports = class Questions extends Abstract {
             questionData[pointerToQuestionData]
           );
 
-          let ecm = {};
-          let csv = {}
+          pushToPendingItems = false
 
-          csv["Question External Id"] = parsedQuestion.externalId
-          csv["Question Name"] = parsedQuestion["question0"]
-
-          if (questionCollection[parsedQuestion["externalId"]]) {
-            csv["UPLOAD_STATUS"] = "Question already exists"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
+          if (!parsedQuestion["externalId"] || parsedQuestion["externalId"] == "" || questionExternalToInternalIdMap[parsedQuestion["externalId"]]) {
+            parsedQuestion["UPLOAD_STATUS"] = "Invalid question External ID"
+            parsedQuestion["_SYSTEM_ID"] = "Not Created"
+            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
             continue
           }
 
-          if (!criteriaObject[parsedQuestion.criteriaExternalId]) {
-            csv["UPLOAD_STATUS"] = "Criteria not found"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
+          if (!parsedQuestion["criteriaExternalId"] || parsedQuestion["criteriaExternalId"] == "" || !criteriaMap[parsedQuestion["criteriaExternalId"]]) {
+            parsedQuestion["UPLOAD_STATUS"] = "Invalid Criteria External ID"
+            parsedQuestion["_SYSTEM_ID"] = "Not Created"
+            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
             continue
-          }
-
-          if (solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]]) {
-            ecm[parsedQuestion["evidenceMethod"]] = {
-              code:
-                solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]]
-                  .externalId
-            };
           } else {
-
-            csv["UPLOAD_STATUS"] = "Ecm is not found in the given solution"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
-            continue
+            parsedQuestion["_criteriaInternalId"] = criteriaMap[parsedQuestion["criteriaExternalId"]]
           }
 
-          let section
-
-          if (solutionDocument.sections[parsedQuestion.section]) {
-            section = parsedQuestion.section;
+          let ecm = (solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]] && solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]].externalId) ? solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]].externalId : ""
+          if (ecm == "") {
+            parsedQuestion["UPLOAD_STATUS"] = "Invalid Evidence Method Code"
+            parsedQuestion["_SYSTEM_ID"] = "Not Created"
+            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
+            continue
           } else {
+            parsedQuestion["_evidenceMethodCode"] = solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]].externalId
+          }
 
-            csv["UPLOAD_STATUS"] = "section is not found in the given solution"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
+          let section = (solutionDocument.sections[parsedQuestion.section]) ? solutionDocument.sections[parsedQuestion.section] : ""
+          if (section == "") {
+            parsedQuestion["UPLOAD_STATUS"] = "Invalid Section Method Code"
+            parsedQuestion["_SYSTEM_ID"] = "Not Created"
+            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }))
             continue
-          }
-
-          if (parsedQuestion["hasAParentQuestion"] === "") {
-            csv["UPLOAD_STATUS"] = "hasAParentQuestion should be either YES or NO"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
-            continue
-          }
-
-          if (parsedQuestion["instanceParentQuestionId"] === "") {
-            csv["UPLOAD_STATUS"] = "instanceParentQuestionId should be either NA or parent question id"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
-            continue
-          }
-
-          let parentQuestion = {}
-
-          if (parsedQuestion["hasAParentQuestion"] == "YES" || parsedQuestion["instanceParentQuestionId"] !== "NA") {
-            parentQuestion = parentQuestionInCsv(_.pick(parsedQuestion, ["instanceParentQuestionId", "hasAParentQuestion", "parentQuestionId"]))
-
-          }
-          if (
-            (parsedQuestion["hasAParentQuestion"] == "YES" &&
-              !questionCollection[parsedQuestion["parentQuestionId"]]) ||
-            (parsedQuestion["instanceParentQuestionId"] !== "NA" &&
-              !questionCollection[parsedQuestion["instanceParentQuestionId"]])
-          ) {
-            pendingItems.push({
-              csvResponse: csv,
-              criteria: criteriaObject[parsedQuestion.criteriaExternalId],
-              parsedQuestion: parsedQuestion,
-              parentQuestion: parentQuestion,
-              evaluationFrameworkMethod: ecm,
-              section: section
-            });
           } else {
+            parsedQuestion["_sectionCode"] = parsedQuestion.section
+          }
 
-            let resultFromCreateQuestions = await questionsHelper.createQuestions(parsedQuestion, parentQuestion, criteriaObject[parsedQuestion.criteriaExternalId], ecm, section)
+          // Parent question CSV data validation begins.
+          parsedQuestion["hasAParentQuestion"] = parsedQuestion["hasAParentQuestion"].toUpperCase()
 
-            if (resultFromCreateQuestions.result) {
-              questionCollection[resultFromCreateQuestions.result.externalId] =
-                resultFromCreateQuestions.result;
+          if (parsedQuestion["hasAParentQuestion"] != "YES" && parsedQuestion["hasAParentQuestion"] != "NO") {
+
+            parsedQuestion["UPLOAD_STATUS"] = "Invalid value for column hasAParentQuestion"
+            parsedQuestion["_SYSTEM_ID"] = "Not Created"
+            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
+            continue
+
+          } else if (parsedQuestion["hasAParentQuestion"] == "YES") {
+
+            if (parsedQuestion["parentQuestionId"] == "") {
+              parsedQuestion["UPLOAD_STATUS"] = "Invalid Parent Question ID"
+              parsedQuestion["_SYSTEM_ID"] = "Not Created"
+              input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
+              continue
+            } else if (currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]]) {
+              parsedQuestion["_parentQuestionId"] = questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]
+            } else {
+              pushToPendingItems = true
             }
 
-            csv = _.merge(csv, resultFromCreateQuestions.csvResult)
-            input.push(csv)
+          } else if (parsedQuestion["hasAParentQuestion"] == "NO") {
+            parsedQuestion["_parentQuestionId"] = ""
           }
+
+          // Parent question CSV data validation ends.
+
+          // Instance Parent question CSV data validation begins.
+          parsedQuestion["instanceParentQuestionId"] = parsedQuestion["instanceParentQuestionId"].toUpperCase()
+          if (parsedQuestion["instanceParentQuestionId"] == "") {
+
+            parsedQuestion["UPLOAD_STATUS"] = "Invalid value for column instanceParentQuestionId"
+            parsedQuestion["_SYSTEM_ID"] = "Not Created"
+            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
+            continue
+
+          } else if (parsedQuestion["instanceParentQuestionId"] == "NA") {
+
+            parsedQuestion["_instanceParentQuestionId"] = ""
+
+          } else {
+
+            if (currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["instanceParentQuestionId"]]] && currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["instanceParentQuestionId"]]] != "") {
+              parsedQuestion["_instanceParentQuestionId"] = questionExternalToInternalIdMap[parsedQuestion["instanceParentQuestionId"]]
+            } else {
+              pushToPendingItems = true
+            }
+
+          }
+          // Instance Parent question CSV data validation ends.
+
+          if(pushToPendingItems) {
+            pendingItems.push(parsedQuestion);
+            continue
+          }
+
+          let resultFromCreateQuestions = await questionsHelper.createQuestion(parsedQuestion)
+
+          if (resultFromCreateQuestions["_SYSTEM_ID"] && resultFromCreateQuestions["_SYSTEM_ID"].toString() != "") {
+            currentQuestionMap[resultFromCreateQuestions["_SYSTEM_ID"].toString()] = {
+              qid: resultFromCreateQuestions["_SYSTEM_ID"].toString()
+            }
+            questionExternalToInternalIdMap[resultFromCreateQuestions.externalId] = resultFromCreateQuestions["_SYSTEM_ID"].toString()
+          } else {
+            parsedQuestion["UPLOAD_STATUS"] = "Something went wrong while creating the question."
+            parsedQuestion["_SYSTEM_ID"] = "Not Created"
+            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
+            continue
+          }
+
+          input.push(resultFromCreateQuestions)
 
         }
 
-        if (pendingItems) {
-          for (
-            let pointerToPendingData = 0;
-            pointerToPendingData < pendingItems.length;
-            pointerToPendingData++
-          ) {
+        if (pendingItems.length > 0) {
 
-            let csvQuestionData = await questionsHelper.createQuestions(pendingItems[pointerToPendingData].parsedQuestion, pendingItems[pointerToPendingData].parentQuestion, pendingItems[pointerToPendingData].criteria, pendingItems[pointerToPendingData].evaluationFrameworkMethod, pendingItems[pointerToPendingData].section)
+          for (let pointerToPendingData = 0;pointerToPendingData < pendingItems.length; pointerToPendingData++) {
 
-            csvQuestionData.csvResult = _.merge(csvQuestionData.csvResult, pendingItems[pointerToPendingData].csvResponse)
+            let parsedQuestion = pendingItems[pointerToPendingData]
+          
+            // Parent question CSV data validation begins.
+            if (parsedQuestion["hasAParentQuestion"] == "YES") {
 
-            input.push(csvQuestionData.csvResult);
+              if (!currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]]) {
+                parsedQuestion["UPLOAD_STATUS"] = "Invalid Parent Question ID"
+                parsedQuestion["_SYSTEM_ID"] = "Not Created"
+                input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
+                continue
+              } else {
+                parsedQuestion["_parentQuestionId"] = questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]
+              }
+
+            } else if (parsedQuestion["hasAParentQuestion"] == "NO") {
+              parsedQuestion["_parentQuestionId"] = ""
+            }
+
+            // Parent question CSV data validation ends.
+
+            // Instance Parent question CSV data validation begins.
+
+            if (parsedQuestion["instanceParentQuestionId"] == "NA") {
+
+              parsedQuestion["_instanceParentQuestionId"] = ""
+
+            } else {
+
+              if (currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["instanceParentQuestionId"]]]) {
+                parsedQuestion["_instanceParentQuestionId"] = questionExternalToInternalIdMap[parsedQuestion["instanceParentQuestionId"]]
+              } else {
+                parsedQuestion["UPLOAD_STATUS"] = "Invalid value for column instanceParentQuestionId"
+                parsedQuestion["_SYSTEM_ID"] = "Not Created"
+                input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
+                continue
+              }
+
+            }
+            // Instance Parent question CSV data validation ends.
+
+            let resultFromCreateQuestions = await questionsHelper.createQuestion(parsedQuestion)
+
+            if (resultFromCreateQuestions["_SYSTEM_ID"] && resultFromCreateQuestions["_SYSTEM_ID"].toString() != "") {
+              currentQuestionMap[resultFromCreateQuestions["_SYSTEM_ID"].toString()] = {
+                qid: resultFromCreateQuestions["_SYSTEM_ID"].toString()
+              }
+              questionExternalToInternalIdMap[resultFromCreateQuestions.externalId] = resultFromCreateQuestions["_SYSTEM_ID"].toString()
+            } else {
+              parsedQuestion["UPLOAD_STATUS"] = "Something went wrong while creating the question."
+              parsedQuestion["_SYSTEM_ID"] = "Not Created"
+              input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
+              continue
+            }
+
+            input.push(resultFromCreateQuestions)
+            
           }
         }
 
         input.push(null);
+
       } catch (error) {
         reject({
           message: error
