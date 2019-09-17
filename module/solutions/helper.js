@@ -391,26 +391,4 @@ module.exports = class solutionsHelper {
 
   }
 
-  static getCriteriasAndQuestions(themes) {
-    return new Promise(async (resolve, reject) => {
-      try {
-
-        let criteriaIds = criteriaHelper.getCriteriaIds(themes)
-
-        let allCriteriaDocument = await database.models.criteria
-          .find({ _id: { $in: criteriaIds } }, { evidences: 1 })
-          .lean();
-
-        let questionIds = questionsHelper.getAllQuestionId(allCriteriaDocument)
-
-        return resolve({
-          criteriaIds: criteriaIds,
-          questionIds: questionIds,
-        })
-
-      } catch (error) {
-        return reject(error);
-      }
-    })
-  }
 };

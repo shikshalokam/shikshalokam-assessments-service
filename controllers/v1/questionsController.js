@@ -273,10 +273,259 @@ module.exports = class Questions extends Abstract {
     });
   }
 
+
   /**
-   * @api {post} /assessment/api/v1/questions/bulkUpdate Bulk update Questions CSV
+   * @api {post} /assessment/api/v1/questions/bulkCreate Bulk Create Questions CSV
    * @apiVersion 0.0.1
-   * @apiName Bulk update Questions CSV
+   * @apiName Bulk Create Questions CSV
+   * @apiGroup Questions
+   * @apiParam {File} questions Mandatory questions file of type CSV.
+   * @apiUse successBody
+   * @apiUse errorBody
+   */
+  bulkCreate(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        if (!req.files || !req.files.questions) {
+          let responseMessage = "Bad request.";
+          return resolve({ status: 400, message: responseMessage });
+        }
+
+        let questionsData = await csv().fromString(
+          req.files.questions.data.toString()
+        );
+
+        let solutionDocument = await database.models.solutions
+          .findOne(
+            { externalId: questions[0]["solutionId"] },
+            { evidenceMethods: 1, sections: 1, themes: 1 }
+          )
+          .lean();
+
+
+        let criteriasIdArray = gen.utils.getCriteriaIds(
+          solutionDocument.themes
+        );
+
+        if (criteriasIdArray.length < 1) {
+          throw "No criteria found for the given solution"
+        }
+
+        let allCriteriaDocument = await database.models.criteria
+          .find({ _id: { $in: criteriasIdArray } }, { evidences: 1, externalId: 1 })
+          .lean();
+
+        if (allCriteriaDocument.length < 1) {
+          throw "No criteria found for the given solution"
+        }
+
+
+        let currentQuestionMap = {};
+
+        let criteriaMap = {};
+
+        allCriteriaDocument.forEach(eachCriteria => {
+
+          criteriaMap[eachCriteria.externalId] = eachCriteria._id.toString()
+
+          eachCriteria.evidences.forEach(eachEvidence => {
+            eachEvidence.sections.forEach(eachSection => {
+              eachSection.questions.forEach(eachQuestion => {
+                currentQuestionMap[eachQuestion.toString()] = {
+                  qid: eachQuestion.toString()
+                }
+              })
+            })
+          })
+        })
+
+        let allQuestionsDocument = await database.models.questions
+          .find(
+            { _id: { $in: Object.keys(currentQuestionMap) } },
+            {
+              externalId: 1
+            }
+          )
+          .lean();
+
+        let questionExternalToInternalIdMap = {};
+        
+        if (allQuestionsDocument.length > 0) {
+          allQuestionsDocument.forEach(eachQuestion => {
+            questionExternalToInternalIdMap[eachQuestion.externalId] = eachQuestion._id.toString()
+          });
+        }
+        
+        const fileName = `Question-Upload-Result`;
+        let fileStream = new FileStream(fileName);
+        let input = fileStream.initStream();
+
+        (async function () {
+          await fileStream.getProcessorPromise();
+          return resolve({
+            isResponseAStream: true,
+            fileNameWithPath: fileStream.fileNameWithPath()
+          });
+        })();
+
+
+        // function parentQuestionInCsv(parentQuestion) {
+        //   let question = {};
+
+        //   if (
+        //     parentQuestion["instanceParentQuestionId"] !== "NA" &&
+        //     questionCollection[parentQuestion["instanceParentQuestionId"]]
+        //   ) {
+        //     question[parentQuestion["instanceParentQuestionId"]] =
+        //       questionCollection[parentQuestion["instanceParentQuestionId"]];
+        //   }
+
+        //   if (
+        //     parentQuestion["hasAParentQuestion"] == "YES" &&
+        //     questionCollection[parentQuestion["parentQuestionId"]]
+        //   ) {
+        //     question[parentQuestion["parentQuestionId"]] =
+        //       questionCollection[parentQuestion["parentQuestionId"]];
+        //   }
+        //   return question
+        // }
+
+        let pendingItems = new Array();
+
+        for (
+          let pointerToQuestionData = 0;
+          pointerToQuestionData < questionData.length;
+          pointerToQuestionData++
+        ) {
+
+          let parsedQuestion = gen.utils.valueParser(
+            questionData[pointerToQuestionData]
+          );
+
+          let ecm = {};
+          let csv = {}
+
+          csv["Question External Id"] = parsedQuestion.externalId
+          csv["Question Name"] = parsedQuestion["question0"]
+
+          if (questionCollection[parsedQuestion["externalId"]]) {
+            csv["UPLOAD_STATUS"] = "Question already exists"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          if (!criteriaObject[parsedQuestion.criteriaExternalId]) {
+            csv["UPLOAD_STATUS"] = "Criteria not found"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          if (solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]]) {
+            ecm[parsedQuestion["evidenceMethod"]] = {
+              code:
+                solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]]
+                  .externalId
+            };
+          } else {
+
+            csv["UPLOAD_STATUS"] = "Ecm is not found in the given solution"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          let section
+
+          if (solutionDocument.sections[parsedQuestion.section]) {
+            section = parsedQuestion.section;
+          } else {
+
+            csv["UPLOAD_STATUS"] = "section is not found in the given solution"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          if (parsedQuestion["hasAParentQuestion"] === "") {
+            csv["UPLOAD_STATUS"] = "hasAParentQuestion should be either YES or NO"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          if (parsedQuestion["instanceParentQuestionId"] === "") {
+            csv["UPLOAD_STATUS"] = "instanceParentQuestionId should be either NA or parent question id"
+            csv["_SYSTEM_ID"] = "Not Created"
+            input.push(csv)
+            continue
+          }
+
+          let parentQuestion = {}
+
+          if (parsedQuestion["hasAParentQuestion"] == "YES" || parsedQuestion["instanceParentQuestionId"] !== "NA") {
+            parentQuestion = parentQuestionInCsv(_.pick(parsedQuestion, ["instanceParentQuestionId", "hasAParentQuestion", "parentQuestionId"]))
+
+          }
+          if (
+            (parsedQuestion["hasAParentQuestion"] == "YES" &&
+              !questionCollection[parsedQuestion["parentQuestionId"]]) ||
+            (parsedQuestion["instanceParentQuestionId"] !== "NA" &&
+              !questionCollection[parsedQuestion["instanceParentQuestionId"]])
+          ) {
+            pendingItems.push({
+              csvResponse: csv,
+              criteria: criteriaObject[parsedQuestion.criteriaExternalId],
+              parsedQuestion: parsedQuestion,
+              parentQuestion: parentQuestion,
+              evaluationFrameworkMethod: ecm,
+              section: section
+            });
+          } else {
+
+            let resultFromCreateQuestions = await questionsHelper.createQuestions(parsedQuestion, parentQuestion, criteriaObject[parsedQuestion.criteriaExternalId], ecm, section)
+
+            if (resultFromCreateQuestions.result) {
+              questionCollection[resultFromCreateQuestions.result.externalId] =
+                resultFromCreateQuestions.result;
+            }
+
+            csv = _.merge(csv, resultFromCreateQuestions.csvResult)
+            input.push(csv)
+          }
+
+        }
+
+        if (pendingItems) {
+          for (
+            let pointerToPendingData = 0;
+            pointerToPendingData < pendingItems.length;
+            pointerToPendingData++
+          ) {
+
+            let csvQuestionData = await questionsHelper.createQuestions(pendingItems[pointerToPendingData].parsedQuestion, pendingItems[pointerToPendingData].parentQuestion, pendingItems[pointerToPendingData].criteria, pendingItems[pointerToPendingData].evaluationFrameworkMethod, pendingItems[pointerToPendingData].section)
+
+            csvQuestionData.csvResult = _.merge(csvQuestionData.csvResult, pendingItems[pointerToPendingData].csvResponse)
+
+            input.push(csvQuestionData.csvResult);
+          }
+        }
+
+        input.push(null);
+      } catch (error) {
+        reject({
+          message: error
+        });
+      }
+    });
+  }
+
+  /**
+   * @api {post} /assessment/api/v1/questions/bulkUpdate Bulk Update Questions CSV
+   * @apiVersion 0.0.1
+   * @apiName Bulk Update Questions CSV
    * @apiGroup Questions
    * @apiParam {File} questions     Mandatory questions file of type CSV.
    * @apiUse successBody
