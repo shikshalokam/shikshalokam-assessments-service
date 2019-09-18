@@ -34,6 +34,8 @@ module.exports = class Questions extends Abstract {
           req.files.questions.data.toString()
         );
 
+        let questions = await questionsHelper.upload(questionsData)
+
         let solutionDocument = await database.models.solutions
           .findOne(
             { externalId: questionsData[0]["solutionId"] },
@@ -315,7 +317,7 @@ module.exports = class Questions extends Abstract {
    * @apiVersion 0.0.1
    * @apiName Bulk Update Questions CSV
    * @apiGroup Questions
-   * @apiParam {File} questions     Mandatory questions file of type CSV.
+   * @apiParam {File} questions Mandatory questions file of type CSV.
    * @apiUse successBody
    * @apiUse errorBody
    */

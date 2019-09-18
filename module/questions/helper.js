@@ -1,6 +1,101 @@
 
 module.exports = class questionsHelper {
 
+  static upload(parsedQuestion) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        let solutionDocument = await database.models.solutions
+          .findOne(
+            { externalId: questionData[0]["solutionId"] },
+            { evidenceMethods: 1, sections: 1, themes: 1 }
+          )
+          .lean();
+
+        let criteriasIdArray = gen.utils.getCriteriaIds(
+          solutionDocument.themes
+        );
+
+        if (criteriasIdArray.length < 1) {
+          throw "No criteria found for the given solution"
+        }
+
+        let allCriteriaDocument = await database.models.criteria
+          .find({ _id: { $in: criteriasIdArray } }, { evidences: 1, externalId: 1 })
+          .lean();
+
+        if (allCriteriaDocument.length < 1) {
+          throw "No criteria found for the given solution"
+        }
+
+
+        let currentQuestionMap = {};
+
+        let criteriaMap = {};
+
+        allCriteriaDocument.forEach(eachCriteria => {
+
+          criteriaMap[eachCriteria.externalId] = eachCriteria._id.toString()
+
+          eachCriteria.evidences.forEach(eachEvidence => {
+            eachEvidence.sections.forEach(eachSection => {
+              eachSection.questions.forEach(eachQuestion => {
+                currentQuestionMap[eachQuestion.toString()] = {
+                  qid: eachQuestion.toString(),
+                  sectionCode: eachSection.code,
+                  evidenceMethodCode: eachEvidence.code,
+                  criteriaId: eachCriteria._id.toString(),
+                  criteriaExternalId: eachCriteria.externalId
+                }
+              })
+            })
+          })
+        })
+
+        let allQuestionsDocument = await database.models.questions
+          .find(
+            { _id: { $in: Object.keys(currentQuestionMap) } },
+            {
+              externalId: 1,
+              children: 1,
+              instanceQuestions: 1
+            }
+          )
+          .lean();
+
+        if (allQuestionsDocument.length < 1) {
+          throw "No question found for the given solution"
+        }
+
+        let questionExternalToInternalIdMap = {};
+        allQuestionsDocument.forEach(eachQuestion => {
+
+          currentQuestionMap[eachQuestion._id.toString()].externalId = eachQuestion.externalId
+          questionExternalToInternalIdMap[eachQuestion.externalId] = eachQuestion._id.toString()
+
+          if (eachQuestion.children && eachQuestion.children.length > 0) {
+            eachQuestion.children.forEach(childQuestion => {
+              if (currentQuestionMap[childQuestion.toString()]) {
+                currentQuestionMap[childQuestion.toString()].parent = eachQuestion._id.toString()
+              }
+            })
+          }
+
+          if (eachQuestion.instanceQuestions && eachQuestion.instanceQuestions.length > 0) {
+            eachQuestion.instanceQuestions.forEach(instanceChildQuestion => {
+              if (currentQuestionMap[instanceChildQuestion.toString()]) {
+                currentQuestionMap[instanceChildQuestion.toString()].instanceParent = eachQuestion._id.toString()
+              }
+            })
+          }
+
+        });
+      } catch (error) {
+        return reject(error);
+      }
+    })
+  }
+
   static createQuestion(parsedQuestion) {
 
     return new Promise(async (resolve, reject) => {
