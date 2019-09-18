@@ -259,29 +259,24 @@ module.exports = class questionsHelper {
 
           }
 
+          if (parsedQuestion["_instanceParentQuestionId"] != "" && parsedQuestion["responseType"] != "matrix") {
 
-          if (parsedQuestion.externalId === "Aman-ques-test4") {
-
-            console.log("here")
-            if (parsedQuestion["_instanceParentQuestionId"] != "" && parsedQuestion["responseType"] != "matrix") {
-
-              await database.models.questions.findOneAndUpdate(
-                {
-                  _id: parsedQuestion["_instanceParentQuestionId"],
-                  responseType: "matrix"
-                },
-                {
-                  $addToSet: {
-                    ["instanceQuestions"]: createQuestion._id
-                  }
-                }, {
-                  _id: 1
+            await database.models.questions.findOneAndUpdate(
+              {
+                _id: parsedQuestion["_instanceParentQuestionId"],
+                responseType: "matrix"
+              },
+              {
+                $addToSet: {
+                  ["instanceQuestions"]: createQuestion._id
                 }
-              );
-
-            }
+              }, {
+                _id: 1
+              }
+            );
 
           }
+
 
           if (parsedQuestion["_criteriaInternalId"] != "" && parsedQuestion["_evidenceMethodCode"] != "" && parsedQuestion["_sectionCode"] != "") {
 

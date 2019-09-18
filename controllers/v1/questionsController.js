@@ -34,8 +34,6 @@ module.exports = class Questions extends Abstract {
           req.files.questions.data.toString()
         );
 
-        let questions = await questionsHelper.upload(questionsData)
-
         let solutionDocument = await database.models.solutions
           .findOne(
             { externalId: questionsData[0]["solutionId"] },
@@ -59,7 +57,6 @@ module.exports = class Questions extends Abstract {
         if (allCriteriaDocument.length < 1) {
           throw "No criteria found for the given solution"
         }
-
 
         let currentQuestionMap = {};
 
