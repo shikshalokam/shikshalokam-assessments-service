@@ -13,268 +13,6 @@ module.exports = class Questions extends Abstract {
   }
 
   /**
-   * @api {post} /assessment/api/v1/questions/upload Upload Questions CSV
-   * @apiVersion 0.0.1
-   * @apiName Upload Questions CSV
-   * @apiGroup Questions
-   * @apiParam {File} questions Mandatory questions file of type CSV.
-   * @apiUse successBody
-   * @apiUse errorBody
-   */
-  upload(req) {
-    return new Promise(async (resolve, reject) => {
-      try {
-
-        const fileName = `Question-Upload-Result`;
-        let fileStream = new FileStream(fileName);
-        let input = fileStream.initStream();
-
-        (async function () {
-          await fileStream.getProcessorPromise();
-          return resolve({
-            isResponseAStream: true,
-            fileNameWithPath: fileStream.fileNameWithPath()
-          });
-        })();
-
-        if (!req.files || !req.files.questions) {
-          let responseMessage = "Bad request.";
-          return resolve({ status: 400, message: responseMessage });
-        }
-
-        let questions = await csv().fromString(
-          req.files.questions.data.toString()
-        );
-
-        let solutionDocument = await database.models.solutions
-          .findOne(
-            { externalId: questions[0]["solutionId"] },
-            { evidenceMethods: 1, sections: 1, themes: 1 }
-          )
-          .lean();
-
-        let solutionCriteriaIdsAndQuestionIds = await solutionsHelper.getCriteriasAndQuestions(solutionDocument.themes)
-
-        let questionIds = new Array();
-        let parsedQuestionArray = new Array()
-        let criteriaInCsv = new Array()
-
-        questions.forEach(eachQuestionData => {
-          let parsedQuestion = gen.utils.valueParser(eachQuestionData);
-
-          parsedQuestionArray.push(parsedQuestion)
-
-          if (!criteriaInCsv.includes(parsedQuestion.criteriaExternalId)) {
-            criteriaInCsv.push(parsedQuestion.criteriaExternalId)
-          }
-
-          if (!questionIds.includes(parsedQuestion["externalId"])) {
-            questionIds.push(parsedQuestion["externalId"]);
-          }
-
-          if (
-            parsedQuestion["hasAParentQuestion"] !== "NO" &&
-            !questionIds.includes(parsedQuestion["parentQuestionId"])
-          ) {
-            questionIds.push(parsedQuestion["parentQuestionId"]);
-          }
-
-          if (
-            parsedQuestion["instanceParentQuestionId"] !== "NA" &&
-            !questionIds.includes(parsedQuestion["instanceParentQuestionId"])
-          ) {
-            questionIds.push(parsedQuestion["instanceParentQuestionId"]);
-          }
-        });
-
-        let questionsFromDatabase = await database.models.questions
-          .find({
-            _id: { $in: solutionCriteriaIdsAndQuestionIds.questionIds },
-            externalId: { $in: questionIds }
-          }, {
-              externalId: 1,
-              _id: 1
-            })
-          .lean();
-
-
-        let criteriaDocument = await database.models.criteria.find(
-          {
-            _id: { $in: solutionCriteriaIdsAndQuestionIds.criteriaIds },
-            externalId: { $in: criteriaInCsv }
-          },
-          {
-            externalId: 1,
-            evidences: 1
-          }
-        ).lean()
-
-        if (!criteriaDocument.length > 0) {
-          throw { status: 400, message: "Criterias not found." }
-        }
-
-        let criteriaObject = _.keyBy(criteriaDocument, 'externalId')
-
-        let questionCollection = {};
-
-        if (questionsFromDatabase.length > 0) {
-          questionsFromDatabase.forEach(question => {
-            questionCollection[question.externalId] = question;
-          });
-        }
-
-        function parentQuestionInCsv(parentQuestion) {
-          let question = {};
-
-          if (
-            parentQuestion["instanceParentQuestionId"] !== "NA" &&
-            questionCollection[parentQuestion["instanceParentQuestionId"]]
-          ) {
-            question[parentQuestion["instanceParentQuestionId"]] =
-              questionCollection[parentQuestion["instanceParentQuestionId"]];
-          }
-
-          if (
-            parentQuestion["hasAParentQuestion"] == "YES" &&
-            questionCollection[parentQuestion["parentQuestionId"]]
-          ) {
-            question[parentQuestion["parentQuestionId"]] =
-              questionCollection[parentQuestion["parentQuestionId"]];
-          }
-          return question
-        }
-
-        let pendingItems = new Array();
-
-        for (
-          let pointerToQuestionData = 0;
-          pointerToQuestionData < parsedQuestionArray.length;
-          pointerToQuestionData++
-        ) {
-
-          let parsedQuestion = parsedQuestionArray[pointerToQuestionData]
-
-          let ecm = {};
-          let csv = {}
-
-          csv["Question External Id"] = parsedQuestion.externalId
-          csv["Question Name"] = parsedQuestion["question0"]
-
-          if (questionCollection[parsedQuestion["externalId"]]) {
-            csv["UPLOAD_STATUS"] = "Question already exists"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
-            continue
-          }
-
-          if (!criteriaObject[parsedQuestion.criteriaExternalId]) {
-            csv["UPLOAD_STATUS"] = "Criteria not found"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
-            continue
-          }
-
-          if (solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]]) {
-            ecm[parsedQuestion["evidenceMethod"]] = {
-              code:
-                solutionDocument.evidenceMethods[parsedQuestion["evidenceMethod"]]
-                  .externalId
-            };
-          } else {
-
-            csv["UPLOAD_STATUS"] = "Ecm is not found in the given solution"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
-            continue
-          }
-
-          let section
-
-          if (solutionDocument.sections[parsedQuestion.section]) {
-            section = parsedQuestion.section;
-          } else {
-
-            csv["UPLOAD_STATUS"] = "section is not found in the given solution"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
-            continue
-          }
-
-          if (parsedQuestion["hasAParentQuestion"] === "") {
-            csv["UPLOAD_STATUS"] = "hasAParentQuestion should be either YES or NO"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
-            continue
-          }
-
-          if (parsedQuestion["instanceParentQuestionId"] === "") {
-            csv["UPLOAD_STATUS"] = "instanceParentQuestionId should be either NA or parent question id"
-            csv["_SYSTEM_ID"] = "Not Created"
-            input.push(csv)
-            continue
-          }
-
-          let parentQuestion = {}
-
-          if (parsedQuestion["hasAParentQuestion"] == "YES" || parsedQuestion["instanceParentQuestionId"] !== "NA") {
-            parentQuestion = parentQuestionInCsv(_.pick(parsedQuestion, ["instanceParentQuestionId", "hasAParentQuestion", "parentQuestionId"]))
-
-          }
-          if (
-            (parsedQuestion["hasAParentQuestion"] == "YES" &&
-              !questionCollection[parsedQuestion["parentQuestionId"]]) ||
-            (parsedQuestion["instanceParentQuestionId"] !== "NA" &&
-              !questionCollection[parsedQuestion["instanceParentQuestionId"]])
-          ) {
-            pendingItems.push({
-              csvResponse: csv,
-              criteria: criteriaObject[parsedQuestion.criteriaExternalId],
-              parsedQuestion: parsedQuestion,
-              parentQuestion: parentQuestion,
-              evaluationFrameworkMethod: ecm,
-              section: section
-            });
-          } else {
-
-            let resultFromCreateQuestions = await questionsHelper.createQuestions(parsedQuestion, parentQuestion, criteriaObject[parsedQuestion.criteriaExternalId], ecm, section)
-
-            if (resultFromCreateQuestions.result) {
-              questionCollection[resultFromCreateQuestions.result.externalId] =
-                resultFromCreateQuestions.result;
-            }
-
-            csv = _.merge(csv, resultFromCreateQuestions.csvResult)
-            input.push(csv)
-          }
-
-        }
-
-        if (pendingItems) {
-          for (
-            let pointerToPendingData = 0;
-            pointerToPendingData < pendingItems.length;
-            pointerToPendingData++
-          ) {
-
-            let csvQuestionData = await questionsHelper.createQuestions(pendingItems[pointerToPendingData].parsedQuestion, pendingItems[pointerToPendingData].parentQuestion, pendingItems[pointerToPendingData].criteria, pendingItems[pointerToPendingData].evaluationFrameworkMethod, pendingItems[pointerToPendingData].section)
-
-            csvQuestionData.csvResult = _.merge(csvQuestionData.csvResult, pendingItems[pointerToPendingData].csvResponse)
-
-            input.push(csvQuestionData.csvResult);
-          }
-        }
-
-        input.push(null);
-      } catch (error) {
-        reject({
-          message: error
-        });
-      }
-    });
-  }
-
-
-  /**
    * @api {post} /assessment/api/v1/questions/bulkCreate Bulk Create Questions CSV
    * @apiVersion 0.0.1
    * @apiName Bulk Create Questions CSV
@@ -298,7 +36,7 @@ module.exports = class Questions extends Abstract {
 
         let solutionDocument = await database.models.solutions
           .findOne(
-            { externalId: questions[0]["solutionId"] },
+            { externalId: questionsData[0]["solutionId"] },
             { evidenceMethods: 1, sections: 1, themes: 1 }
           )
           .lean();
@@ -340,6 +78,8 @@ module.exports = class Questions extends Abstract {
           })
         })
 
+        // for few questions we are loading all the questions in the criterias
+
         let allQuestionsDocument = await database.models.questions
           .find(
             { _id: { $in: Object.keys(currentQuestionMap) } },
@@ -350,13 +90,13 @@ module.exports = class Questions extends Abstract {
           .lean();
 
         let questionExternalToInternalIdMap = {};
-        
+
         if (allQuestionsDocument.length > 0) {
           allQuestionsDocument.forEach(eachQuestion => {
             questionExternalToInternalIdMap[eachQuestion.externalId] = eachQuestion._id.toString()
           });
         }
-        
+
         const fileName = `Question-Upload-Result`;
         let fileStream = new FileStream(fileName);
         let input = fileStream.initStream();
@@ -374,12 +114,12 @@ module.exports = class Questions extends Abstract {
 
         for (
           let pointerToQuestionData = 0;
-          pointerToQuestionData < questionData.length;
+          pointerToQuestionData < questionsData.length;
           pointerToQuestionData++
         ) {
 
           let parsedQuestion = gen.utils.valueParser(
-            questionData[pointerToQuestionData]
+            questionsData[pointerToQuestionData]
           );
 
           pushToPendingItems = false
@@ -437,7 +177,7 @@ module.exports = class Questions extends Abstract {
               parsedQuestion["_SYSTEM_ID"] = "Not Created"
               input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
               continue
-            } else if (currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]]) {
+            } else if (currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]]) { // It can be directly taken from questionExternalToInternalIdMap
               parsedQuestion["_parentQuestionId"] = questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]
             } else {
               pushToPendingItems = true
@@ -447,15 +187,13 @@ module.exports = class Questions extends Abstract {
             parsedQuestion["_parentQuestionId"] = ""
           }
 
-          // Parent question CSV data validation ends.
-
           // Instance Parent question CSV data validation begins.
-          parsedQuestion["instanceParentQuestionId"] = parsedQuestion["instanceParentQuestionId"].toUpperCase()
+          // parsedQuestion["instanceParentQuestionId"] = parsedQuestion["instanceParentQuestionId"].toUpperCase()
           if (parsedQuestion["instanceParentQuestionId"] == "") {
 
             parsedQuestion["UPLOAD_STATUS"] = "Invalid value for column instanceParentQuestionId"
             parsedQuestion["_SYSTEM_ID"] = "Not Created"
-            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
+            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" })); // No need to load everything. Only return specific field that is required.
             continue
 
           } else if (parsedQuestion["instanceParentQuestionId"] == "NA") {
@@ -473,13 +211,14 @@ module.exports = class Questions extends Abstract {
           }
           // Instance Parent question CSV data validation ends.
 
-          if(pushToPendingItems) {
+          if (pushToPendingItems) {
             pendingItems.push(parsedQuestion);
             continue
           }
 
           let resultFromCreateQuestions = await questionsHelper.createQuestion(parsedQuestion)
 
+          // stop here.
           if (resultFromCreateQuestions["_SYSTEM_ID"] && resultFromCreateQuestions["_SYSTEM_ID"].toString() != "") {
             currentQuestionMap[resultFromCreateQuestions["_SYSTEM_ID"].toString()] = {
               qid: resultFromCreateQuestions["_SYSTEM_ID"].toString()
@@ -496,12 +235,14 @@ module.exports = class Questions extends Abstract {
 
         }
 
+        // Same logic repeated here.
+
         if (pendingItems.length > 0) {
 
-          for (let pointerToPendingData = 0;pointerToPendingData < pendingItems.length; pointerToPendingData++) {
+          for (let pointerToPendingData = 0; pointerToPendingData < pendingItems.length; pointerToPendingData++) {
 
             let parsedQuestion = pendingItems[pointerToPendingData]
-          
+
             // Parent question CSV data validation begins.
             if (parsedQuestion["hasAParentQuestion"] == "YES") {
 
@@ -555,7 +296,7 @@ module.exports = class Questions extends Abstract {
             }
 
             input.push(resultFromCreateQuestions)
-            
+
           }
         }
 
@@ -759,7 +500,7 @@ module.exports = class Questions extends Abstract {
 
           // Instance Parent question CSV data validation begins.
           parsedQuestion["instanceParentQuestionId"] = parsedQuestion["instanceParentQuestionId"].toUpperCase()
-          if (parsedQuestion["instanceParentQuestionId"] == "") {
+          if (parsedQuestion["instanceParentQuestionId"] && parsedQuestion["instanceParentQuestionId"] == "") {
 
             parsedQuestion["UPDATE_STATUS"] = "Invalid value for column instanceParentQuestionId"
             input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
