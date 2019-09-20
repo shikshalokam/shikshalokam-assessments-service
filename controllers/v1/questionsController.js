@@ -34,64 +34,18 @@ module.exports = class Questions extends Abstract {
           req.files.questions.data.toString()
         );
 
-        let solutionDocument = await database.models.solutions
-          .findOne(
-            { externalId: questionsData[0]["solutionId"] },
-            { evidenceMethods: 1, sections: 1, themes: 1 }
-          )
-          .lean();
+        let questions = await questionsHelper.upload(questionsData)
 
+        let solutionDocument = questions.solutionDocument
 
-        let criteriasIdArray = gen.utils.getCriteriaIds(
-          solutionDocument.themes
-        );
+        let criteriaMap = questions.criteriaMap
 
-        if (criteriasIdArray.length < 1) {
-          throw "No criteria found for the given solution"
-        }
-
-        let allCriteriaDocument = await database.models.criteria
-          .find({ _id: { $in: criteriasIdArray } }, { evidences: 1, externalId: 1 })
-          .lean();
-
-        if (allCriteriaDocument.length < 1) {
-          throw "No criteria found for the given solution"
-        }
-
-        let currentQuestionMap = {};
-
-        let criteriaMap = {};
-
-        allCriteriaDocument.forEach(eachCriteria => {
-
-          criteriaMap[eachCriteria.externalId] = eachCriteria._id.toString()
-
-          eachCriteria.evidences.forEach(eachEvidence => {
-            eachEvidence.sections.forEach(eachSection => {
-              eachSection.questions.forEach(eachQuestion => {
-                currentQuestionMap[eachQuestion.toString()] = {
-                  qid: eachQuestion.toString()
-                }
-              })
-            })
-          })
-        })
-
-        // for few questions we are loading all the questions in the criterias
-
-        let allQuestionsDocument = await database.models.questions
-          .find(
-            { _id: { $in: Object.keys(currentQuestionMap) } },
-            {
-              externalId: 1
-            }
-          )
-          .lean();
+        let currentQuestionMap = questions.currentQuestionMap
 
         let questionExternalToInternalIdMap = {};
 
-        if (allQuestionsDocument.length > 0) {
-          allQuestionsDocument.forEach(eachQuestion => {
+        if (questions.allQuestionsDocument.length > 0) {
+          questions.allQuestionsDocument.forEach(eachQuestion => {
             questionExternalToInternalIdMap[eachQuestion.externalId] = eachQuestion._id.toString()
           });
         }
@@ -159,7 +113,6 @@ module.exports = class Questions extends Abstract {
             parsedQuestion["_sectionCode"] = parsedQuestion.section
           }
 
-          // Parent question CSV data validation begins.
           parsedQuestion["hasAParentQuestion"] = parsedQuestion["hasAParentQuestion"].toUpperCase()
 
           if (parsedQuestion["hasAParentQuestion"] != "YES" && parsedQuestion["hasAParentQuestion"] != "NO") {
@@ -186,8 +139,6 @@ module.exports = class Questions extends Abstract {
             parsedQuestion["_parentQuestionId"] = ""
           }
 
-          // Instance Parent question CSV data validation begins.
-          // parsedQuestion["instanceParentQuestionId"] = parsedQuestion["instanceParentQuestionId"].toUpperCase()
           if (parsedQuestion["instanceParentQuestionId"] == "") {
 
             parsedQuestion["UPLOAD_STATUS"] = "Invalid value for column instanceParentQuestionId"
@@ -201,14 +152,13 @@ module.exports = class Questions extends Abstract {
 
           } else {
 
-            if (currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["instanceParentQuestionId"]]] && currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["instanceParentQuestionId"]]] != "") {
+            if (currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["instanceParentQuestionId"]]] && currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["instanceParentQuestionId"]]].qid != "") {
               parsedQuestion["_instanceParentQuestionId"] = questionExternalToInternalIdMap[parsedQuestion["instanceParentQuestionId"]]
             } else {
               pushToPendingItems = true
             }
 
           }
-          // Instance Parent question CSV data validation ends.
 
           if (pushToPendingItems) {
             pendingItems.push(parsedQuestion);
@@ -217,7 +167,6 @@ module.exports = class Questions extends Abstract {
 
           let resultFromCreateQuestions = await questionsHelper.createQuestion(parsedQuestion)
 
-          // stop here.
           if (resultFromCreateQuestions["_SYSTEM_ID"] && resultFromCreateQuestions["_SYSTEM_ID"].toString() != "") {
             currentQuestionMap[resultFromCreateQuestions["_SYSTEM_ID"].toString()] = {
               qid: resultFromCreateQuestions["_SYSTEM_ID"].toString()
@@ -234,7 +183,6 @@ module.exports = class Questions extends Abstract {
 
         }
 
-        // Same logic repeated here.
 
         if (pendingItems.length > 0) {
 
@@ -242,7 +190,6 @@ module.exports = class Questions extends Abstract {
 
             let parsedQuestion = pendingItems[pointerToPendingData]
 
-            // Parent question CSV data validation begins.
             if (parsedQuestion["hasAParentQuestion"] == "YES") {
 
               if (!currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]]) {
@@ -257,10 +204,6 @@ module.exports = class Questions extends Abstract {
             } else if (parsedQuestion["hasAParentQuestion"] == "NO") {
               parsedQuestion["_parentQuestionId"] = ""
             }
-
-            // Parent question CSV data validation ends.
-
-            // Instance Parent question CSV data validation begins.
 
             if (parsedQuestion["instanceParentQuestionId"] == "NA") {
 
@@ -278,7 +221,6 @@ module.exports = class Questions extends Abstract {
               }
 
             }
-            // Instance Parent question CSV data validation ends.
 
             let resultFromCreateQuestions = await questionsHelper.createQuestion(parsedQuestion)
 
@@ -331,68 +273,23 @@ module.exports = class Questions extends Abstract {
           req.files.questions.data.toString()
         );
 
-        let solutionDocument = await database.models.solutions
-          .findOne(
-            { externalId: questionData[0]["solutionId"] },
-            { evidenceMethods: 1, sections: 1, themes: 1 }
-          )
-          .lean();
 
-        let criteriasIdArray = gen.utils.getCriteriaIds(
-          solutionDocument.themes
-        );
+        let questions = await questionsHelper.upload(questionData)
 
-        if (criteriasIdArray.length < 1) {
-          throw "No criteria found for the given solution"
-        }
+        let solutionDocument = questions.solutionDocument
 
-        let allCriteriaDocument = await database.models.criteria
-          .find({ _id: { $in: criteriasIdArray } }, { evidences: 1, externalId: 1 })
-          .lean();
+        let criteriaMap = questions.criteriaMap
 
-        if (allCriteriaDocument.length < 1) {
-          throw "No criteria found for the given solution"
-        }
+        let currentQuestionMap = questions.currentQuestionMap
 
-        let currentQuestionMap = {};
-
-        let criteriaMap = {};
-
-        allCriteriaDocument.forEach(eachCriteria => {
-
-          criteriaMap[eachCriteria.externalId] = eachCriteria._id.toString()
-
-          eachCriteria.evidences.forEach(eachEvidence => {
-            eachEvidence.sections.forEach(eachSection => {
-              eachSection.questions.forEach(eachQuestion => {
-                currentQuestionMap[eachQuestion.toString()] = {
-                  qid: eachQuestion.toString(),
-                  sectionCode: eachSection.code,
-                  evidenceMethodCode: eachEvidence.code,
-                  criteriaId: eachCriteria._id.toString(),
-                  criteriaExternalId: eachCriteria.externalId
-                }
-              })
-            })
-          })
-        })
-
-        let allQuestionsDocument = await database.models.questions
-          .find(
-            { _id: { $in: Object.keys(currentQuestionMap) } },
-            {
-              externalId: 1,
-              children: 1,
-              instanceQuestions: 1
-            }
-          )
-          .lean();
+        let allQuestionsDocument = questions.allQuestionsDocument
 
         if (allQuestionsDocument.length < 1) {
           throw "No question found for the given solution"
         }
 
         let questionExternalToInternalIdMap = {};
+
         allQuestionsDocument.forEach(eachQuestion => {
 
           currentQuestionMap[eachQuestion._id.toString()].externalId = eachQuestion.externalId
@@ -428,7 +325,6 @@ module.exports = class Questions extends Abstract {
           });
         })();
 
-        let pendingItems = new Array();
 
         for (
           let pointerToQuestionData = 0;
@@ -472,7 +368,6 @@ module.exports = class Questions extends Abstract {
             parsedQuestion["_sectionCode"] = parsedQuestion.section
           }
 
-          // Parent question CSV data validation begins.
           parsedQuestion["hasAParentQuestion"] = parsedQuestion["hasAParentQuestion"].toUpperCase()
 
           if (parsedQuestion["hasAParentQuestion"] != "YES" && parsedQuestion["hasAParentQuestion"] != "NO") {
@@ -494,10 +389,7 @@ module.exports = class Questions extends Abstract {
           } else if (parsedQuestion["hasAParentQuestion"] == "NO") {
             parsedQuestion["_parentQuestionId"] = ""
           }
-          // Parent question CSV data validation ends.
 
-
-          // Instance Parent question CSV data validation begins.
           parsedQuestion["instanceParentQuestionId"] = parsedQuestion["instanceParentQuestionId"].toUpperCase()
           if (parsedQuestion["instanceParentQuestionId"] && parsedQuestion["instanceParentQuestionId"] == "") {
 
@@ -520,12 +412,11 @@ module.exports = class Questions extends Abstract {
             }
 
           }
-          // Instance Parent question CSV data validation ends.
 
           let currentQuestion = currentQuestionMap[parsedQuestion["_SYSTEM_ID"]]
 
           if (currentQuestion.criteriaId != parsedQuestion["_criteriaInternalId"] || currentQuestion.sectionCode != parsedQuestion["_sectionCode"] || currentQuestion.evidenceMethodCode != parsedQuestion["_evidenceMethodCode"]) {
-            // remove question from criteria (qid,criteiaid, ecm, section)
+
             let criteriaToUpdate = await database.models.criteria.findOne(
               {
                 _id: ObjectId(currentQuestion.criteriaId)

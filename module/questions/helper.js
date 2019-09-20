@@ -60,19 +60,11 @@ module.exports = class questionsHelper {
           )
           .lean();
 
-
-        let questionExternalToInternalIdMap = {};
-
-        if (allQuestionsDocument.length > 0) {
-          allQuestionsDocument.forEach(eachQuestion => {
-            questionExternalToInternalIdMap[eachQuestion.externalId] = eachQuestion._id.toString()
-          });
-        }
-
         return resolve({
+          solutionDocument: solutionDocument,
           criteriaMap: criteriaMap,
           currentQuestionMap: currentQuestionMap,
-          questionExternalToInternalIdMap: questionExternalToInternalIdMap
+          allQuestionsDocument: allQuestionsDocument,
         })
 
       } catch (error) {
@@ -159,11 +151,11 @@ module.exports = class questionsHelper {
 
             let updateQuery = {
               $addToSet: {
-                ["children"]: updateQuestion._id
+                ["children"]: createQuestion._id
               }
             }
 
-            let updateQuestion = await questionsHelper.updateQuestion(findQuery, updateQuery, { _id: 1 })
+            let updateQuestion = await questionsHelper.questionUpdateDocument(findQuery, updateQuery, { _id: 1 })
 
             parsedQuestion["UPLOAD_STATUS"] = updateQuestion.result
 
@@ -182,7 +174,7 @@ module.exports = class questionsHelper {
               }
             }
 
-            let updateQuestion = await questionsHelper.updateQuestion(findQuery, updateQuery, { _id: 1 })
+            let updateQuestion = await questionsHelper.questionUpdateDocument(findQuery, updateQuery, { _id: 1 })
 
             parsedQuestion["UPLOAD_STATUS"] = updateQuestion.result
 
@@ -304,9 +296,9 @@ module.exports = class questionsHelper {
                 }
               }
 
-              let updateQuestion = await questionsHelper.updateQuestion(findQuery, updateQuery, { _id: 1 })
+              let updateQuestionStatus = await questionsHelper.questionUpdateDocument(findQuery, updateQuery, { _id: 1 })
 
-              parsedQuestion["UPDATE_STATUS"] = updateQuestion.result
+              parsedQuestion["UPDATE_STATUS"] = updateQuestionStatus.result
 
             }
 
@@ -324,9 +316,9 @@ module.exports = class questionsHelper {
                 }
               }
 
-              let updateQuestion = await questionsHelper.updateQuestion(findQuery, updateQuery, { _id: 1 })
+              let updateQuestionStatus = await questionsHelper.questionUpdateDocument(findQuery, updateQuery, { _id: 1 })
 
-              parsedQuestion["UPDATE_STATUS"] = updateQuestion.result
+              parsedQuestion["UPDATE_STATUS"] = updateQuestionStatus.result
 
             }
 
