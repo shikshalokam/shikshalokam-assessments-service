@@ -155,9 +155,9 @@ module.exports = class questionsHelper {
               }
             }
 
-            let updateQuestion = await questionsHelper.questionUpdateDocument(findQuery, updateQuery, { _id: 1 })
+            let updateQuestionStatus = await questionsHelper.questionUpdateDocument(findQuery, updateQuery, { _id: 1 })
 
-            parsedQuestion["UPLOAD_STATUS"] = updateQuestion.result
+            parsedQuestion["UPLOAD_STATUS"] = updateQuestionStatus.result
 
           }
 
@@ -174,9 +174,9 @@ module.exports = class questionsHelper {
               }
             }
 
-            let updateQuestion = await questionsHelper.questionUpdateDocument(findQuery, updateQuery, { _id: 1 })
+            let updateQuestionStatus = await questionsHelper.questionUpdateDocument(findQuery, updateQuery, { _id: 1 })
 
-            parsedQuestion["UPLOAD_STATUS"] = updateQuestion.result
+            parsedQuestion["UPLOAD_STATUS"] = updateQuestionStatus.result
 
           }
 
@@ -501,8 +501,6 @@ module.exports = class questionsHelper {
       result["minCount"] = parseInt(questionFile.minFileCount)
       result["maxCount"] = parseInt(questionFile.maxFileCount)
       result["caption"] = questionFile.caption ? questionFile.caption : ""
-
-      // questionFile.file = result
     }
     return result
   }

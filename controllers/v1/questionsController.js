@@ -129,7 +129,7 @@ module.exports = class Questions extends Abstract {
               parsedQuestion["_SYSTEM_ID"] = "Not Created"
               input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
               continue
-            } else if (currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]]) { // It can be directly taken from questionExternalToInternalIdMap
+            } else if (currentQuestionMap[questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]]) {
               parsedQuestion["_parentQuestionId"] = questionExternalToInternalIdMap[parsedQuestion["parentQuestionId"]]
             } else {
               pushToPendingItems = true
@@ -143,7 +143,7 @@ module.exports = class Questions extends Abstract {
 
             parsedQuestion["UPLOAD_STATUS"] = "Invalid value for column instanceParentQuestionId"
             parsedQuestion["_SYSTEM_ID"] = "Not Created"
-            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" })); // No need to load everything. Only return specific field that is required.
+            input.push(_.omitBy(parsedQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
             continue
 
           } else if (parsedQuestion["instanceParentQuestionId"] == "NA") {
