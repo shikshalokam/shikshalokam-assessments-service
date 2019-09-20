@@ -1,7 +1,7 @@
 
 module.exports = class questionsHelper {
 
-  static upload(parsedQuestion) {
+  static upload(questionData) {
     return new Promise(async (resolve, reject) => {
       try {
 
@@ -17,7 +17,7 @@ module.exports = class questionsHelper {
         );
 
         if (criteriasIdArray.length < 1) {
-          throw "No criteria found for the given solution"
+          throw "No criteria found"
         }
 
         let allCriteriaDocument = await database.models.criteria
@@ -27,7 +27,6 @@ module.exports = class questionsHelper {
         if (allCriteriaDocument.length < 1) {
           throw "No criteria found for the given solution"
         }
-
 
         let currentQuestionMap = {};
 
@@ -57,39 +56,25 @@ module.exports = class questionsHelper {
             { _id: { $in: Object.keys(currentQuestionMap) } },
             {
               externalId: 1,
-              children: 1,
-              instanceQuestions: 1
             }
           )
           .lean();
 
-        if (allQuestionsDocument.length < 1) {
-          throw "No question found for the given solution"
-        }
 
         let questionExternalToInternalIdMap = {};
-        allQuestionsDocument.forEach(eachQuestion => {
 
-          currentQuestionMap[eachQuestion._id.toString()].externalId = eachQuestion.externalId
-          questionExternalToInternalIdMap[eachQuestion.externalId] = eachQuestion._id.toString()
+        if (allQuestionsDocument.length > 0) {
+          allQuestionsDocument.forEach(eachQuestion => {
+            questionExternalToInternalIdMap[eachQuestion.externalId] = eachQuestion._id.toString()
+          });
+        }
 
-          if (eachQuestion.children && eachQuestion.children.length > 0) {
-            eachQuestion.children.forEach(childQuestion => {
-              if (currentQuestionMap[childQuestion.toString()]) {
-                currentQuestionMap[childQuestion.toString()].parent = eachQuestion._id.toString()
-              }
-            })
-          }
+        return resolve({
+          criteriaMap: criteriaMap,
+          currentQuestionMap: currentQuestionMap,
+          questionExternalToInternalIdMap: questionExternalToInternalIdMap
+        })
 
-          if (eachQuestion.instanceQuestions && eachQuestion.instanceQuestions.length > 0) {
-            eachQuestion.instanceQuestions.forEach(instanceChildQuestion => {
-              if (currentQuestionMap[instanceChildQuestion.toString()]) {
-                currentQuestionMap[instanceChildQuestion.toString()].instanceParent = eachQuestion._id.toString()
-              }
-            })
-          }
-
-        });
       } catch (error) {
         return reject(error);
       }
@@ -130,95 +115,20 @@ module.exports = class questionsHelper {
           parsedQuestion["question1"]
         )
 
-        allValues["visibleIf"] = new Array
+        allValues["visibleIf"] = questionsHelper.getQuestionVisibleIf(parsedQuestion["_parentQuestionId"], parsedQuestion["parentQuestionOperator"], parsedQuestion.parentQuestionValue)
 
-        if (parsedQuestion["hasAParentQuestion"] !== "YES") {
-          allValues.visibleIf = ""
-        } else {
+        let generateResponseTypeAndValidation = questionsHelper.addValidationAndResponseType(_.pick(parsedQuestion, ["responseType", "validation", "instanceIdentifier", "dateFormat", "autoCapture", "validationIsNumber", "validationRegex", "validationMax", "validationMin"]))
 
-          let operator = parsedQuestion["parentQuestionOperator"] == "EQUALS" ? parsedQuestion["parentQuestionOperator"] = "===" : parsedQuestion["parentQuestionOperator"]
-
-          allValues.visibleIf.push({
-            operator: operator,
-            value: parsedQuestion.parentQuestionValue,
-            _id: parsedQuestion["_parentQuestionId"] ? ObjectId(parsedQuestion["_parentQuestionId"]) : null
-          })
-
-        }
-
-        if (parsedQuestion["responseType"] !== "") {
-          allValues["validation"] = {}
-          allValues["validation"]["required"] = gen.utils.lowerCase(parsedQuestion["validation"])
-
-          if (parsedQuestion["responseType"] == "matrix") {
-            allValues["instanceIdentifier"] = parsedQuestion["instanceIdentifier"]
-          }
-
-          if (parsedQuestion["responseType"] == "date") {
-            allValues["dateFormat"] = parsedQuestion.dateFormat
-            allValues["autoCapture"] = gen.utils.lowerCase(parsedQuestion.autoCapture)
-            allValues["validation"]["max"] = parsedQuestion.validationMax
-            allValues["validation"]["min"] = parsedQuestion.validationMin ? parsedQuestion.validationMin : parsedQuestion.validationMin = ""
-          }
-
-          if (parsedQuestion["responseType"] == "number") {
-
-            allValues["validation"]["IsNumber"] = gen.utils.lowerCase(parsedQuestion["validationIsNumber"])
-
-            if (parsedQuestion["validationRegex"] == "IsNumber") {
-              allValues["validation"]["regex"] = "^[0-9s]*$"
-            }
-
-          }
-
-          if (parsedQuestion["responseType"] == "slider") {
-            if (parsedQuestion["validationRegex"] == "IsNumber") {
-              allValues["validation"]["regex"] = "^[0-9s]*$"
-            }
-            allValues["validation"]["max"] = parsedQuestion.validationMax
-            allValues["validation"]["min"] = parsedQuestion.validationMin ? parsedQuestion.validationMin : parsedQuestion.validationMin = ""
-          }
-
-        }
+        allValues["responseType"] = generateResponseTypeAndValidation.responseType
+        allValues["validation"] = generateResponseTypeAndValidation.validation
 
         allValues["fileName"] = []
-        allValues["file"] = {}
 
-        if (parsedQuestion["file"] != "NA") {
-
-          allValues.file["required"] = gen.utils.lowerCase(parsedQuestion["fileIsRequired"])
-          allValues.file["type"] = new Array
-          let allowedFileUploads = this.allowedFileUploads()
-          parsedQuestion["fileUploadType"].split(",").forEach(fileType => {
-            if (allowedFileUploads[fileType] && allowedFileUploads[fileType] != "") {
-              allValues.file.type.push(allowedFileUploads[fileType])
-            }
-          })
-
-          allValues.file["minCount"] = parseInt(parsedQuestion["minFileCount"])
-          allValues.file["maxCount"] = parseInt(parsedQuestion["maxFileCount"])
-          allValues.file["caption"] = parsedQuestion["caption"]
-        }
+        allValues["file"] = questionsHelper.addFileInQuestion(_.pick(parsedQuestion, ["file", "fileIsRequired", "fileUploadType", "minFileCount", "maxFileCount", "caption"]))
 
         allValues["questionGroup"] = parsedQuestion["questionGroup"] ? parsedQuestion["questionGroup"].split(',') : "A1"
-        allValues["options"] = new Array
 
-        // Adding data in options field
-        for (let pointerToResponseCount = 1; pointerToResponseCount < 10; pointerToResponseCount++) {
-          let optionValue = "R" + pointerToResponseCount
-          let optionHint = "R" + pointerToResponseCount + "-hint"
-
-          if (parsedQuestion[optionValue] && parsedQuestion[optionValue] != "") {
-            let eachOption = {
-              value: optionValue,
-              label: parsedQuestion[optionValue]
-            }
-            if (parsedQuestion[optionHint] && parsedQuestion[optionHint] != "") {
-              eachOption.hint = parsedQuestion[optionHint]
-            }
-            allValues.options.push(eachOption)
-          }
-        }
+        allValues["options"] = questionsHelper.questionResponse(parsedQuestion)
 
         Object.keys(parsedQuestion).forEach(parsedQuestionData => {
           if (!fieldNotIncluded.includes(parsedQuestionData) && !allValues[parsedQuestionData] && questionDataModel.includes(parsedQuestionData)) {
@@ -244,39 +154,39 @@ module.exports = class questionsHelper {
 
           if (parsedQuestion["_parentQuestionId"] != "") {
 
-            await database.models.questions.findOneAndUpdate(
-              {
-                _id: parsedQuestion["_parentQuestionId"]
-              },
-              {
-                $addToSet: {
-                  ["children"]: createQuestion._id
-                }
-              }, {
-                _id: 1
+
+            let findQuery = { _id: parsedQuestion["_parentQuestionId"] }
+
+            let updateQuery = {
+              $addToSet: {
+                ["children"]: updateQuestion._id
               }
-            );
+            }
+
+            let updateQuestion = await questionsHelper.updateQuestion(findQuery, updateQuery, { _id: 1 })
+
+            parsedQuestion["UPLOAD_STATUS"] = updateQuestion.result
 
           }
 
           if (parsedQuestion["_instanceParentQuestionId"] != "" && parsedQuestion["responseType"] != "matrix") {
 
-            await database.models.questions.findOneAndUpdate(
-              {
-                _id: parsedQuestion["_instanceParentQuestionId"],
-                responseType: "matrix"
-              },
-              {
-                $addToSet: {
-                  ["instanceQuestions"]: createQuestion._id
-                }
-              }, {
-                _id: 1
+            let findQuery = {
+              _id: parsedQuestion["_instanceParentQuestionId"],
+              responseType: "matrix"
+            }
+
+            let updateQuery = {
+              $addToSet: {
+                ["instanceQuestions"]: createQuestion._id
               }
-            );
+            }
+
+            let updateQuestion = await questionsHelper.updateQuestion(findQuery, updateQuery, { _id: 1 })
+
+            parsedQuestion["UPLOAD_STATUS"] = updateQuestion.result
 
           }
-
 
           if (parsedQuestion["_criteriaInternalId"] != "" && parsedQuestion["_evidenceMethodCode"] != "" && parsedQuestion["_sectionCode"] != "") {
 
@@ -287,45 +197,18 @@ module.exports = class questionsHelper {
               {
                 evidences: 1
               }
-            )
+            ).lean()
 
-            let evidenceMethod = parsedQuestion["_evidenceMethodCode"]
-
-            let criteriaEvidences = criteriaToUpdate.evidences
-            let indexOfEvidenceMethodInCriteria = criteriaEvidences.findIndex(evidence => evidence.code === evidenceMethod);
-
-            if (indexOfEvidenceMethodInCriteria < 0) {
-              criteriaEvidences.push({
-                code: evidenceMethod,
-                sections: new Array
-              })
-              indexOfEvidenceMethodInCriteria = criteriaEvidences.length - 1
+            let updateData = {
+              ecm: parsedQuestion["_evidenceMethodCode"],
+              section: parsedQuestion["_sectionCode"],
+              questionId: createQuestion._id,
+              criteriaToUpdate: criteriaToUpdate
             }
 
-            let questionSection = parsedQuestion["_sectionCode"]
+            let updateCriteria = await questionsHelper.updateCriteria(updateData)
 
-            let indexOfSectionInEvidenceMethod = criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.findIndex(section => section.code === questionSection)
-
-            if (indexOfSectionInEvidenceMethod < 0) {
-              criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.push({ code: questionSection, questions: new Array })
-              indexOfSectionInEvidenceMethod = criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.length - 1
-            }
-
-            criteriaEvidences[indexOfEvidenceMethodInCriteria].sections[indexOfSectionInEvidenceMethod].questions.push(createQuestion._id)
-
-            let queryCriteriaObject = {
-              _id: criteriaToUpdate._id
-            }
-
-            let updateCriteriaObject = {}
-            updateCriteriaObject.$set = {
-              ["evidences"]: criteriaEvidences
-            }
-
-            await database.models.criteria.findOneAndUpdate(
-              queryCriteriaObject,
-              updateCriteriaObject
-            )
+            parsedQuestion["UPLOAD_STATUS"] = updateCriteria.criteriaUpdateStatus
 
           }
 
@@ -357,236 +240,120 @@ module.exports = class questionsHelper {
           )
           .lean();
 
-        if (parsedQuestion["_parentQuestionId"] == "") {
-          existingQuestion.visibleIf = ""
+
+        if (!existingQuestion._id) {
+
+          parsedQuestion["UPDATE_STATUS"] = "Question id is not present in database."
+
         } else {
 
-          let operator = parsedQuestion["parentQuestionOperator"] == "EQUALS" ? parsedQuestion["parentQuestionOperator"] = "===" : parsedQuestion["parentQuestionOperator"]
+          existingQuestion.visibleIf = questionsHelper.getQuestionVisibleIf(parsedQuestion["_parentQuestionId"], parsedQuestion["parentQuestionOperator"], parsedQuestion.parentQuestionValue)
 
-          existingQuestion.visibleIf = new Array
-
-          existingQuestion.visibleIf.push({
-            operator: operator,
-            value: parsedQuestion.parentQuestionValue,
-            _id: ObjectId(parsedQuestion["_parentQuestionId"])
-          })
-
-        }
-
-        if (parsedQuestion["question0"]) {
-          existingQuestion.question[0] = parsedQuestion["question0"]
-        }
-
-        if (parsedQuestion["question1"]) {
-          existingQuestion.question[1] = parsedQuestion["question1"]
-        }
-
-        // if (parsedQuestion["isAGeneralQuestion"] && (parsedQuestion["isAGeneralQuestion"] == "true" || parsedQuestion["isAGeneralQuestion"] == "TRUE")) {
-        //   existingQuestion["isAGeneralQuestion"] = parsedQuestion["isAGeneralQuestion"] = true
-        // } else {
-        //   existingQuestion["isAGeneralQuestion"] = parsedQuestion["isAGeneralQuestion"] = false
-        // }
-
-        if (parsedQuestion["responseType"] !== "") {
-
-          existingQuestion["responseType"] = parsedQuestion["responseType"]
-          existingQuestion["validation"] = {}
-          existingQuestion["validation"]["required"] = this.convertStringToBoolean(gen.utils.lowerCase(parsedQuestion["validation"]))
-
-          if (parsedQuestion["responseType"] == "matrix") {
-            existingQuestion["instanceIdentifier"] = parsedQuestion["instanceIdentifier"]
+          if (parsedQuestion["question0"]) {
+            existingQuestion.question[0] = parsedQuestion["question0"]
           }
 
-          if (parsedQuestion["responseType"] == "date") {
-            existingQuestion["dateFormat"] = parsedQuestion.dateFormat
-            existingQuestion["autoCapture"] = gen.utils.lowerCase(parsedQuestion.autoCapture)
-            existingQuestion["validation"]["max"] = parsedQuestion.validationMax
-            existingQuestion["validation"]["min"] = parsedQuestion.validationMin ? parsedQuestion.validationMin : parsedQuestion.validationMin = ""
+          if (parsedQuestion["question1"]) {
+            existingQuestion.question[1] = parsedQuestion["question1"]
           }
 
-          if (parsedQuestion["responseType"] == "number") {
+          let generateResponseTypeAndValidation = questionsHelper.addValidationAndResponseType(_.pick(parsedQuestion, ["responseType", "validation", "instanceIdentifier", "dateFormat", "autoCapture", "validationIsNumber", "validationRegex", "validationMax", "validationMin"]))
 
-            existingQuestion["validation"]["IsNumber"] = gen.utils.lowerCase(parsedQuestion["validationIsNumber"])
+          existingQuestion["responseType"] = generateResponseTypeAndValidation.responseType
+          existingQuestion["validation"] = generateResponseTypeAndValidation.validation
 
-            if (parsedQuestion["validationRegex"] == "IsNumber") {
-              existingQuestion["validation"]["regex"] = "^[0-9s]*$"
-            }
+          existingQuestion.file = questionsHelper.addFileInQuestion(_.pick(parsedQuestion, ["file", "fileIsRequired", "fileUploadType", "minFileCount", "maxFileCount", "caption"]))
 
+          existingQuestion["fileName"] = new Array
+
+          if (parsedQuestion["questionGroup"]) {
+            existingQuestion["questionGroup"] = parsedQuestion["questionGroup"] = parsedQuestion["questionGroup"].split(',')
           }
 
-          if (parsedQuestion["responseType"] == "slider") {
-            if (parsedQuestion["validationRegex"] == "IsNumber") {
-              existingQuestion["validation"]["regex"] = "^[0-9s]*$"
-            }
-            existingQuestion["validation"]["max"] = parsedQuestion.validationMax
-            existingQuestion["validation"]["min"] = parsedQuestion.validationMin ? parsedQuestion.validationMin : ""
-          }
+          existingQuestion["options"] = questionsHelper.questionResponse(parsedQuestion)
 
-          delete parsedQuestion["validation"]
-
-        }
-
-        existingQuestion["fileName"] = new Array
-        existingQuestion["file"] = {}
-
-        if (parsedQuestion["file"] != "NA") {
-
-          existingQuestion.file["required"] = gen.utils.lowerCase(parsedQuestion["fileIsRequired"])
-          existingQuestion.file["type"] = new Array
-          let allowedFileUploads = this.allowedFileUploads()
-          parsedQuestion["fileUploadType"].split(",").forEach(fileType => {
-            if (allowedFileUploads[fileType] && allowedFileUploads[fileType] != "") {
-              existingQuestion.file.type.push(allowedFileUploads[fileType])
+          Object.keys(parsedQuestion).forEach(parsedQuestionData => {
+            if (!_.startsWith(parsedQuestionData, "_") && questionDataModel.includes(parsedQuestionData)) {
+              if (this.booleanData().includes(parsedQuestionData)) {
+                existingQuestion[parsedQuestionData] = this.convertStringToBoolean(parsedQuestion[parsedQuestionData])
+              } else {
+                existingQuestion[parsedQuestionData] = parsedQuestion[parsedQuestionData]
+              }
             }
           })
-          existingQuestion.file["minCount"] = parseInt(parsedQuestion["minFileCount"])
-          existingQuestion.file["maxCount"] = parseInt(parsedQuestion["maxFileCount"])
-          existingQuestion.file["caption"] = parsedQuestion["caption"]
 
-          parsedQuestion["file"] = existingQuestion.file
-        }
+          let updateQuestion = await database.models.questions.findOneAndUpdate(
+            { _id: existingQuestion._id },
+            existingQuestion,
+            { _id: 1 }
+          ).lean()
 
-        // if (parsedQuestion["showRemarks"] && (parsedQuestion["showRemarks"] == "true" || parsedQuestion["showRemarks"] == "TRUE")) {
-        //   existingQuestion["showRemarks"] = parsedQuestion["showRemarks"] = true
-        // } else {
-        //   existingQuestion["showRemarks"] = parsedQuestion["showRemarks"] = false
-        // }
+          if (!updateQuestion._id) {
+            parsedQuestion["UPDATE_STATUS"] = "Question Not Updated"
+          } else {
 
+            parsedQuestion["UPDATE_STATUS"] = "Success"
 
-        if (parsedQuestion["questionGroup"]) {
-          existingQuestion["questionGroup"] = parsedQuestion["questionGroup"] = parsedQuestion["questionGroup"].split(',')
-        }
+            if (parsedQuestion["_parentQuestionId"] != "") {
 
-        existingQuestion["options"] = new Array
+              let findQuery = { _id: parsedQuestion["_parentQuestionId"] }
 
-        for (let pointerToResponseCount = 1; pointerToResponseCount < 10; pointerToResponseCount++) {
-          let optionValue = "R" + pointerToResponseCount
-          let optionHint = "R" + pointerToResponseCount + "-hint"
-
-          if (parsedQuestion[optionValue] && parsedQuestion[optionValue] != "") {
-            let eachOption = {
-              value: optionValue,
-              label: parsedQuestion[optionValue]
-            }
-            if (parsedQuestion[optionHint] && parsedQuestion[optionHint] != "") {
-              eachOption.hint = parsedQuestion[optionHint]
-            }
-            existingQuestion.options.push(eachOption)
-          }
-
-        }
-
-        Object.keys(parsedQuestion).forEach(parsedQuestionData => {
-          if (!_.startsWith(parsedQuestionData, "_") && questionDataModel.includes(parsedQuestionData)) {
-            if (this.booleanData().includes(parsedQuestionData)) {
-              existingQuestion[parsedQuestionData] = this.convertStringToBoolean(parsedQuestion[parsedQuestionData])
-            } else {
-              existingQuestion[parsedQuestionData] = parsedQuestion[parsedQuestionData]
-            }
-            // existingQuestion[parsedQuestionData] = parsedQuestion[parsedQuestionData]
-          }
-        })
-
-        let updateQuestion = await database.models.questions.findOneAndUpdate(
-          { _id: existingQuestion._id },
-          existingQuestion,
-          { _id: 1 }
-        )
-
-        if (!updateQuestion._id) {
-          parsedQuestion["UPDATE_STATUS"] = "Question Not Updated"
-        } else {
-
-          parsedQuestion["UPDATE_STATUS"] = "Success"
-
-          if (parsedQuestion["_parentQuestionId"] != "") {
-
-            await database.models.questions.findOneAndUpdate(
-              {
-                _id: parsedQuestion["_parentQuestionId"]
-              },
-              {
+              let updateQuery = {
                 $addToSet: {
                   ["children"]: updateQuestion._id
                 }
-              }, {
-                _id: 1
               }
-            );
 
-          }
+              let updateQuestion = await questionsHelper.updateQuestion(findQuery, updateQuery, { _id: 1 })
+
+              parsedQuestion["UPDATE_STATUS"] = updateQuestion.result
+
+            }
 
 
-          if (parsedQuestion["_instanceParentQuestionId"] != "" && parsedQuestion["responseType"] != "matrix") {
+            if (parsedQuestion["_instanceParentQuestionId"] != "" && parsedQuestion["responseType"] != "matrix") {
 
-            await database.models.questions.findOneAndUpdate(
-              {
+              let findQuery = {
                 _id: parsedQuestion["_instanceParentQuestionId"],
                 responseType: "matrix"
-              },
-              {
+              }
+
+              let updateQuery = {
                 $addToSet: {
                   ["instanceQuestions"]: updateQuestion._id
                 }
-              }, {
-                _id: 1
               }
-            );
 
-          }
+              let updateQuestion = await questionsHelper.updateQuestion(findQuery, updateQuery, { _id: 1 })
 
-          if (parsedQuestion["_setQuestionInCriteria"] && parsedQuestion["_criteriaInternalId"] != "" && parsedQuestion["_evidenceMethodCode"] != "" && parsedQuestion["_sectionCode"] != "") {
+              parsedQuestion["UPDATE_STATUS"] = updateQuestion.result
 
-            let criteriaToUpdate = await database.models.criteria.findOne(
-              {
-                _id: ObjectId(parsedQuestion["_criteriaInternalId"])
-              },
-              {
-                evidences: 1
+            }
+
+            if (parsedQuestion["_setQuestionInCriteria"] && parsedQuestion["_criteriaInternalId"] != "" && parsedQuestion["_evidenceMethodCode"] != "" && parsedQuestion["_sectionCode"] != "") {
+
+              let criteriaToUpdate = await database.models.criteria.findOne(
+                {
+                  _id: ObjectId(parsedQuestion["_criteriaInternalId"])
+                },
+                {
+                  evidences: 1
+                }
+              )
+
+              let updateData = {
+                ecm: parsedQuestion["_evidenceMethodCode"],
+                section: parsedQuestion["_sectionCode"],
+                questionId: updateQuestion._id,
+                criteriaToUpdate: criteriaToUpdate
               }
-            )
 
-            let evidenceMethod = parsedQuestion["_evidenceMethodCode"]
+              let updateCriteria = await questionsHelper.updateCriteria(updateData)
 
-            let criteriaEvidences = criteriaToUpdate.evidences
-            let indexOfEvidenceMethodInCriteria = criteriaEvidences.findIndex(evidence => evidence.code === evidenceMethod);
+              parsedQuestion["UPLOAD_STATUS"] = updateCriteria.criteriaUpdateStatus
 
-            if (indexOfEvidenceMethodInCriteria < 0) {
-              criteriaEvidences.push({
-                code: evidenceMethod,
-                sections: new Array
-              })
-              indexOfEvidenceMethodInCriteria = criteriaEvidences.length - 1
             }
-
-            let questionSection = parsedQuestion["_sectionCode"]
-
-            let indexOfSectionInEvidenceMethod = criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.findIndex(section => section.code === questionSection)
-
-            if (indexOfSectionInEvidenceMethod < 0) {
-              criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.push({ code: questionSection, questions: new Array })
-              indexOfSectionInEvidenceMethod = criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.length - 1
-            }
-
-            criteriaEvidences[indexOfEvidenceMethodInCriteria].sections[indexOfSectionInEvidenceMethod].questions.push(updateQuestion._id)
-
-            let queryCriteriaObject = {
-              _id: criteriaToUpdate._id
-            }
-
-            let updateCriteriaObject = {}
-            updateCriteriaObject.$set = {
-              ["evidences"]: criteriaEvidences
-            }
-
-            await database.models.criteria.findOneAndUpdate(
-              queryCriteriaObject,
-              updateCriteriaObject
-            )
-
           }
-
-
         }
 
         return resolve(parsedQuestion)
@@ -596,6 +363,28 @@ module.exports = class questionsHelper {
       }
     })
 
+  }
+
+  static getQuestionVisibleIf(parentQuestionId, parentQuestionOperator, parentQuestionValue) {
+
+    let visibleIf
+
+    if (parentQuestionId === "") {
+      visibleIf = ""
+    } else {
+
+      let operator = parentQuestionOperator == "EQUALS" ? parentQuestionOperator = "===" : parentQuestionOperator
+
+      visibleIf = new Array
+
+      visibleIf.push({
+        operator: operator,
+        value: parentQuestionValue,
+        _id: ObjectId(parentQuestionId)
+      })
+
+    }
+    return visibleIf
   }
 
   static booleanData() {
@@ -659,4 +448,176 @@ module.exports = class questionsHelper {
     return questionIds
   }
 
+  static addValidationAndResponseType(parsedQuestion) {
+    let result = {}
+
+    if (parsedQuestion.responseType !== "") {
+
+      result["responseType"] = parsedQuestion.responseType
+      result["validation"] = {}
+      result["validation"]["required"] = this.convertStringToBoolean(gen.utils.lowerCase(parsedQuestion["validation"]))
+
+      if (parsedQuestion["responseType"] == "matrix") {
+        result["instanceIdentifier"] = parsedQuestion["instanceIdentifier"]
+      }
+
+      if (parsedQuestion["responseType"] == "date") {
+        result["dateFormat"] = parsedQuestion.dateFormat
+        result["autoCapture"] = gen.utils.lowerCase(parsedQuestion.autoCapture)
+        result["validation"]["max"] = parsedQuestion.validationMax
+        result["validation"]["min"] = parsedQuestion.validationMin ? parsedQuestion.validationMin : parsedQuestion.validationMin = ""
+      }
+
+      if (parsedQuestion["responseType"] == "number") {
+
+        result["validation"]["IsNumber"] = gen.utils.lowerCase(parsedQuestion["validationIsNumber"])
+
+        if (parsedQuestion["validationRegex"] == "IsNumber") {
+          result["validation"]["regex"] = "^[0-9s]*$"
+        }
+
+      }
+
+      if (parsedQuestion["responseType"] == "slider") {
+        if (parsedQuestion["validationRegex"] == "IsNumber") {
+          result["validation"]["regex"] = "^[0-9s]*$"
+        }
+        result["validation"]["max"] = parsedQuestion.validationMax
+        result["validation"]["min"] = parsedQuestion.validationMin ? parsedQuestion.validationMin : ""
+      }
+
+    }
+
+    return result
+  }
+
+  static addFileInQuestion(questionFile) {
+
+    let result = {}
+
+    if (questionFile.file != "NA") {
+
+      result["required"] = gen.utils.lowerCase(questionFile.fileIsRequired)
+      result["type"] = new Array
+      let allowedFileUploads = this.allowedFileUploads()
+
+      questionFile.fileUploadType.split(",").forEach(fileType => {
+        if (allowedFileUploads[fileType] && allowedFileUploads[fileType] != "") {
+          result.type.push(allowedFileUploads[fileType])
+        }
+      })
+      result["minCount"] = parseInt(questionFile.minFileCount)
+      result["maxCount"] = parseInt(questionFile.maxFileCount)
+      result["caption"] = questionFile.caption ? questionFile.caption : ""
+
+      // questionFile.file = result
+    }
+    return result
+  }
+
+  static questionResponse(parsedQuestion) {
+
+    let options = new Array()
+
+    for (let pointerToResponseCount = 1; pointerToResponseCount < 10; pointerToResponseCount++) {
+      let optionValue = "R" + pointerToResponseCount
+      let optionHint = "R" + pointerToResponseCount + "-hint"
+
+      if (parsedQuestion[optionValue] && parsedQuestion[optionValue] != "") {
+        let eachOption = {
+          value: optionValue,
+          label: parsedQuestion[optionValue]
+        }
+        if (parsedQuestion[optionHint] && parsedQuestion[optionHint] != "") {
+          eachOption.hint = parsedQuestion[optionHint]
+        }
+        options.push(eachOption)
+      }
+
+    }
+
+    return options
+  }
+
+  static updateCriteria(updateData) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        let criteriaEvidences = updateData.criteriaToUpdate.evidences
+
+        let indexOfEvidenceMethodInCriteria = criteriaEvidences.findIndex(evidence => evidence.code === updateData.ecm);
+
+        if (indexOfEvidenceMethodInCriteria < 0) {
+          criteriaEvidences.push({
+            code: updateData.ecm,
+            sections: new Array
+          })
+          indexOfEvidenceMethodInCriteria = criteriaEvidences.length - 1
+        }
+
+        let questionSection = updateData.section
+
+        let indexOfSectionInEvidenceMethod = criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.findIndex(section => section.code === questionSection)
+
+        if (indexOfSectionInEvidenceMethod < 0) {
+          criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.push({ code: questionSection, questions: new Array })
+          indexOfSectionInEvidenceMethod = criteriaEvidences[indexOfEvidenceMethodInCriteria].sections.length - 1
+        }
+
+        criteriaEvidences[indexOfEvidenceMethodInCriteria].sections[indexOfSectionInEvidenceMethod].questions.push(updateData.questionId)
+
+        let queryCriteriaObject = {
+          _id: updateData.criteriaToUpdate._id
+        }
+
+        let updateCriteriaObject = {}
+        updateCriteriaObject.$set = {
+          ["evidences"]: criteriaEvidences
+        }
+
+        let criteriaUpdateDocument = await database.models.criteria.findOneAndUpdate(
+          queryCriteriaObject,
+          updateCriteriaObject
+        ).lean()
+
+        let criteriaUpdateStatus
+
+        if (criteriaUpdateDocument._id) {
+          criteriaUpdateStatus = "Criteria updated successfully"
+        } else {
+          criteriaUpdateStatus = "Criteria could not be updated"
+        }
+
+        return resolve({
+          criteriaUpdateStatus: criteriaUpdateStatus
+        })
+
+      } catch (error) {
+        return reject(error);
+      }
+    })
+  }
+
+  static questionUpdateDocument(findQuery, updateQuery, projection) {
+    return new Promise(async (resolve, reject) => {
+
+      try {
+        let updateQuestions = await database.models.questions.findOneAndUpdate(findQuery, updateQuery, projection)
+
+        let result
+        if (!updateQuestions._id) {
+          result = "Question could not be updated"
+        } else {
+          result = "Success"
+        }
+
+        return resolve({
+          result: result
+        })
+
+      } catch (error) {
+        return reject(error);
+      }
+    })
+  }
 };
