@@ -509,7 +509,7 @@ module.exports = class questionsHelper {
 
     let options = new Array()
 
-    for (let pointerToResponseCount = 1; pointerToResponseCount < 10; pointerToResponseCount++) {
+    for (let pointerToResponseCount = 1; pointerToResponseCount < 26; pointerToResponseCount++) {
       let optionValue = "R" + pointerToResponseCount
       let optionHint = "R" + pointerToResponseCount + "-hint"
 
