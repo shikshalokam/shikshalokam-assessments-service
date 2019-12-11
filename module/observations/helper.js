@@ -435,4 +435,40 @@ module.exports = class observationsHelper {
         })
     }
 
+    static details(observationId) {
+        return new Promise(async (resolve, reject) => {
+            try {
+
+                let observationDocument = await this.observationDocuments({
+                    _id:observationId
+                });
+
+                if(!observationDocument[0]) {
+                    throw "Observation for given id is not found";
+                }
+
+                if(!observationDocument[0].entities.length>0) {
+                    throw "No entities found in the given observation"
+                }
+
+                let entitiesDocument = await entitiesHelper.entityDocuments({
+                    _id:{$in:observationDocument[0].entities}
+                })
+
+                observationDocument[0].entities = [];
+                observationDocument[0]["count"] = entitiesDocument.length;
+
+                entitiesDocument.forEach(eachEntityDocument=>{
+                    observationDocument[0].entities.push(eachEntityDocument)
+                })
+
+                return resolve(observationDocument[0]);
+
+            }
+            catch (error) {
+                return reject(error);
+            }
+        })
+    }
+
 };
