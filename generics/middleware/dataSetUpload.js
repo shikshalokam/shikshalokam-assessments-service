@@ -5,6 +5,13 @@ module.exports = (req, res, next) => {
             if(req.files[filekey].mimetype === "text/csv") isRequestForDataSetUpload = true
         })
         if(isRequestForDataSetUpload) {
+            // Read CSV to get recordsToUploadCount, generate csvData
+            
+            // let entityCSVData = await csv().fromString(req.files.entities.data.toString());
+
+            // Create a request ID
+
+            // Send request ID to user.
             res.status(200).json({
                 message: "Upload request submitted successfully.",
                 status: 200,
@@ -12,6 +19,12 @@ module.exports = (req, res, next) => {
                     requestId : 123131231
                 }
             })
+
+            // req.data = csvData
+            // req.requestId = request ID
+            // req.file = ""
+
+
             controllers[req.params.version][req.params.controller][req.params.method](req);
         }
     }
