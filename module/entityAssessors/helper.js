@@ -1,8 +1,10 @@
-const csv = require("csvtojson");
 const moment = require("moment");
 let shikshalokam = require(ROOT_PATH + "/generics/helpers/shikshalokam");
 const slackClient = require(ROOT_PATH + "/generics/helpers/slackCommunications");
 const kafkaClient = require(ROOT_PATH + "/generics/helpers/kafkaCommunications");
+const FileStream = require(ROOT_PATH + "/generics/fileStream");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
 module.exports = class entityAssessorHelper {
 
@@ -154,12 +156,23 @@ module.exports = class entityAssessorHelper {
         })
     }
 
-    static upload(files, programId, solutionId, userId, token) {
+    static upload(assessorData, programId, solutionId, userId, token,requestId) {
         return new Promise(async (resolve, reject) => {
             try {
-                if (!files || !files.assessors) throw { status: 400, message: "Bad request." };
 
-                let assessorData = await csv().fromString(files.assessors.data.toString());
+                const fileName = `entity-assessors-upload`;
+                let fileStream = new FileStream(fileName);
+                let input = fileStream.initStream();
+        
+                let noOfRecords = assessorData.length;
+
+                (async function () {
+                  await fileStream.getProcessorPromise();
+                //   return resolve({
+                //     isResponseAStream: true,
+                //     fileNameWithPath: fileStream.fileNameWithPath()
+                //   });
+                })();
 
                 let entityIds = [];
                 let programIds = [];
@@ -177,11 +190,16 @@ module.exports = class entityAssessorHelper {
                     solutionIds.push(solutionId ? solutionId : assessor.solutionId);
 
                     if (!assessor["keycloak-userId"]) {
-                        if (!userExternalIds.includes(assessor.externalId)) userExternalIds.push(assessor.externalId);
+                        if (!userExternalIds.includes(assessor.externalId)) {
+                            userExternalIds.push(assessor.externalId);
+                        }
                     }
 
                     if (!assessor["keycloak-parentId"]) {
-                        if (assessor.parentId && assessor.parentId !== "" && !userExternalIds.includes(assessor.parentId)) userExternalIds.push(assessor.parentId);
+                        if (assessor.parentId && assessor.parentId !== "" 
+                        && !userExternalIds.includes(assessor.parentId)) {
+                            userExternalIds.push(assessor.parentId);
+                        }
                     }
 
                 });
@@ -194,7 +212,8 @@ module.exports = class entityAssessorHelper {
                     externalId: { $in: solutionIds }
                 }, { externalId: 1, entityType: 1, entityTypeId: 1, entities: 1, name: 1, type: 1, subType: 1 }).lean();
 
-                let entitiesBySolution = _.flattenDeep(solutionsFromDatabase.map(solution => solution.entities));
+                let entitiesBySolution = 
+                _.flattenDeep(solutionsFromDatabase.map(solution => solution.entities));
 
                 let entityFromDatabase = await database.models.entities.aggregate([
                     {
@@ -238,12 +257,16 @@ module.exports = class entityAssessorHelper {
 
                 assessorData = await Promise.all(assessorData.map(async (assessor) => {
 
+                    let csvAssessor = {...assessor};
+
                     if (assessor["keycloak-userId"] && assessor["keycloak-userId"] !== "") {
                         assessor["userId"] = assessor["keycloak-userId"]
                     } else {
 
                         if (userIdByExternalId[assessor.externalId] === "") {
-                            throw { status: 400, message: "Keycloak id for user is not present" };
+                            throw { status: 400, 
+                                message: "Keycloak id for user is not present" 
+                            };
                         }
 
                         assessor["userId"] = userIdByExternalId[assessor.externalId]
@@ -256,7 +279,9 @@ module.exports = class entityAssessorHelper {
                         if (assessor.parentId && assessor.parentId !== "") {
 
                             if (userIdByExternalId[assessor.parentId] === "") {
-                                throw { status: 400, message: "Keycloak id for parent is not present" };
+                                throw { status: 400, 
+                                    message: "Keycloak id for parent is not present" 
+                                };
                             }
 
                             assessor["parentId"] = userIdByExternalId[assessor.parentId]
@@ -300,7 +325,9 @@ module.exports = class entityAssessorHelper {
                     let fieldsWithOutEntity = {};
 
                     Object.keys(database.models.entityAssessors.schema.paths).forEach(fieldName => {
-                        if (fieldName != 'entities' && assessor[fieldName]) fieldsWithOutEntity[fieldName] = assessor[fieldName];
+                        if (fieldName != 'entities' && assessor[fieldName]) {
+                            fieldsWithOutEntity[fieldName] = assessor[fieldName];
+                        }
                     })
 
                     let updateObject;
@@ -320,14 +347,45 @@ module.exports = class entityAssessorHelper {
                         updateObject = { $pull: { entities: { $in: assessor.entities } }, $set: fieldsWithOutEntity };
                     }
 
-                    let updatedEntityAssessorDocument = await database.models.entityAssessors.findOneAndUpdate({ userId: assessor.userId, programId: assessor.programId, solutionId: fieldsWithOutEntity["solutionId"] }, updateObject,
+                    let updatedEntityAssessorDocument = 
+                    await database.models.entityAssessors.findOneAndUpdate({ 
+                        userId: assessor.userId,
+                         programId: assessor.programId, 
+                         solutionId: fieldsWithOutEntity["solutionId"] }, 
+                         updateObject,
                         {
                             upsert: true,
                             new: true,
                             setDefaultsOnInsert: true,
                             returnNewDocument: true
-                        });
+                        }).lean();
 
+                    if(updatedEntityAssessorDocument) {
+                        
+                        let dataSetUploadRequestsDocument = 
+                        await dataSetUploadRequestsHelper
+                        .dataSetUploadRequestDocuments({
+                            _id:requestId
+                        },["noOfRecordsToUpload","noOfRecordsUploaded","resultFileUrl"]);
+
+                        let noOfRecordsUploaded =  
+                        dataSetUploadRequestsDocument[0].noOfRecordsUploaded +1;
+
+                        let noOfRecordsToUpload = noOfRecords - noOfRecordsUploaded;
+
+                        let updateRequestDocument = {
+                            noOfRecordsUploaded:
+                            noOfRecordsUploaded,
+
+                            noOfRecordsToUpload : noOfRecordsToUpload,
+
+                            status : noOfRecordsToUpload === 0 ? "completed" :
+                            "inProgress"
+                        }
+
+                        await dataSetUploadRequestsHelper.
+                        update(requestId,updateRequestDocument);
+                    }
                     //entity assessor tracker
                     let entityAssessorDocument = {
                         "action": assessor.entityOperation,
@@ -338,6 +396,9 @@ module.exports = class entityAssessorHelper {
                         "entityType": assessor.entityType,
                         "entityTypeId": assessor.entityTypeId,
                     }
+
+                    csvAssessor["status"] = "Done";
+                    input.push(csvAssessor);
 
                     await this.uploadEntityAssessorTracker(entityAssessorDocument);
 

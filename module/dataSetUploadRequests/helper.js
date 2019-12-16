@@ -17,7 +17,9 @@ module.exports = class dataSetUploadRequestsHelper {
                     });
                 }
 
-                let dataSetUploadRequestDocuments = await database.models.dataSetUploadRequests.find(queryObject, projectionObject).lean();
+                let dataSetUploadRequestDocuments = 
+                await database.models.dataSetUploadRequests
+                .find(queryObject, projectionObject).lean();
 
                 return resolve(dataSetUploadRequestDocuments);
 
@@ -60,21 +62,31 @@ module.exports = class dataSetUploadRequestsHelper {
         return new Promise(async (resolve, reject) => {
             try {
 
-                let requestData = await database.models.observations.create(
-                    _.merge(data, {
-                        "solutionId": solutionDocument._id,
-                        "solutionExternalId": solutionDocument.externalId,
-                        "frameworkId": solutionDocument.frameworkId,
-                        "frameworkExternalId": solutionDocument.frameworkExternalId,
-                        "entityTypeId": solutionDocument.entityTypeId,
-                        "entityType": solutionDocument.entityType,
-                        "author": userDetails.id,
-                        "updatedBy": userDetails.id,
-                        "createdBy": userDetails.id
-                    })
-                );
+                let requestedData = 
+                await database.models.dataSetUploadRequests.create(requestData);
 
-                return resolve(_.pick(observationData, ["_id", "name", "description"]));
+                return resolve({
+                    requestId : requestedData._id
+                });
+
+            } catch (error) {
+                return reject(error);
+            }
+        })
+
+    }
+
+    static update(requestId,updateData) {
+        return new Promise(async (resolve, reject) => {
+            try {
+
+                let requestedData = 
+                await database.models.dataSetUploadRequests.
+                findOneAndUpdate({
+                    _id : requestId
+                },{$set:updateData});
+
+                return resolve(requestedData);
 
             } catch (error) {
                 return reject(error);

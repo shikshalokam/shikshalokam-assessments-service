@@ -1,5 +1,5 @@
-const entityAssessorsHelper = require(MODULES_BASE_PATH + "/entityAssessors/helper");
-
+const entityAssessorsHelper = 
+require(MODULES_BASE_PATH + "/entityAssessors/helper");
 
 module.exports = class EntityAssessors extends Abstract {
   constructor() {
@@ -224,11 +224,27 @@ module.exports = class EntityAssessors extends Abstract {
 
       try {
 
-        await entityAssessorsHelper.upload(req.files, null, null, req.userDetails.userId, req.rspObj.userToken);
+        if(!req.files || !req.files.assessors) {
+          throw { status : 400, message : "Bad request"}
+        }
 
-        let response = { message: "Assessor record created successfully." };
+        if(req.file === "assessors" ) {
+          
+          await entityAssessorsHelper.upload(
+            req.csvData,
+            null,
+            null,
+            req.userDetails.userId,
+            req.rspObj.userToken,
+            req.requestId
+            );
+        }
 
-        return resolve(response)
+        // await entityAssessorsHelper.upload(req.files, null, null, req.userDetails.userId, req.rspObj.userToken);
+
+        // let response = { message: "Assessor record created successfully." };
+
+        // return resolve(response)
 
       } catch (error) {
 

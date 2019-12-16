@@ -1,4 +1,5 @@
-const dataSetUploadRequestsHelper = require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper")
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
 module.exports = class DataSetUploadRequests extends Abstract {
   
