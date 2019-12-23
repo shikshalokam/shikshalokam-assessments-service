@@ -27,11 +27,17 @@ module.exports = function () {
   gen.utils = require(ROOT_PATH + "/generics/helpers/utils");
   global.config = require(".");
 
-  global.ENABLE_CONSOLE_LOGGING = process.env.ENABLE_CONSOLE_LOGGING || "ON";
-  global.ENABLE_BUNYAN_LOGGING = process.env.ENABLE_BUNYAN_LOGGING || "ON";
+  global.ENABLE_CONSOLE_LOGGING = 
+  process.env.ENABLE_CONSOLE_LOGGING || 
+  process.env.DEFAULT_ENABLE_CONSOLE_LOGGING;
+  global.ENABLE_BUNYAN_LOGGING = 
+  process.env.ENABLE_BUNYAN_LOGGING || 
+  process.env.DEFAULT_ENABLE_BUNYAN_LOGGING;
 
 
-  global.REQUEST_TIMEOUT_FOR_REPORTS = process.env.REQUEST_TIMEOUT_FOR_REPORTS || 120000;
+  global.REQUEST_TIMEOUT_FOR_REPORTS = 
+  process.env.REQUEST_TIMEOUT_FOR_REPORTS || 
+  process.env.DEFAULT_REQUEST_TIMEOUT_FOR_REPORTS;
 
   // boostrap all models
   global.models = requireAll({

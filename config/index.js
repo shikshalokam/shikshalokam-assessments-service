@@ -26,18 +26,18 @@ let kafka_connect = function(configData) {
 const configuration = {
   root: require("path").normalize(__dirname + "/.."),
   app: {
-    name: "sl-assessment-api"
+    name: process.env.DEFAULT_APP_NAME
   },
-  host: process.env.HOST || "http://localhost",
-  port: process.env.PORT || 4201,
-  log: process.env.LOG || "debug",
+  host: process.env.HOST || process.env.DEFAULT_HOST,
+  port: process.env.PORT || process.env.DEFAULT_PORT,
+  log: process.env.LOG || process.env.DEFAULT_LOG,
   DB_Config: {
     connection: {
       mongodb: {
-        host: process.env.MONGODB_URL || "mongodb://localhost:27017",
+        host: process.env.MONGODB_URL || process.env.DEFAULT_MONGODB_HOST ,
         user: "",
         pass: "",
-        database: process.env.DB || "sl-assessment",
+        database: process.env.DB || process.env.DEFAULT_MONGODB_DATABASE,
         options: {
           useNewUrlParser: true
         }
@@ -49,20 +49,22 @@ const configuration = {
       softDelete: true,
       autoPopulate: false,
       timestamps_fields: {
-        createdAt: "createdAt",
-        updatedAt: "updatedAt"
+        createdAt: process.env.DEFAULT_CREATED_AT,
+        updatedAt: process.env.DEFAULT_UPDATED_AT
       }
     }
   },
   Kafka_Config: {
-    host: process.env.KAFKA_URL || "10.160.0.8:9092",
+    host: process.env.KAFKA_URL || process.env.DEFAULT_KAFKA_URL,
     consumerTopics: {
-      submissionRatingQueueTopic: process.env.SUBMISSION_RATING_QUEUE_TOPIC || "sl-submissions-rating-dev"
+      submissionRatingQueueTopic: 
+      process.env.SUBMISSION_RATING_QUEUE_TOPIC || 
+      process.env.DEFAULT_SUBMISSION_RATING_QUEUE_TOPIC
     }
   },
-  version: "1.0.0",
-  URLPrefix: "/api/v1",
-  webUrl: "https://dev.shikshalokam.org"
+  version: process.env.DEFAULT_VERSION,
+  URLPrefix: process.env.DEFAULT_URL_PREFIX,
+  webUrl: process.env.DEFAULT_WEB_URL
 };
 
 db_connect(configuration);

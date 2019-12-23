@@ -9,7 +9,9 @@ const inputValidator = require(ROOT_PATH + "/generics/middleware/validator");
 
 module.exports = function (app) {
 
-  const applicationBaseUrl = process.env.APPLICATION_BASE_URL || "/assessment/"
+  const applicationBaseUrl = 
+  process.env.APPLICATION_BASE_URL || 
+  process.env.DEFAULT_APPLICATION_BASE_URL;
 
   app.use(applicationBaseUrl, authenticator);
   app.use(applicationBaseUrl, pagination);

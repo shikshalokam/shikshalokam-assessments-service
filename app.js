@@ -23,20 +23,26 @@ app.use(expressValidator())
 
 
 //health check
-app.get("/ping", (req, res) => {
-  res.send("pong!");
+app.get(process.env.HEALTH_CHECK_URL, (req, res) => {
+  res.send(process.env.HEALTH_CHECK_RESPONSE);
 });
 
 app.use(fileUpload());
-app.use(bodyParser.json({ limit: '50MB' }));
-app.use(bodyParser.urlencoded({ limit: '50MB', extended: false }));
-app.use(express.static("public"));
+app.use(bodyParser.json({ limit: process.env.BODY_PARSER_LIMIT }));
+app.use(bodyParser.urlencoded({ limit: process.env.BODY_PARSER_LIMIT, extended: false }));
+app.use(express.static(process.env.PUBLIC_FOLDER_PATH));
 
-fs.existsSync("logs") || fs.mkdirSync("logs");
+fs.existsSync(process.env.LOGGER_DIRECTORY) || fs.mkdirSync(process.env.LOGGER_DIRECTORY);
 
-const serviceBaseUrl = process.env.APPLICATION_BASE_URL || "/assessment/";
+const serviceBaseUrl = 
+process.env.APPLICATION_BASE_URL || 
+process.env.DEFAULT_APPLICATION_BASE_URL;
 
-const observationSubmissionsHtmlPath = process.env.OBSERVATION_SUBMISSIONS_HTML_PATH ? process.env.OBSERVATION_SUBMISSIONS_HTML_PATH : "observationSubmissions"
+const observationSubmissionsHtmlPath = 
+process.env.OBSERVATION_SUBMISSIONS_HTML_PATH ? 
+process.env.OBSERVATION_SUBMISSIONS_HTML_PATH : 
+process.env.DEFAULT_OBSERVATION_SUBMISSIONS_HTML_PATH;
+
 app.use(express.static(observationSubmissionsHtmlPath));
 app.get(serviceBaseUrl+observationSubmissionsHtmlPath+"/*", (req, res) => {
       let urlArray = req.path.split("/")
@@ -45,24 +51,23 @@ app.get(serviceBaseUrl+observationSubmissionsHtmlPath+"/*", (req, res) => {
 });
 
 //API documentation (apidoc)
-if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == "local") {
-  app.use(express.static("apidoc"));
-  if(process.env.NODE_ENV == "local") {
-    app.get("/apidoc", (req, res) => {
+if (
+  process.env.NODE_ENV == process.env.DEFAULT_NODE_ENV || 
+  process.env.NODE_ENV == process.env.DEFAULT_LOCAL_NODE_ENV
+) {
+  app.use(express.static(process.env.DEFAULT_APIDOC_URL));
+  if(process.env.NODE_ENV == process.env.DEFAULT_LOCAL_NODE_ENV) {
+    app.get("/"+process.env.DEFAULT_APIDOC_URL, (req, res) => {
       res.sendFile(path.join(__dirname, "/public/apidoc/index.html"));
     });
   } else {
-    app.get(serviceBaseUrl+"apidoc/*", (req, res) => {
+    app.get(serviceBaseUrl+process.env.DEFAULT_APIDOC_URL+"/*", (req, res) => {
       let urlArray = req.path.split("/")
       urlArray.splice(0,3)
       res.sendFile(path.join(__dirname, "/public/apidoc/"+urlArray.join("/")));
     });
   }
 }
-
-// app.get(serviceBaseUrl+"web/*", function(req, res) {
-//   res.sendFile(path.join(__dirname, "/public/assessment/web/index.html"));
-// });
 
 app.get(serviceBaseUrl + "web2/*", function (req, res) {
   res.sendFile(path.join(__dirname, "/public" + serviceBaseUrl + "web2/index.html"));
@@ -92,7 +97,7 @@ global.loggerExceptionObj = bunyan.createLogger({
   ]
 });
 
-app.all("*", (req, res, next) => {
+app.all(process.env.ALL_ROUTES, (req, res, next) => {
   if(ENABLE_BUNYAN_LOGGING === "ON") {
     loggerObj.info({
       method: req.method,
@@ -128,7 +133,7 @@ app.listen(config.port, () => {
 
   log.info(
     "Environment: " +
-    (process.env.NODE_ENV ? process.env.NODE_ENV : "development")
+    (process.env.NODE_ENV ? process.env.NODE_ENV : process.env.DEFAULT_NODE_ENV)
   );
 
   log.info("Application is running on the port:" + config.port);
