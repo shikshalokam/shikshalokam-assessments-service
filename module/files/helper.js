@@ -3,6 +3,7 @@ const moment = require("moment-timezone");
 const cloudStorage = (process.env.CLOUD_STORAGE && process.env.CLOUD_STORAGE != "") ? process.env.CLOUD_STORAGE : ""
 const gcp = require(ROOT_PATH + "/generics/helpers/gcpFileUpload");
 const aws = require(ROOT_PATH + "/generics/helpers/awsFileUpload");
+const FileStream = require(ROOT_PATH + "/generics/fileStream");
 
 module.exports = class filesHelper {
 
@@ -215,5 +216,29 @@ module.exports = class filesHelper {
             }
         })
     }
+
+    static csvFile(csvName = "") {
+        return new Promise(async (resolve, reject) => {
+            try {
+
+                const fileName = csvName;
+                let fileStream = new FileStream(fileName);
+                let input = fileStream.initStream();
+            
+                (async function () {
+                  await fileStream.getProcessorPromise();
+                }());
+
+                return resolve({
+                    input: input,
+                    filePathUrl : fileStream.fileName
+                });
+
+            } catch (error) {
+                return reject(error);
+            }
+        })
+    }
+
 
 };

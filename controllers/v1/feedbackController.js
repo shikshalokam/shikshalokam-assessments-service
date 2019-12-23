@@ -1,3 +1,15 @@
+/**
+ * name : feedbackController.js
+ * author : Akash
+ * created-date : 21-Dec-2019
+ * Description : Feedback form
+ */
+
+ /**
+    * Feedback
+    * @class
+*/
+
 module.exports = class Feedback extends Abstract {
 
   constructor() {
@@ -7,6 +19,13 @@ module.exports = class Feedback extends Abstract {
   static get name() {
     return "feedback";
   }
+
+  /**
+      * form
+      * @method
+      * @name form
+      * @returns {JSON} All feedback related information.
+  */
 
   async form(req) {
     return new Promise(async function(resolve, reject) {

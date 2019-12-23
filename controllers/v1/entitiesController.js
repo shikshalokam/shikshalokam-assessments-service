@@ -436,9 +436,12 @@ module.exports = class Entities extends Abstract {
 
       try {
 
-        let entityCSVData = await csv().fromString(req.files.entityMap.data.toString());
+        let entityCSVData = 
+        await csv().fromString(req.files.entityMap.data.toString());
 
-        let entityMappingUploadResponse = await entitiesHelper.processEntityMappingUploadData(entityCSVData)
+        let entityMappingUploadResponse = 
+        await entitiesHelper.processEntityMappingUploadData(entityCSVData);
+
         if(!entityMappingUploadResponse.success) {
           throw new Error ("Something went wrong while doing entity mapping upload.")
         }

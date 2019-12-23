@@ -76,7 +76,7 @@ module.exports = class dataSetUploadRequestsHelper {
 
     }
 
-    static update(requestId,updateData) {
+    static _update(requestId,updateData) {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -84,7 +84,7 @@ module.exports = class dataSetUploadRequestsHelper {
                 await database.models.dataSetUploadRequests.
                 findOneAndUpdate({
                     _id : requestId
-                },{$set:updateData});
+                },{$set:updateData}).lean();
 
                 return resolve(requestedData);
 
@@ -94,5 +94,49 @@ module.exports = class dataSetUploadRequestsHelper {
         })
 
     }
+
+    static updateUploadedCsvData(
+        sizeOfUploadedCsv,
+        requestId,
+        fileName,
+        recordsUploaded
+    ) {
+        return new Promise(async (resolve,reject)=>{
+            try {
+
+                let noOfRecordsUploaded = recordsUploaded;
+
+                let noOfRecordsToUpload = 
+                sizeOfUploadedCsv - noOfRecordsUploaded;
+
+                let updateRequestDocument = {
+                    noOfRecordsUploaded:
+                    noOfRecordsUploaded,
+
+                    noOfRecordsToUpload : noOfRecordsToUpload,
+
+                    resultFileUrl : fileName,
+
+                    status : noOfRecordsToUpload === 0 ? "completed" :
+                    "inProgress"
+                }
+
+                let updatedDocument = 
+                await database.models.dataSetUploadRequests.findOneAndUpdate({
+                        _id : requestId
+                    },{$set:updateRequestDocument}
+                );
+
+                return resolve(updatedDocument);
+
+            } catch (error) {
+                return reject(error);
+            }
+        })
+
+    }
+
+  
+        
 
 };

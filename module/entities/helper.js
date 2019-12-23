@@ -452,7 +452,9 @@ module.exports = class entitiesHelper {
         return new Promise(async (resolve, reject) => {
             try {
 
-                if(mappingData.length < 1) throw new Error("Invalid mapping data")
+                if(mappingData.length < 1) {
+                    throw new Error("Invalid mapping data");
+                }
 
                 this.entityMapProccessData = {
                     entityTypeMap : {},

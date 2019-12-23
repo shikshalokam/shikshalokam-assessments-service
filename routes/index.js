@@ -32,8 +32,9 @@ module.exports = function (app) {
 
         let validationError = req.validationErrors();
 
-        if (validationError.length)
+        if (validationError.length) {
           throw { status: 400, message: validationError }
+        }
 
         var result = await controllers[req.params.version][req.params.controller][req.params.method](req);
 

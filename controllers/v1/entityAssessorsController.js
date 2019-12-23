@@ -1,6 +1,19 @@
+/**
+ * name : entityAssessors/helper.js
+ * author : Aman Jung Karki
+ * created-date : 18-Dec-2019
+ * Description : Entity assessors.
+ */
+
+// Dependencies
+
 const entityAssessorsHelper = 
 require(MODULES_BASE_PATH + "/entityAssessors/helper");
 
+/**
+    * EntityAssessors
+    * @class
+*/
 module.exports = class EntityAssessors extends Abstract {
   constructor() {
     super(entityAssessorsSchema);
@@ -11,7 +24,8 @@ module.exports = class EntityAssessors extends Abstract {
   }
 
   /**
- * @api {get} /assessment/api/v1/entityAssessors/entities?type=:solutionType&subType=:solutionSubType&programId=:programInternalId&solutionId=:solutionInternalId Entity assessor list
+ * @api {get} /assessment/api/v1/entityAssessors/entities?type=:solutionType&subType=:solutionSubType&programId=:programInternalId&solutionId=:solutionInternalId 
+ * Entity assessor list
  * @apiVersion 1.0.0
  * @apiName Entity assessor list
  * @apiGroup Entity Assessor
@@ -54,6 +68,14 @@ module.exports = class EntityAssessors extends Abstract {
 ]
  */
 
+  /**
+      * entities
+      * @method
+      * @name entities
+      * @param  {Request} req request body.
+      * @returns {JSON} Response consists of message and result.
+  */
+
   async entities(req) {
 
     return new Promise(async (resolve, reject) => {
@@ -93,20 +115,31 @@ module.exports = class EntityAssessors extends Abstract {
           }
         ];
 
-        if (req.query.programId) assessorEntitiesQueryObject[0]["$match"]["programId"] = ObjectId(req.query.programId);
-        if (req.query.solutionId) assessorEntitiesQueryObject[0]["$match"]["solutionId"] = ObjectId(req.query.solutionId);
+        if (req.query.programId) {
+          assessorEntitiesQueryObject[0]["$match"]["programId"] = 
+          ObjectId(req.query.programId);
+        }
 
-        const assessorsDocument = await database.models.entityAssessors.aggregate(assessorEntitiesQueryObject)
+        if (req.query.solutionId) {
+          assessorEntitiesQueryObject[0]["$match"]["solutionId"] = 
+          ObjectId(req.query.solutionId);
+        }
 
-        let assessor
+        const assessorsDocument = 
+        await database.models.entityAssessors.aggregate(assessorEntitiesQueryObject);
+
+        let assessor;
         let solutionQueryObject = {};
         let programQueryObject = {};
         let program = {};
         let solution = {};
-        let submissions
-        let entityPAISubmissionStatus = new Array
+        let submissions;
+        let entityPAISubmissionStatus = new Array;
 
-        for (let pointerToAssessorDocumentArray = 0; pointerToAssessorDocumentArray < assessorsDocument.length; pointerToAssessorDocumentArray++) {
+        for (let pointerToAssessorDocumentArray = 0; 
+          pointerToAssessorDocumentArray < assessorsDocument.length; 
+          pointerToAssessorDocumentArray++
+        ) {
 
           assessor = assessorsDocument[pointerToAssessorDocumentArray];
 
@@ -115,7 +148,7 @@ module.exports = class EntityAssessors extends Abstract {
           solutionQueryObject["type"] = req.query.type;
           solutionQueryObject["subType"] = req.query.subType;
           solutionQueryObject["status"] = "active";
-          solutionQueryObject["isDeleted"] = false
+          solutionQueryObject["isDeleted"] = false;
 
           solution = await database.models.solutions.findOne(
             solutionQueryObject,
@@ -126,8 +159,7 @@ module.exports = class EntityAssessors extends Abstract {
               type: 1,
               subType: 1
             }
-          ).lean()
-
+          ).lean();
 
           programQueryObject["_id"] = assessor.programId;
           programQueryObject["status"] = "active";
@@ -142,8 +174,7 @@ module.exports = class EntityAssessors extends Abstract {
               startDate: 1,
               endDate: 1
             }
-          ).lean()
-
+          ).lean();
 
           if (solution && program) {
 
@@ -159,37 +190,59 @@ module.exports = class EntityAssessors extends Abstract {
                 "status": 1,
                 "evidences.PAI.isSubmitted": 1
               }
-            )
+            );
 
             entityPAISubmissionStatus = submissions.reduce(
               (ac, entitySubmission) => ({
                 ...ac,
                 [entitySubmission.entityId.toString()]: {
-                  PAIStatus: (entitySubmission.entityId && entitySubmission.entityId.evidences && entitySubmission.entityId.evidences.PAI && entitySubmission.entityId.evidences.PAI.isSubmitted === true) ? entity.entityId.evidences.PAI.isSubmitted : false,
+                  PAIStatus: 
+                  (
+                    entitySubmission.entityId && 
+                    entitySubmission.entityId.evidences && 
+                    entitySubmission.entityId.evidences.PAI && 
+                    entitySubmission.entityId.evidences.PAI.isSubmitted === true
+                  ) ? entity.entityId.evidences.PAI.isSubmitted : false,
+                  
                   submissionId: entitySubmission._id,
-                  submissionStatus: (entitySubmission.entityId && entitySubmission.status) ? entitySubmission.status : "pending"
+                  submissionStatus: 
+                  (entitySubmission.entityId && entitySubmission.status) ? 
+                  entitySubmission.status : "pending"
                 }
-              }), {})
+              }), {});
 
-            let programDocument = program
-            programDocument.solutions = new Array
-            solution.entities = new Array
+            let programDocument = program;
+            programDocument.solutions = new Array;
+            solution.entities = new Array;
             assessor.entityDocuments.forEach(assessorEntity => {
               solution.entities.push({
                 _id: assessorEntity._id,
-                isParentInterviewCompleted: (entityPAISubmissionStatus[assessorEntity._id.toString()]) ? entityPAISubmissionStatus[assessorEntity._id.toString()]["PAIStatus"] : false,
-                submissionId: (entityPAISubmissionStatus[assessorEntity._id.toString()]) ? entityPAISubmissionStatus[assessorEntity._id.toString()]["submissionId"] : "",
-                submissionStatus: (entityPAISubmissionStatus[assessorEntity._id.toString()]) ? entityPAISubmissionStatus[assessorEntity._id.toString()]["submissionStatus"] : "pending",
+                isParentInterviewCompleted: 
+                (
+                  entityPAISubmissionStatus[assessorEntity._id.toString()]
+                ) ? entityPAISubmissionStatus[assessorEntity._id.toString()]["PAIStatus"] 
+                : false,
+
+                submissionId: 
+                (entityPAISubmissionStatus[assessorEntity._id.toString()]) ? 
+                entityPAISubmissionStatus[assessorEntity._id.toString()]["submissionId"] 
+                : "",
+
+                submissionStatus: 
+                (entityPAISubmissionStatus[assessorEntity._id.toString()]) ? 
+                entityPAISubmissionStatus[assessorEntity._id.toString()]["submissionStatus"] : 
+                "pending",
+
                 ...assessorEntity.metaInformation
-              })
+              });
             })
-            programDocument.solutions.push(solution)
-            programs.push(programDocument)
+            programDocument.solutions.push(solution);
+            programs.push(programDocument);
           }
 
         }
 
-        responseMessage = "Entity list fetched successfully"
+        responseMessage = "Entity list fetched successfully";
 
         return resolve({
           message: responseMessage,
@@ -218,33 +271,22 @@ module.exports = class EntityAssessors extends Abstract {
 * @apiUse successBody
 * @apiUse errorBody
 */
+
+   /**
+      * Upload entity assessors via csv
+      * @method
+      * @name upload
+      * @param  {Request} req - request body. req.files - consists of csv file 
+      * of name assessors.
+    */
+
   async upload(req) {
 
     return new Promise(async (resolve, reject) => {
 
       try {
 
-        if(!req.files || !req.files.assessors) {
-          throw { status : 400, message : "Bad request"}
-        }
-
-        if(req.file === "assessors" ) {
-          
-          await entityAssessorsHelper.upload(
-            req.csvData,
-            null,
-            null,
-            req.userDetails.userId,
-            req.rspObj.userToken,
-            req.requestId
-            );
-        }
-
-        // await entityAssessorsHelper.upload(req.files, null, null, req.userDetails.userId, req.rspObj.userToken);
-
-        // let response = { message: "Assessor record created successfully." };
-
-        // return resolve(response)
+        await entityAssessorsHelper.uploadOrUploadForPortal(req);
 
       } catch (error) {
 
@@ -261,7 +303,8 @@ module.exports = class EntityAssessors extends Abstract {
   }
 
   /**
-* @api {post} /assessment/api/v1/entityAssessors/uploadForPortal?programId=:programExternalId&solutionId=:solutionExternalId Upload Entity Information CSV Using Portal
+* @api {post} /assessment/api/v1/entityAssessors/uploadForPortal?programId=:programExternalId&solutionId=:solutionExternalId 
+* Upload Entity Information CSV Using Portal
 * @apiVersion 1.0.0
 * @apiName Upload Entity Assessor Information CSV Using Portal
 * @apiGroup Entity Assessor
@@ -271,20 +314,21 @@ module.exports = class EntityAssessors extends Abstract {
 * @apiUse errorBody
 */
 
+   /**
+      * Upload entity assessors for portal.
+      * @method
+      * @name uploadForPortal
+      * @param  {Request} req - request body. req.files - consists of csv file 
+      * of name assessors.
+    */
+
   async uploadForPortal(req) {
 
     return new Promise(async (resolve, reject) => {
 
       try {
 
-        let programId = req.query.programId;
-        let solutionId = req.query.solutionId;
-
-        await entityAssessorsHelper.upload(req.files, programId, solutionId, req.userDetails.userId, req.rspObj.userToken);
-
-        let response = { message: "Assessor record created successfully." };
-
-        return resolve(response);
+        await entityAssessorsHelper.uploadOrUploadForPortal(req,true);        
 
       } catch (error) {
         return reject({
@@ -298,7 +342,8 @@ module.exports = class EntityAssessors extends Abstract {
   }
 
   /**
-* @api {get} /assessment/api/v1/entityAssessors/pendingAssessments Pending Assessments
+* @api {get} /assessment/api/v1/entityAssessors/pendingAssessments 
+* Pending Assessments
 * @apiVersion 1.0.0
 * @apiName Pending Assessments
 * @apiGroup Entity Assessor
@@ -324,15 +369,23 @@ module.exports = class EntityAssessors extends Abstract {
 */
 
 
+  /**
+      * Pending Assessments 
+      * @method
+      * @name pendingAssessments
+      * @returns {JSON} Response consists of message and result.
+  */
+
   async pendingAssessments() {
     return new Promise(async (resolve, reject) => {
       try {
 
         let status = {
           pending: true,
-        }
+        };
 
-        let pendingAssessmentDocument = await entityAssessorsHelper.pendingOrCompletedAssessment(status)
+        let pendingAssessmentDocument = 
+        await entityAssessorsHelper.pendingOrCompletedAssessment(status);
 
         return resolve({
           message: "Pending Assessments",
@@ -376,6 +429,13 @@ module.exports = class EntityAssessors extends Abstract {
 }
 */
 
+ /**
+      * Completed Assessments 
+      * @method
+      * @name completedAssessments
+      * @returns {JSON} Response consists of message and result.
+  */
+
   async completedAssessments() {
     return new Promise(async (resolve, reject) => {
       try {
@@ -384,7 +444,8 @@ module.exports = class EntityAssessors extends Abstract {
           completed: true
         }
 
-        let completedAssessmentDocument = await entityAssessorsHelper.pendingOrCompletedAssessment(status)
+        let completedAssessmentDocument = 
+        await entityAssessorsHelper.pendingOrCompletedAssessment(status);
 
         return resolve({
           message: "Completed Assessments",

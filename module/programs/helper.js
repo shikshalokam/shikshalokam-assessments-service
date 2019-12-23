@@ -1,8 +1,6 @@
 
 module.exports = class programsHelper {
 
-
-
   static programDocument(programIds = "all", fields = "all", pageIndex = "all", pageSize = "all") {
 
     return new Promise(async (resolve, reject) => {

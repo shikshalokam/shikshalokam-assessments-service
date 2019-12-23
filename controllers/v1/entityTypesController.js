@@ -1,5 +1,33 @@
-const entitiyTypesHelper = require(MODULES_BASE_PATH + "/entityTypes/helper")
-const entitiesHelper = require(MODULES_BASE_PATH + "/entities/helper")
+/**
+ * name : entityTypesController.js
+ * author : Akash
+ * created-date : 21-Dec-2019
+ * Description : Entities types. 
+ * Types are:
+ * 1. School
+ * 2. parent
+ * 3. teacher
+ * 4. schoolLeader
+ * 5. block
+ * 6. district
+ * 7. cluster
+ * 8. state
+ * 9. hub
+ * 10. zone
+ * 11. taluk
+ * 12. region
+ * 13. mandal
+ * 14. complex
+ */
+
+// Dependencies
+const entitiyTypesHelper = require(MODULES_BASE_PATH + "/entityTypes/helper");
+const entitiesHelper = require(MODULES_BASE_PATH + "/entities/helper");
+
+/**
+    * EntityTypes
+    * @class
+*/
 
 module.exports = class EntityTypes extends Abstract {
   constructor() {
@@ -31,6 +59,13 @@ module.exports = class EntityTypes extends Abstract {
       "name": "schoolLeader"
     }
     ]
+  */
+
+    /**
+      * List all the entity types that can be observed.
+      * @method
+      * @name canBeObserved
+      * @returns {JSON} Result of entity types name that can be observed.
   */
 
   canBeObserved() {
@@ -69,6 +104,13 @@ module.exports = class EntityTypes extends Abstract {
   * @apiSampleRequest /assessment/api/v1/entityTypes/createGroupEntityTypeIndex
   * @apiUse successBody
   * @apiUse errorBody
+  */
+
+    /**
+      * Create index when a new entity type is created in entities.
+      * @method
+      * @name canBeObserved
+      * @returns {JSON} Result of index result.
   */
 
   createGroupEntityTypeIndex() {

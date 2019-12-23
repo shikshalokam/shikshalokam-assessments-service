@@ -1,3 +1,15 @@
+/**
+ * name : configurations
+ * author : Akash
+ * created-date : 18-Dec-2018
+ * Description : Configurations.
+ */
+
+ /**
+    * Configurations
+    * @class
+*/
+
 module.exports = class Configurations extends Abstract {
     constructor() {
         super(configurationsSchema);
@@ -38,6 +50,16 @@ module.exports = class Configurations extends Abstract {
     * }
     ]
     */
+
+       /**
+      * App navigation.
+      * @method
+      * @name navigation
+      * @param  {Request} req request body.
+      * @returns {JSON} Response consists of message and result.
+    */
+
+
     async navigation(req) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -49,7 +71,11 @@ module.exports = class Configurations extends Abstract {
                         message: "Bad request."
                     });
                 }
-                let tabControlsDocument = await database.models.configurations.findOne({ name: 'navigation' }).lean();
+                let tabControlsDocument = 
+                await database.models.configurations.findOne({ 
+                    name: 'navigation' 
+                }).lean();
+
                 if (!tabControlsDocument) {
                     return resolve({
                         status: 400,
@@ -58,7 +84,11 @@ module.exports = class Configurations extends Abstract {
                 }
                 return resolve({
                     message: "Configurations fetched successfully.",
-                    result: tabControlsDocument.result.tabGroups[userRole] ? tabControlsDocument.result.tabGroups[userRole] : tabControlsDocument.result.tabGroups["DEFAULT"]
+                    
+                    result: 
+                    tabControlsDocument.result.tabGroups[userRole] ? 
+                    tabControlsDocument.result.tabGroups[userRole] : 
+                    tabControlsDocument.result.tabGroups["DEFAULT"]
                 });
             } catch (error) {
                 return reject({

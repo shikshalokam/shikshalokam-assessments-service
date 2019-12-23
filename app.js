@@ -103,18 +103,18 @@ app.all("*", (req, res, next) => {
   }
 
   if(ENABLE_CONSOLE_LOGGING === "ON") {
-    console.log("-------Request log starts here------------------");
-    console.log(
+    log.info("-------Request log starts here------------------");
+    log.info(
       "%s %s on %s from ",
       req.method,
       req.url,
       new Date(),
       req.headers["user-agent"]
     );
-    console.log("Request Headers: ", req.headers);
-    console.log("Request Body: ", req.body);
-    console.log("Request Files: ", req.files);
-    console.log("-------Request log ends here------------------");
+    log.info("Request Headers: ", req.headers);
+    log.info("Request Body: ", req.body);
+    log.info("Request Files: ", req.files);
+    log.info("-------Request log ends here------------------");
   }
   next();
 });

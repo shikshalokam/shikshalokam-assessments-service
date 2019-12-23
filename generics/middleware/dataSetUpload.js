@@ -12,6 +12,7 @@ module.exports = async (req, res, next) => {
                 isRequestForDataSetUpload = true;
             }
         })
+
         if(isRequestForDataSetUpload) {
 
             let allRequestedFiles = Object.keys(req.files);
@@ -55,6 +56,14 @@ module.exports = async (req, res, next) => {
                         req.requestId = createRequestId.requestId;
                         req.csvData = csvData;
                         req.file = existingRequestedFile;
+
+                        // let splitRequestedUrl = req.url.split("/").slice(2);
+                        // let version = splitRequestedUrl[0];
+                        // let controller = splitRequestedUrl[1] + "Controller";
+                        // let method = splitRequestedUrl[2] 
+
+                        // controllers[version][controller][method](req);
+
                     }
                 }
             // Read CSV to get recordsToUploadCount, generate csvData
@@ -78,8 +87,6 @@ module.exports = async (req, res, next) => {
 
 
             // controllers[req.params.version][req.params.controller][req.params.method](req);
-        } else {
-            console.log("something !!!")
         }
     }
 
