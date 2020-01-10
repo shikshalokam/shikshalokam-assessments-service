@@ -70,7 +70,7 @@ module.exports = class UserRoles extends Abstract {
           });
 
         return resolve({
-          message: apiResponses.USER_ROLES_FETCHED,
+          message: messageConstants.apiResponses.USER_ROLES_FETCHED,
           result: result
         });
 
@@ -116,7 +116,7 @@ module.exports = class UserRoles extends Abstract {
         let userRolesCSVData = await csv().fromString(req.files.userRoles.data.toString());
 
         if (!userRolesCSVData || userRolesCSVData.length < 1) {
-          throw apiResponses.FILE_DATA_MISSING;
+          throw messageConstants.apiResponses.FILE_DATA_MISSING;
         }
 
         let newUserRoleData = await userRolesHelper.bulkCreate(userRolesCSVData, req.userDetails);
@@ -142,7 +142,7 @@ module.exports = class UserRoles extends Abstract {
           input.push(null);
 
         } else {
-          throw apiResponses.SOMETHING_WENT_WRONG;
+          throw messageConstants.apiResponses.SOMETHING_WENT_WRONG;
         }
 
       } catch (error) {
@@ -187,7 +187,7 @@ module.exports = class UserRoles extends Abstract {
         let userRolesCSVData = await csv().fromString(req.files.userRoles.data.toString());
 
         if (!userRolesCSVData || userRolesCSVData.length < 1) {
-          throw apiResponses.FILE_DATA_MISSING;
+          throw messageConstants.apiResponses.FILE_DATA_MISSING;
         }
 
         let newUserRoleData = await userRolesHelper.bulkUpdate(userRolesCSVData, req.userDetails);
@@ -213,7 +213,7 @@ module.exports = class UserRoles extends Abstract {
           input.push(null);
 
         } else {
-          throw apiResponses.SOMETHING_WENT_WRONG;
+          throw messageConstants.apiResponses.SOMETHING_WENT_WRONG;
         }
 
       } catch (error) {

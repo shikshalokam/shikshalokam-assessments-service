@@ -236,11 +236,11 @@ module.exports = class UserExtensionHelper {
                     try {
 
                         if (!userRoleMap[userRole.role]) {
-                            throw apiResponses.INVALID_ROLE_CODE;
+                            throw messageConstants.apiResponses.INVALID_ROLE_CODE;
                         }
 
                         if (!entityOperation[userRole.entityOperation]) {
-                            throw apiResponses.INVALID_ENTITY_OPERATION;
+                            throw messageConstants.apiResponses.INVALID_ENTITY_OPERATION;
                         }
 
                         let entityQueryObject = {
@@ -259,7 +259,7 @@ module.exports = class UserExtensionHelper {
                         );
 
                         if (!existingEntity || !existingEntity._id) {
-                            throw apiResponses.INVALID_ENTITY_ID;
+                            throw messageConstants.apiResponses.INVALID_ENTITY_ID;
                         }
 
                         if (userToKeycloakIdMap[userRole.user]) {
@@ -267,7 +267,7 @@ module.exports = class UserExtensionHelper {
                         } else {
                             if (keycloakUserIdIsMandatoryInFile) {
                                 if (!userRole["keycloak-userId"] || userRole["keycloak-userId"] == "") {
-                                    throw apiResponses.KEYCLOAK_USER_ID;
+                                    throw messageConstants.apiResponses.KEYCLOAK_USER_ID;
                                 }
                                 userKeycloakId = userRole["keycloak-userId"]
                                 userToKeycloakIdMap[userRole.user] = userRole["keycloak-userId"];
@@ -278,7 +278,7 @@ module.exports = class UserExtensionHelper {
                                     userKeycloakId = keycloakUserId[0].userLoginId;
                                     userToKeycloakIdMap[userRole.user] = keycloakUserId[0].userLoginId;
                                 } else {
-                                    throw apiResponses.USER_ENTITY_ID;
+                                    throw messageConstants.apiResponses.USER_ENTITY_ID;
                                 }
                             }
                         }
@@ -389,7 +389,7 @@ module.exports = class UserExtensionHelper {
         return new Promise(async (resolve, reject) => {
             try {
                 if (!userId) {
-                    throw apiResponses.USER_ID_REQUIRED_CHECK;
+                    throw messageConstants.apiResponses.USER_ID_REQUIRED_CHECK;
                 }
 
                 let userExtensionDoument = await database.models.userExtension.findOne({
@@ -399,7 +399,7 @@ module.exports = class UserExtensionHelper {
                 if (!userExtensionDoument) {
                     throw { 
                         status: httpStatusCode.badrequest.status, 
-                        message: apiResponses.USER_EXTENSION_NOT_FOUND 
+                        message: messageConstants.apiResponses.USER_EXTENSION_NOT_FOUND 
                     };
                 }
 
@@ -430,11 +430,11 @@ module.exports = class UserExtensionHelper {
         return new Promise(async (resolve, reject) => {
             try {
                 if ( !userId ) {
-                    throw apiResponses.USER_ID_REQUIRED_CHECK;
+                    throw messageConstants.apiResponses.USER_ID_REQUIRED_CHECK;
                 }
 
                 if ( !entityType ) {
-                    throw apiResponses.ENTITY_ID_REQUIRED_CHECK;
+                    throw messageConstants.apiResponses.ENTITY_ID_REQUIRED_CHECK;
                 }
 
                 let allEntities = new Array;

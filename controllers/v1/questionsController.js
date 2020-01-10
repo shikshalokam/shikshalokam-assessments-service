@@ -112,7 +112,7 @@ module.exports = class Questions extends Abstract {
           .lean();
 
         if (!criteriaDocument.length > 0) {
-          throw apiResponses.CRITERIA_NOT_FOUND;
+          throw messageConstants.apiResponses.CRITERIA_NOT_FOUND;
         }
 
         criteriaDocument.forEach(eachCriteriaDocument => {
@@ -316,7 +316,7 @@ module.exports = class Questions extends Abstract {
         );
 
         if (criteriasIdArray.length < 1) {
-          throw apiResponses.CRITERIA_NOT_FOUND;
+          throw messageConstants.apiResponses.CRITERIA_NOT_FOUND;
         }
 
         let allCriteriaDocument = await database.models.criteria
@@ -324,7 +324,7 @@ module.exports = class Questions extends Abstract {
           .lean();
 
         if (allCriteriaDocument.length < 1) {
-          throw apiResponses.CRITERIA_NOT_FOUND;
+          throw messageConstants.apiResponses.CRITERIA_NOT_FOUND;
         }
 
         let currentQuestionMap = {};
@@ -362,7 +362,7 @@ module.exports = class Questions extends Abstract {
           .lean();
 
         if (allQuestionsDocument.length < 1) {
-          throw apiResponses.QUESTION_NOT_FOUND;
+          throw messageConstants.apiResponses.QUESTION_NOT_FOUND;
         }
 
         let questionExternalToInternalIdMap = {};

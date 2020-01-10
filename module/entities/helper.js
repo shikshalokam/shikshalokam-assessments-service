@@ -32,7 +32,7 @@ module.exports = class EntitiesHelper {
                 let entityTypeDocument = await database.models.entityTypes.findOne({ name: queryParams.type }, { _id: 1 }).lean();
 
                 if (!entityTypeDocument){
-                    throw apiResponses.ENTITY_NOT_FOUND;
+                    throw messageConstants.apiResponses.ENTITY_NOT_FOUND;
                 }
 
                 let entityDocuments = data.map(singleEntity => {
@@ -60,7 +60,7 @@ module.exports = class EntitiesHelper {
                 }
 
                 if (entityData.length != data.length) {
-                    throw apiResponses.ENTITY_INFORMATION_NOT_INSERTED;
+                    throw messageConstants.apiResponses.ENTITY_INFORMATION_NOT_INSERTED;
                 }
 
                 return resolve(entityData);
@@ -282,7 +282,7 @@ module.exports = class EntitiesHelper {
                 ).lean();
 
                 if (!parentDocument) {
-                    throw apiResponses.PARENT_NOT_FOUND;
+                    throw messageConstants.apiResponses.PARENT_NOT_FOUND;
                 }
 
                 let updateSubmissionDocument = false;
@@ -425,7 +425,7 @@ module.exports = class EntitiesHelper {
                 let entityTypeDocument = await database.models.entityTypes.findOne({ name: entityType }, { _id: 1 });
 
                 if (!entityTypeDocument) {
-                    throw apiResponses.INVALID_ENTITY_TYPE;
+                    throw messageConstants.apiResponses.INVALID_ENTITY_TYPE;
                 }
 
                 const entityUploadedData = await Promise.all(
@@ -462,7 +462,7 @@ module.exports = class EntitiesHelper {
                 )
 
                 if (entityUploadedData.findIndex(entity => entity === undefined) >= 0) {
-                    throw apiResponses.SOMETHING_WRONG_INSERTED_UPDATED;
+                    throw messageConstants.apiResponses.SOMETHING_WRONG_INSERTED_UPDATED;
                 }
 
                 solutionsData && await Promise.all(
@@ -534,7 +534,7 @@ module.exports = class EntitiesHelper {
                 }))
 
                 if (entityUploadedData.findIndex(entity => entity === undefined) >= 0) {
-                    throw apiResponses.SOMETHING_WRONG_INSERTED_UPDATED;
+                    throw messageConstants.apiResponses.SOMETHING_WRONG_INSERTED_UPDATED;
                 }
 
                 return resolve(entityUploadedData);
@@ -559,7 +559,7 @@ module.exports = class EntitiesHelper {
             try {
 
                 if(mappingData.length < 1) {
-                    throw new Error(apiResponses.INVALID_MAPPING_DATA);
+                    throw new Error(messageConstants.apiResponses.INVALID_MAPPING_DATA);
                 }
 
                 this.entityMapProccessData = {
@@ -597,7 +597,7 @@ module.exports = class EntitiesHelper {
                 
                 return resolve({
                     success : true,
-                    message: apiResponses.ENTITY_INFORMATION_UPDATE
+                    message: messageConstants.apiResponses.ENTITY_INFORMATION_UPDATE
                 });
 
             } catch (error) {
@@ -858,7 +858,7 @@ module.exports = class EntitiesHelper {
                 } else {
                     throw { 
                         status: httpStatusCode.bad_request.status, 
-                        message: apiResponses.MISSING_ENTITYID_ENTITYTYPE_ENTITYTYPEID 
+                        message: messageConstants.apiResponses.MISSING_ENTITYID_ENTITYTYPE_ENTITYTYPEID 
                     };
                 }
 
@@ -996,7 +996,7 @@ module.exports = class EntitiesHelper {
                 const entityIndexes = await database.models.entities.listIndexes();
 
                 if (_.findIndex(entityIndexes, { name: 'groups.' + entityType + "_1" }) >= 0) {
-                    return resolve(apiResponses.CREATE_INDEX);
+                    return resolve(messageConstants.apiResponses.CREATE_INDEX);
                 }
 
                 const newIndexCreation = await database.models.entities.db.collection('entities').createIndex(
@@ -1005,9 +1005,9 @@ module.exports = class EntitiesHelper {
                 );
 
                 if (newIndexCreation == "groups." + entityType + "_1") {
-                    return resolve(apiResponses.CREATE_INDEX);
+                    return resolve(messageConstants.apiResponses.CREATE_INDEX);
                 } else {
-                    throw apiResponses.INDEX_NOT_CREATED;
+                    throw messageConstants.apiResponses.INDEX_NOT_CREATED;
                 }
 
             } catch (error) {

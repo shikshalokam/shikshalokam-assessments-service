@@ -67,7 +67,7 @@ module.exports = class Frameworks extends Abstract {
         if (!frameworkDocument) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.FRAMEWORK_NOT_FOUND
+            message: messageConstants.apiResponses.FRAMEWORK_NOT_FOUND
           });
         }
 
@@ -120,18 +120,18 @@ module.exports = class Frameworks extends Abstract {
         let frameworkData = JSON.parse(req.files.framework.data.toString());
 
         if (!frameworkData.externalId) {
-          throw apiResponses.REQUIRED_FRAMEWORK_EXTERNALID;
+          throw messageConstants.apiResponses.REQUIRED_FRAMEWORK_EXTERNALID;
         }
 
         if (!frameworkData.name) {
-          throw apiResponses.REQUIRED_FRAMEWORK_NAME;
+          throw messageConstants.apiResponses.REQUIRED_FRAMEWORK_NAME;
         }
 
         if (!frameworkData.description) {
-          throw apiResponses.REQUIRED_FRAMEWORK_DESCRIPTION;
+          throw messageConstants.apiResponses.REQUIRED_FRAMEWORK_DESCRIPTION;
         }
         if (!frameworkData.entityType) {
-          throw apiResponses.REQUIRED_ENTITY_TYPE_FOR_FRAMEWORK;
+          throw messageConstants.apiResponses.REQUIRED_ENTITY_TYPE_FOR_FRAMEWORK;
         }
 
         let entityDocument = await database.models.entityTypes.findOne({
@@ -152,7 +152,7 @@ module.exports = class Frameworks extends Abstract {
 
 
         if (frameworkDocument) {
-          throw apiResponses.FRAMEWORK_EXISTS;
+          throw messageConstants.apiResponses.FRAMEWORK_EXISTS;
         }
 
         Object.keys(frameworkMandatoryFields).forEach(eachMandatoryField => {
@@ -169,7 +169,7 @@ module.exports = class Frameworks extends Abstract {
 
         return resolve({
           status: httpStatusCode.ok.status,
-          message: apiResponses.FRAMEWORK_INSERTED
+          message: messageConstants.apiResponses.FRAMEWORK_INSERTED
         });
       }
       catch (error) {
@@ -219,7 +219,7 @@ module.exports = class Frameworks extends Abstract {
         if (!frameworkDocument) {
           return resolve({
             status : httpStatusCode.bad_request.status,
-            message : apiResponses.FRAMEWORK_NOT_FOUND
+            message : messageConstants.apiResponses.FRAMEWORK_NOT_FOUND
           });
         }
 
@@ -232,7 +232,7 @@ module.exports = class Frameworks extends Abstract {
 
         return resolve({
           status : httpStatusCode.ok.status,
-          message : apiResponses.FRAMEWORK_UPDATED
+          message : messageConstants.apiResponses.FRAMEWORK_UPDATED
         });
       }
       catch (error) {

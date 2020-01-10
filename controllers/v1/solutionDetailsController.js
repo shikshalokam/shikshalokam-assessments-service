@@ -51,7 +51,7 @@ module.exports = class SolutionDetails {
       try {
 
         if (!req.query.programId || req.query.programId == "" || !req.query.solutionId || req.query.solutionId == "") {
-          throw apiResponses.INVALID_PARAMETER;
+          throw messageConstants.apiResponses.INVALID_PARAMETER;
         }
 
         let findQuery = {
@@ -72,7 +72,7 @@ module.exports = class SolutionDetails {
         if (!entities.length) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.ENTITY_NOT_FOUND
+            message: messageConstants.apiResponses.ENTITY_NOT_FOUND
           });
         } else {
 

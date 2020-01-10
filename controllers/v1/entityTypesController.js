@@ -61,7 +61,7 @@ module.exports = class EntityTypes extends Abstract {
         let result = await entitiyTypesHelper.list({ isObservable: true }, { name: 1 });
 
         return resolve({
-          message : apiResponses.ENTITY_FETCHED,
+          message : messageConstants.apiResponses.ENTITY_FETCHED,
           result : result
         });
 
@@ -116,11 +116,11 @@ module.exports = class EntityTypes extends Abstract {
             index => index === undefined || index === null
           ) >= 0
         ) {
-          throw apiResponses.SOMETHING_WENT_WRONG +"entity group index was not created.";
+          throw messageConstants.apiResponses.SOMETHING_WENT_WRONG +"entity group index was not created.";
         }
 
         return resolve({
-          message: apiResponses.ENTITY_TYPE_INDEX,
+          message: messageConstants.apiResponses.ENTITY_TYPE_INDEX,
           result: indexResult
         });
 
@@ -175,7 +175,7 @@ module.exports = class EntityTypes extends Abstract {
         let result = await entitiyTypesHelper.list("all", { name: 1 });
 
         return resolve({
-          message: apiResponses.ENTITY_TYPES_FETCHED,
+          message: messageConstants.apiResponses.ENTITY_TYPES_FETCHED,
           result: result
         });
 

@@ -51,7 +51,7 @@ module.exports = class Export {
                 if (!programDocument) {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.PROGRAM_NOT_FOUND
+                        message: messageConstants.apiResponses.PROGRAM_NOT_FOUND
                     });
                 }
 
@@ -96,7 +96,7 @@ module.exports = class Export {
                 if (!solutionDocument) {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.SOLUTION_NOT_FOUND
+                        message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
                     });
                 }
 
@@ -142,7 +142,7 @@ module.exports = class Export {
                 if (!frameworkDocument) {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.FRAMEWORK_NOT_FOUND
+                        message: messageConstants.apiResponses.FRAMEWORK_NOT_FOUND
                     });
                 }
 
@@ -188,7 +188,7 @@ module.exports = class Export {
                 if (!frameworkDocument) {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.FRAMEWORK_NOT_FOUND
+                        message: messageConstants.apiResponses.FRAMEWORK_NOT_FOUND
                     });
                 }
 
@@ -236,7 +236,7 @@ module.exports = class Export {
                 if (!solutionDocument) {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.SOLUTION_NOT_FOUND
+                        message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
                     });
                 }
 
@@ -284,7 +284,7 @@ module.exports = class Export {
                 if (!solutionDocument) {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.SOLUTION_NOT_FOUND
+                        message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
                     });
                 }
 

@@ -101,13 +101,13 @@ module.exports = class ProgramOperations {
 
                     response = { 
                         status: httpStatusCode.not_found.status, 
-                        message: apiResponses.SOLUTION_NOT_FOUND 
+                        message: messageConstants.apiResponses.SOLUTION_NOT_FOUND 
                     };
 
                 } else {
 
                     response = { 
-                        message: apiResponses.PROGRAM_LIST, 
+                        message: messageConstants.apiResponses.PROGRAM_LIST, 
                     result: solutionsDocuments };
 
                 }
@@ -201,7 +201,7 @@ module.exports = class ProgramOperations {
                 });
 
                 return resolve({
-                    message: apiResponses.REPORTS_FILTER,
+                    message: messageConstants.apiResponses.REPORTS_FILTER,
                     result: result
                 });
 
@@ -302,7 +302,7 @@ module.exports = class ProgramOperations {
                 ];
 
                 return resolve({
-                    message: apiResponses.MANAGER_PROFILE,
+                    message: messageConstants.apiResponses.MANAGER_PROFILE,
                     result: result
                 });
 
@@ -389,7 +389,7 @@ module.exports = class ProgramOperations {
                 resultArray[3]["value"] = averageTimeTaken ? (parseFloat(averageTimeTaken.toFixed(2)) || "") : "";
 
                 return resolve({
-                    message: apiResponses.ENTITY_FETCHED,
+                    message: messageConstants.apiResponses.ENTITY_FETCHED,
                     result: resultArray
                 });
 

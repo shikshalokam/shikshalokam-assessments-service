@@ -33,7 +33,7 @@ module.exports = class insightsHelper {
                 ).lean();
                 
                 if(!submissionDocument._id) {
-                  throw apiResponses.SUBMISSION_NOT_FOUND;
+                  throw messageConstants.apiResponses.SUBMISSION_NOT_FOUND;
                 }
           
                 let solutionDocument = await database.models.solutions.findOne(
@@ -42,7 +42,7 @@ module.exports = class insightsHelper {
                 );
           
                 if(!solutionDocument._id) {
-                  throw apiResponses.SOLUTION_NOT_FOUND;
+                  throw messageConstants.apiResponses.SOLUTION_NOT_FOUND;
                 }
                 
                 let criteriaScore = _.keyBy(submissionDocument.criteria, '_id')
@@ -174,7 +174,7 @@ module.exports = class insightsHelper {
                   }
                 );
           
-                return resolve({message : apiResponses.INSIGHTS_FETCHED});
+                return resolve({message : messageConstants.apiResponses.INSIGHTS_FETCHED});
           
           
               } catch (error) {

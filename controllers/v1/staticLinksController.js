@@ -74,7 +74,7 @@ module.exports = class StaticLinks extends Abstract {
           });
 
         return resolve({
-          message: apiResponses.STATIC_LINKS_FETCHED,
+          message: messageConstants.apiResponses.STATIC_LINKS_FETCHED,
           result: result
         });
 
@@ -120,7 +120,7 @@ module.exports = class StaticLinks extends Abstract {
         let staticLinksCSVData = await csv().fromString(req.files.staticLinks.data.toString());
 
         if (!staticLinksCSVData || staticLinksCSVData.length < 1) {
-          throw apiResponses.FILE_DATA_MISSING;
+          throw messageConstants.apiResponses.FILE_DATA_MISSING;
         }
 
         let newStaticLinkData = await staticLinksHelper.bulkCreate(staticLinksCSVData, req.userDetails);
@@ -146,7 +146,7 @@ module.exports = class StaticLinks extends Abstract {
           input.push(null);
 
         } else {
-          throw apiResponses.SOMETHING_WENT_WRONG;
+          throw messageConstants.apiResponses.SOMETHING_WENT_WRONG;
         }
 
       } catch (error) {
@@ -191,7 +191,7 @@ module.exports = class StaticLinks extends Abstract {
         let staticLinksCSVData = await csv().fromString(req.files.staticLinks.data.toString());
 
         if (!staticLinksCSVData || staticLinksCSVData.length < 1) {
-          throw apiResponses.FILE_DATA_MISSING;
+          throw messageConstants.apiResponses.FILE_DATA_MISSING;
         }
 
         let newStaticLinkData = await staticLinksHelper.bulkUpdate(staticLinksCSVData, req.userDetails);
@@ -217,7 +217,7 @@ module.exports = class StaticLinks extends Abstract {
           input.push(null);
 
         } else {
-          throw apiResponses.SOMETHING_WENT_WRONG;
+          throw messageConstants.apiResponses.SOMETHING_WENT_WRONG;
         }
 
       } catch (error) {

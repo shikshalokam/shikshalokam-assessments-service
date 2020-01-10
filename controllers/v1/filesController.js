@@ -48,7 +48,7 @@ module.exports = class FileUpload {
       try {
 
         if(!Array.isArray(req.body.files) || req.body.files.length < 1) {
-          throw new Error(apiResponses.FILES_NAME_NOT_GIVEN);
+          throw new Error(messageConstants.apiResponses.FILES_NAME_NOT_GIVEN);
         }
 
         const folderPath = req.body.submissionId + "/" + req.userDetails.userId + "/";
@@ -57,7 +57,7 @@ module.exports = class FileUpload {
 
         if(signedUrl.success) {
           return resolve({
-            message: apiResponses.URL_GENERATED,
+            message: messageConstants.apiResponses.URL_GENERATED,
             result: signedUrl.files
           });
         } else {

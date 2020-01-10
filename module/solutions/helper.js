@@ -115,7 +115,7 @@ module.exports = class SolutionsHelper {
     return new Promise(async (resolve, reject) => {
       try {
         if (solutionExternalId == "" || groupName == "") {
-          throw apiResponses.INVALID_PARAMETER;
+          throw messageConstants.apiResponses.INVALID_PARAMETER;
         }
 
         let solutionEntities = await database.models.solutions.findOne(
@@ -209,7 +209,7 @@ module.exports = class SolutionsHelper {
 
               if (themeKey !== "criteriaInternalId") {
                 if (themesSplittedArray.length < 2) {
-                  csvObject["status"] = apiResponses.MISSING_NAME_EXTERNALID;
+                  csvObject["status"] = messageConstants.apiResponses.MISSING_NAME_EXTERNALID;
 
                 } else {
                   let name = themesSplittedArray[0] ? themesSplittedArray[0] : "";
@@ -336,7 +336,7 @@ module.exports = class SolutionsHelper {
 
         themeRubricExpressionData = themeRubricExpressionData.map(function(themeRow) {
           themeRow = gen.utils.valueParser(themeRow);
-          themeRow.status = apiResponses.THEME_SUBTHEME_FAILED;
+          themeRow.status = messageConstants.apiResponses.THEME_SUBTHEME_FAILED;
           return themeRow;
         })
 
@@ -483,7 +483,7 @@ module.exports = class SolutionsHelper {
             success : true
           });
         } else {
-          throw new Error(apiResponses.CRITERIA_WEIGHTAGE_NOT_UPDATED);
+          throw new Error(messageConstants.apiResponses.CRITERIA_WEIGHTAGE_NOT_UPDATED);
         }
 
       } catch (error) {

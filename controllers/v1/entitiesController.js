@@ -151,7 +151,7 @@ module.exports = class Entities extends Abstract {
         let result = await entitiesHelper.add(queryParams, req.body.data, req.userDetails);
 
         return resolve({
-          message: apiResponses.ENTITY_ADDED,
+          message: messageConstants.apiResponses.ENTITY_ADDED,
           result: result
         });
 
@@ -199,7 +199,7 @@ module.exports = class Entities extends Abstract {
         let result = await entitiesHelper.list(req.query.type, req.params._id, req.pageSize, req.pageSize * (req.pageNo - 1));
 
         return resolve({
-          message: apiResponses.ENTITY_INFORMATION_FETCHED,
+          message: messageConstants.apiResponses.ENTITY_INFORMATION_FETCHED,
           result: result.entityData,
           count: result.count
         });
@@ -246,7 +246,7 @@ module.exports = class Entities extends Abstract {
         let result = await entitiesHelper.form(req.query.type);
 
         return resolve({
-          message: apiResponses.ENTITY_INFORMATION_FETCHED,
+          message: messageConstants.apiResponses.ENTITY_INFORMATION_FETCHED,
           result: result
         });
 
@@ -292,7 +292,7 @@ module.exports = class Entities extends Abstract {
         let result = await entitiesHelper.fetch(req.query.type, req.params._id);
 
         return resolve({
-          message: apiResponses.ENTITY_INFORMATION_FETCHED,
+          message: messageConstants.apiResponses.ENTITY_INFORMATION_FETCHED,
           result: result
         });
 
@@ -354,7 +354,7 @@ module.exports = class Entities extends Abstract {
         let result = await entitiesHelper.update(req.query.type, req.params._id, req.body);
 
         return resolve({
-          message: apiResponses.ENTITY_INFORMATION_UPDATE,
+          message: messageConstants.apiResponses.ENTITY_INFORMATION_UPDATE,
           result: result
         });
 
@@ -424,7 +424,7 @@ module.exports = class Entities extends Abstract {
           input.push(null);
 
         } else {
-          throw apiResponses.SOMETHING_WENT_WRONG;
+          throw messageConstants.apiResponses.SOMETHING_WENT_WRONG;
         }
 
       } catch (error) {
@@ -493,7 +493,7 @@ module.exports = class Entities extends Abstract {
           input.push(null);
 
         } else {
-          throw new Error(apiResponses.SOMETHING_WENT_WRONG);
+          throw new Error(messageConstants.apiResponses.SOMETHING_WENT_WRONG);
         }
 
       } catch (error) {
@@ -540,11 +540,11 @@ module.exports = class Entities extends Abstract {
 
         let entityMappingUploadResponse = await entitiesHelper.processEntityMappingUploadData(entityCSVData);
         if(!entityMappingUploadResponse.success) {
-          throw new Error (apiResponses.SOMETHING_WENT_WRONG);
+          throw new Error (messageConstants.apiResponses.SOMETHING_WENT_WRONG);
         }
 
         return resolve({
-          message: apiResponses.ENTITY_INFORMATION_UPDATE
+          message: messageConstants.apiResponses.ENTITY_INFORMATION_UPDATE
         });
 
       } catch (error) {
@@ -589,7 +589,7 @@ module.exports = class Entities extends Abstract {
         await entitiesHelper.bulkCreate(req.query.type, req.query.programId, req.query.solutionId, req.userDetails, entityCsvData);
 
         return resolve({
-          message: apiResponses.ENTITY_INFORMATION_UPDATE
+          message: messageConstants.apiResponses.ENTITY_INFORMATION_UPDATE
         });
 
       } catch (error) {
@@ -667,7 +667,7 @@ module.exports = class Entities extends Abstract {
         if (entityDocument.length < 0) {
           throw { 
             status: httpStatusCode.not_found.status, 
-            message: apiResponses.ENTITY_NOT_FOUND 
+            message: messageConstants.apiResponses.ENTITY_NOT_FOUND 
           };
         }
 
@@ -677,7 +677,7 @@ module.exports = class Entities extends Abstract {
         result["relatedEntities"] = (relatedEntities.length > 0) ? relatedEntities : [];
 
         return resolve({
-          message: apiResponses.ENTITY_FETCHED,
+          message: messageConstants.apiResponses.ENTITY_FETCHED,
           result: result
         });
 
@@ -749,7 +749,7 @@ module.exports = class Entities extends Abstract {
         if ( entityDocuments.length < 0 ) {
           throw { 
             status: httpStatusCode.not_found.status, 
-            message: apiResponses.ENTITY_NOT_FOUND
+            message: messageConstants.apiResponses.ENTITY_NOT_FOUND
           };
         }
 
@@ -762,7 +762,7 @@ module.exports = class Entities extends Abstract {
         })
 
         return resolve({
-          message: apiResponses.ENTITY_FETCHED,
+          message: messageConstants.apiResponses.ENTITY_FETCHED,
           result: entityDocuments
         });
 

@@ -143,7 +143,7 @@ module.exports = class SharedLink extends Abstract {
         if (!shareableData) {
           throw { 
             status: httpStatusCode.bad_request.status, 
-            message: apiResponses.NO_DATA_FOUND 
+            message: messageConstants.apiResponses.NO_DATA_FOUND 
           };
         }
 

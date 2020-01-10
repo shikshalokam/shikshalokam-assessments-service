@@ -104,7 +104,7 @@ module.exports = class Insights extends Abstract {
         );
 
         if (!insights) {
-          throw apiResponses.INSIGHTS_NOT_FOUND;
+          throw messageConstants.apiResponses.INSIGHTS_NOT_FOUND;
         }
 
         let insightResult = {};
@@ -379,7 +379,7 @@ module.exports = class Insights extends Abstract {
         responseObject.sections = _.concat(responseObject.sections, ...themeSummary);
 
         let response = {
-          message: apiResponses.INSIGHTS_FETCHED,
+          message: messageConstants.apiResponses.INSIGHTS_FETCHED,
           result: responseObject
         };
 
@@ -436,7 +436,7 @@ module.exports = class Insights extends Abstract {
         );
 
         if (!insights) {
-          throw apiResponses.INSIGHTS_NOT_FOUND;
+          throw messageConstants.apiResponses.INSIGHTS_NOT_FOUND;
         }
 
         let insightResult = {};
@@ -713,7 +713,7 @@ module.exports = class Insights extends Abstract {
         })
 
         let response = {
-          message: apiResponses.HIGH_LEVEL_INSIGHTS,
+          message: messageConstants.apiResponses.HIGH_LEVEL_INSIGHTS,
           result: responseObject
         };
 
@@ -780,7 +780,7 @@ module.exports = class Insights extends Abstract {
         );
 
         if (!insights) {
-          throw apiResponses.INSIGHTS_NOT_FOUND;
+          throw messageConstants.apiResponses.INSIGHTS_NOT_FOUND;
         }
 
         let insightResult = {};
@@ -891,7 +891,7 @@ module.exports = class Insights extends Abstract {
 
 
         let response = {
-          message: apiResponses.INSIGHTS_FETCHED,
+          message: messageConstants.apiResponses.INSIGHTS_FETCHED,
           result: responseObject
         };
 
@@ -959,7 +959,7 @@ module.exports = class Insights extends Abstract {
         );
 
         if (!insights) {
-          throw apiResponses.INSIGHTS_NOT_FOUND;
+          throw messageConstants.apiResponses.INSIGHTS_NOT_FOUND;
         }
 
         let insightResult = {};
@@ -1159,7 +1159,7 @@ module.exports = class Insights extends Abstract {
         }
 
         let response = {
-          message : apiResponses.INSIGHTS_FETCHED,
+          message : messageConstants.apiResponses.INSIGHTS_FETCHED,
           result : responseObject
         };
 

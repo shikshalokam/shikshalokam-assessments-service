@@ -90,11 +90,11 @@ module.exports = class Programs extends Abstract {
         if (!programDocument) {
           return reject({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.PROGRAM_NOT_FOUND
+            message: messageConstants.apiResponses.PROGRAM_NOT_FOUND
           });
         }
 
-        let response = { message: apiResponses.PROGRAM_LIST, result: programDocument };
+        let response = { message: messageConstants.apiResponses.PROGRAM_LIST, result: programDocument };
 
         return resolve(response);
 
@@ -183,7 +183,7 @@ module.exports = class Programs extends Abstract {
           }
         });
 
-        return resolve({ message: apiResponses.ENTITY_LIST, result: result });
+        return resolve({ message: messageConstants.apiResponses.ENTITY_LIST, result: result });
       }
       catch (error) {
         return reject({
@@ -301,7 +301,7 @@ module.exports = class Programs extends Abstract {
 
 
         return resolve({
-          message: apiResponses.ENTITY_LIST,
+          message: messageConstants.apiResponses.ENTITY_LIST,
           result: {
             entities: assessorsDocument[0].entityDocuments
           }
@@ -437,7 +437,7 @@ module.exports = class Programs extends Abstract {
         result["assessorInformation"] = solutionDocument[0].assessorInformationData.map(eachAssessor => eachAssessor.assessorInformation);
 
         return resolve({
-          message: apiResponses.ASSESSOR_LIST,
+          message: messageConstants.apiResponses.ASSESSOR_LIST,
           result: result
         });
 
@@ -513,7 +513,7 @@ module.exports = class Programs extends Abstract {
         })
 
         return resolve({
-          message: apiResponses.ZONE_LIST,
+          message: messageConstants.apiResponses.ZONE_LIST,
           result: result
         });
 

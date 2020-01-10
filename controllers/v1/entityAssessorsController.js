@@ -85,7 +85,7 @@ module.exports = class EntityAssessors extends Abstract {
       try {
 
         let programs = new Array;
-        let responseMessage = apiResponses.UNAUTHORIZED;
+        let responseMessage = messageConstants.apiResponses.UNAUTHORIZED;
 
         let assessorEntitiesQueryObject = [
           {
@@ -217,7 +217,7 @@ module.exports = class EntityAssessors extends Abstract {
 
         }
 
-        responseMessage = apiResponses.ENTITY_FETCHED;
+        responseMessage = messageConstants.apiResponses.ENTITY_FETCHED;
 
         return resolve({
           message: responseMessage,
@@ -266,7 +266,7 @@ module.exports = class EntityAssessors extends Abstract {
 
         await entityAssessorsHelper.upload(req.files, null, null, req.userDetails.userId, req.rspObj.userToken);
 
-        let response = { message : apiResponses.ASSESSOR_CREATED };
+        let response = { message : messageConstants.apiResponses.ASSESSOR_CREATED };
 
         return resolve(response);
 
@@ -319,7 +319,7 @@ module.exports = class EntityAssessors extends Abstract {
 
         await entityAssessorsHelper.upload(req.files, programId, solutionId, req.userDetails.userId, req.rspObj.userToken);
 
-        let response = { message: apiResponses.ASSESSOR_CREATED };
+        let response = { message: messageConstants.apiResponses.ASSESSOR_CREATED };
 
         return resolve(response);
 
@@ -378,7 +378,7 @@ module.exports = class EntityAssessors extends Abstract {
         let pendingAssessmentDocument = await entityAssessorsHelper.pendingOrCompletedAssessment(status);
 
         return resolve({
-          message: apiResponses.PENDING_ASSESSMENT,
+          message: messageConstants.apiResponses.PENDING_ASSESSMENT,
           result: pendingAssessmentDocument
         });
 
@@ -437,7 +437,7 @@ module.exports = class EntityAssessors extends Abstract {
         let completedAssessmentDocument = await entityAssessorsHelper.pendingOrCompletedAssessment(status)
 
         return resolve({
-          message: apiResponses.COMPLETED_ASSESSMENT,
+          message: messageConstants.apiResponses.COMPLETED_ASSESSMENT,
           result: completedAssessmentDocument
         });
 

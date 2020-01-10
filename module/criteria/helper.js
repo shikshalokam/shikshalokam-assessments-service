@@ -58,7 +58,7 @@ module.exports = class criteriaHelper {
 
                 return resolve({
                     success: true,
-                    message : apiResponses.CRITERIA_RUBRIC_UPDATE
+                    message : messageConstants.apiResponses.CRITERIA_RUBRIC_UPDATE
                 });
 
             } catch (error) {

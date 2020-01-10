@@ -258,7 +258,7 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = apiResponses.PARENT_INTERVIEW_COMPLETED;
+        let message = messageConstants.apiResponses.PARENT_INTERVIEW_COMPLETED;
         const parentInterviewEvidenceMethod = "PAI";
         let runUpdateQuery = false;
 
@@ -412,7 +412,7 @@ module.exports = class Submission extends Abstract {
           //isParentInterviewCompleted
 
           let response = {
-            message: apiResponses.ALREADY_COMPLETED
+            message: messageConstants.apiResponses.ALREADY_COMPLETED
           };
 
           return resolve(response);
@@ -462,7 +462,7 @@ module.exports = class Submission extends Abstract {
         } else {
 
           let response = {
-            message: apiResponses.PARENT_INTERVIEW_FAILED
+            message: messageConstants.apiResponses.PARENT_INTERVIEW_FAILED
           };
 
           return resolve(response);
@@ -505,7 +505,7 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = apiResponses.GENERAL_QUESTION_SUBMITTED;
+        let message = messageConstants.apiResponses.GENERAL_QUESTION_SUBMITTED;
         let runUpdateQuery = false;
 
         let queryObject = {
@@ -612,7 +612,7 @@ module.exports = class Submission extends Abstract {
         } else {
 
           let response = {
-            message: apiResponses.GENERAL_QUESTION_FAILED
+            message: messageConstants.apiResponses.GENERAL_QUESTION_FAILED
           };
 
           return resolve(response);
@@ -655,7 +655,7 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = apiResponses.PARENT_INTERVIEW_SUBMITTED;
+        let message = messageConstants.apiResponses.PARENT_INTERVIEW_SUBMITTED;
 
         let queryObject = {
           _id: ObjectId(req.params._id)
@@ -723,11 +723,11 @@ module.exports = class Submission extends Abstract {
             );
 
           } else {
-            throw apiResponses.PARENT_INFORMATION_NOT_FOUND;
+            throw messageConstants.apiResponses.PARENT_INFORMATION_NOT_FOUND;
           }
 
         } else {
-          throw apiResponses.SUBMISSION_NOT_FOUND;
+          throw messageConstants.apiResponses.SUBMISSION_NOT_FOUND;
         }
 
 
@@ -772,7 +772,7 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = apiResponses.PARENT_INTERVIEW_FETCHED;
+        let message = messageConstants.apiResponses.PARENT_INTERVIEW_FETCHED;
         let result = {};
 
         let queryObject = {
@@ -806,7 +806,7 @@ module.exports = class Submission extends Abstract {
           else {
             let noSubmissionResponse = {
               result: [],
-              message: apiResponses.SUBMISSION_NOT_FOUND +"for parent interview"
+              message: messageConstants.apiResponses.SUBMISSION_NOT_FOUND +"for parent interview"
             };
 
             return resolve(noSubmissionResponse);
@@ -817,7 +817,7 @@ module.exports = class Submission extends Abstract {
 
           let noSubmissionResponse = {
             result: [],
-            message: apiResponses.SUBMISSION_NOT_FOUND
+            message: messageConstants.apiResponses.SUBMISSION_NOT_FOUND
           };
 
           return resolve(noSubmissionResponse);
@@ -873,22 +873,22 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = apiResponses.CRITERIA_RATING;
+        let message = messageConstants.apiResponses.CRITERIA_RATING;
 
         let programId = req.query.programId;
         let solutionId = req.query.solutionId;
         let entityId = req.params._id;
 
         if (!programId) {
-          throw apiResponses.PROGRAM_NOT_FOUND;
+          throw messageConstants.apiResponses.PROGRAM_NOT_FOUND;
         }
 
         if (!solutionId) {
-          throw apiResponses.SOLUTION_NOT_FOUND;
+          throw messageConstants.apiResponses.SOLUTION_NOT_FOUND;
         }
 
         if (!entityId) {
-          throw apiResponses.ENTITY_NOT_FOUND;
+          throw messageConstants.apiResponses.ENTITY_NOT_FOUND;
         }
 
 
@@ -899,7 +899,7 @@ module.exports = class Submission extends Abstract {
         if (!solutionDocument) {
           return resolve({
             status: httpStatusCode.bad_request.status,
-            message: apiResponses.SOLUTION_NOT_FOUND
+            message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
           });
         }
 
@@ -915,7 +915,7 @@ module.exports = class Submission extends Abstract {
         ).lean();
 
         if (!submissionDocument._id) {
-          throw apiResponses.SUBMISSION_NOT_FOUND;
+          throw messageConstants.apiResponses.SUBMISSION_NOT_FOUND;
         }
 
 
@@ -1044,22 +1044,22 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = apiResponses.CRITERIA_RATING;
+        let message = messageConstants.apiResponses.CRITERIA_RATING;
 
         let programId = req.query.programId;
         let solutionId = req.query.solutionId;
         let entityId = req.query.entityId.split(",");
 
         if (!programId) {
-          throw apiResponses.PROGRAM_NOT_FOUND;
+          throw messageConstants.apiResponses.PROGRAM_NOT_FOUND;
         }
 
         if (!solutionId) {
-          throw apiResponses.SOLUTION_NOT_FOUND;
+          throw messageConstants.apiResponses.SOLUTION_NOT_FOUND;
         }
 
         if (!req.query.entityId || !(req.query.entityId.length >= 1)) {
-          throw apiResponses.ENTITY_NOT_FOUND;
+          throw messageConstants.apiResponses.ENTITY_NOT_FOUND;
         }
 
         let solutionDocument = await database.models.solutions.findOne({
@@ -1069,7 +1069,7 @@ module.exports = class Submission extends Abstract {
         if (!solutionDocument) {
           return resolve({
             status: httpStatusCode.bad_request.status,
-            message: apiResponses.SOLUTION_NOT_FOUND
+            message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
           });
         }
 
@@ -1085,7 +1085,7 @@ module.exports = class Submission extends Abstract {
         ).lean();
 
         if (!submissionDocuments) {
-          throw apiResponses.SUBMISSION_NOT_FOUND;
+          throw messageConstants.apiResponses.SUBMISSION_NOT_FOUND;
         }
 
         let commonSolutionDocumentParameters = {};
@@ -1207,7 +1207,7 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = apiResponses.DUMMY_RATE;
+        let message = messageConstants.apiResponses.DUMMY_RATE;
 
         let queryObject = {
           "entityExternalId": req.params._id
@@ -1317,7 +1317,7 @@ module.exports = class Submission extends Abstract {
           allowed: true
         };
         req.body = req.body || {};
-        let message = apiResponses.SUBMISSION_CHECK;
+        let message = messageConstants.apiResponses.SUBMISSION_CHECK;
 
         let queryObject = {
           "_id": req.params._id
@@ -1332,7 +1332,7 @@ module.exports = class Submission extends Abstract {
         );
 
         if (!submissionDocument || !submissionDocument._id) {
-          throw apiResponses.SUBMISSION_NOT_FOUND;
+          throw messageConstants.apiResponses.SUBMISSION_NOT_FOUND;
         } else {
           if (submissionDocument.evidences[req.query.evidenceId].isSubmitted && submissionDocument.evidences[req.query.evidenceId].isSubmitted == true) {
             submissionDocument.evidences[req.query.evidenceId].submissions.forEach(submission => {
@@ -1642,7 +1642,7 @@ module.exports = class Submission extends Abstract {
         };
 
       } else {
-        responseMessage = apiResponses.FEEDBACK_ERROR;
+        responseMessage = messageConstants.apiResponses.FEEDBACK_ERROR;
       }
 
       if (runUpdateQuery) {
@@ -1651,7 +1651,7 @@ module.exports = class Submission extends Abstract {
           updateObject
         );
 
-        responseMessage = apiResponses.FEEDBACK_SUBMITTED;
+        responseMessage = messageConstants.apiResponses.FEEDBACK_SUBMITTED;
 
       }
 
@@ -1705,7 +1705,7 @@ module.exports = class Submission extends Abstract {
         result.evidences = submissionDocument.evidences;
       }
 
-      let response = { message: apiResponses.SUBMISSION_STATUS_FETCHED, result: result };
+      let response = { message: messageConstants.apiResponses.SUBMISSION_STATUS_FETCHED, result: result };
 
       return resolve(response);
     }).catch(error => {
@@ -1744,15 +1744,15 @@ module.exports = class Submission extends Abstract {
       try {
 
         if (!req.query.solutionId) {
-          throw apiResponses.SOLUTION_ID_NOT_FOUND;
+          throw messageConstants.apiResponses.SOLUTION_ID_NOT_FOUND;
         }
 
         if (!req.query.entityId) {
-          throw apiResponses.ENTITY_ID_NOT_FOUND;
+          throw messageConstants.apiResponses.ENTITY_ID_NOT_FOUND;
         }
 
         if (!req.query.ecm) {
-          throw apiResponses.ECM_REQUIRED;
+          throw messageConstants.apiResponses.ECM_REQUIRED;
         }
 
         let ecmMethod = "evidences." + req.query.ecm;
@@ -1763,7 +1763,7 @@ module.exports = class Submission extends Abstract {
         }, { answers: 1, [ecmMethod]: 1 }).lean();
 
         if (!submissionDocuments) {
-          throw apiResponses.SUBMISSION_NOT_FOUND;
+          throw messageConstants.apiResponses.SUBMISSION_NOT_FOUND;
         }
 
         let ecmData = submissionDocuments.evidences[req.query.ecm];
@@ -1834,10 +1834,10 @@ module.exports = class Submission extends Abstract {
             }
           );
 
-          messageData = apiResponses.ANSWER_MERGED;
+          messageData = messageConstants.apiResponses.ANSWER_MERGED;
 
         } else {
-          messageData = apiResponses.INSUBMITTED_FALSE;
+          messageData = messageConstants.apiResponses.INSUBMITTED_FALSE;
         }
 
         return resolve({
@@ -2011,7 +2011,7 @@ module.exports = class Submission extends Abstract {
               let questionValueConversion = await submissionsHelper.questionValueConversion(questionExternalId[eachQuestionRow.questionCode], eachQuestionRow.oldResponse, eachQuestionRow.newResponse);
 
               if (!questionValueConversion.oldValue || !questionValueConversion.newValue || questionValueConversion.oldValue == "" || questionValueConversion.newValue == "") {
-                eachQuestionRow["status"] = apiResponses.VALID_INVALID_RESPONSE;
+                eachQuestionRow["status"] = messageConstants.apiResponses.VALID_INVALID_RESPONSE;
               }
 
               else {
@@ -2035,9 +2035,9 @@ module.exports = class Submission extends Abstract {
 
                 let submissionCheck = await database.models.submissions.findOneAndUpdate(findQuery, updateQuery).lean();
 
-                eachQuestionRow["status"] = apiResponses.DONE;
+                eachQuestionRow["status"] = messageConstants.apiResponses.DONE;
                 if (submissionCheck == null) {
-                  eachQuestionRow["status"] = apiResponses.NOT_DONE;
+                  eachQuestionRow["status"] = messageConstants.apiResponses.NOT_DONE;
                 }
 
               }
@@ -2089,7 +2089,7 @@ module.exports = class Submission extends Abstract {
         let programId = req.params._id;
 
         if (!programId) {
-          throw apiResponses.PROGRAM_ID_REQUIRED;
+          throw messageConstants.apiResponses.PROGRAM_ID_REQUIRED;
         }
 
         let entityId = req.query.entityId;
@@ -2098,7 +2098,7 @@ module.exports = class Submission extends Abstract {
         let submissionUpdated = new Array;
 
         if (!entityId) {
-          throw apiResponses.ENTITY_ID_NOT_FOUND;
+          throw messageConstants.apiResponses.ENTITY_ID_NOT_FOUND;
         }
 
         let findQuery = {
@@ -2125,11 +2125,11 @@ module.exports = class Submission extends Abstract {
         let updatedQuery = await database.models.submissions.findOneAndUpdate(findQuery, updateQuery).lean();
 
         if (updatedQuery == null) {
-          throw apiResponses.ECM_NOT_EXIST;
+          throw messageConstants.apiResponses.ECM_NOT_EXIST;
         }
 
         return resolve({
-          message: apiResponses.ECM_RESET
+          message: messageConstants.apiResponses.ECM_RESET
         });
 
       } catch (error) {

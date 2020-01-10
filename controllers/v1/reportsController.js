@@ -78,7 +78,7 @@ module.exports = class Reports {
         if (!submissionsIds.length) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.SUBMISSION_NOT_FOUND
+            message: messageConstants.apiResponses.SUBMISSION_NOT_FOUND
           });
         } else {
           let chunkOfSubmissionsIdsDocument = _.chunk(submissionsIds, 10);
@@ -238,7 +238,7 @@ module.exports = class Reports {
         if (!assessorDocument.length) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.ASSESSOR_NOT_FOUND
+            message: messageConstants.apiResponses.ASSESSOR_NOT_FOUND
           });
         } else {
           let chunkOfAssessorDocument = _.chunk(assessorDocument, 10);
@@ -367,7 +367,7 @@ module.exports = class Reports {
         if (!assessorDocument.length) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.ASSESSOR_NOT_FOUND
+            message: messageConstants.apiResponses.ASSESSOR_NOT_FOUND
           });
         } else {
           let chunkOfAssessorDocument = _.chunk(assessorDocument, 10);
@@ -570,7 +570,7 @@ module.exports = class Reports {
             ) {
               return resolve({
                 status: httpStatusCode.not_found.status,
-                message: apiResponses.NO_DATA_FOUND
+                message: messageConstants.apiResponses.NO_DATA_FOUND
               });
             } else {
               entityDocument.forEach(entity => {
@@ -701,7 +701,7 @@ module.exports = class Reports {
         if (!submissionDocumentIdsToProcess.length) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.SUBMISSION_NOT_FOUND
+            message: messageConstants.apiResponses.SUBMISSION_NOT_FOUND
           });
         } else {
           const chunkOfSubmissionIds = _.chunk(
@@ -1083,7 +1083,7 @@ module.exports = class Reports {
         if (!submissionDocument) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.SUBMISSION_NOT_FOUND
+            message: messageConstants.apiResponses.SUBMISSION_NOT_FOUND
           });
         }
 
@@ -1388,7 +1388,7 @@ module.exports = class Reports {
               if (!Object.values(singleEntitySubmission.answers).length) {
                 return resolve({
                   status: httpStatusCode.not_found.status,
-                  message: apiResponses.SUBMISSION_NOT_FOUND
+                  message: messageConstants.apiResponses.SUBMISSION_NOT_FOUND
                 });
               } else {
                 Object.values(singleEntitySubmission.answers).forEach(
@@ -2141,7 +2141,7 @@ module.exports = class Reports {
 
           input.push(null);
         } else {
-          throw apiResponses.INVALID_TYPE;
+          throw messageConstants.apiResponses.INVALID_TYPE;
         }
       } catch (error) {
         return reject({
@@ -2214,7 +2214,7 @@ module.exports = class Reports {
         if (!submissionIds.length) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.SUBMISSION_NOT_FOUND
+            message: messageConstants.apiResponses.SUBMISSION_NOT_FOUND
           });
         } else {
           let chunkOfSubmissionIds = _.chunk(submissionIds, 10);
@@ -2397,7 +2397,7 @@ module.exports = class Reports {
         if (!submissionDocumentIdsToProcess.length) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.SUBMISSION_NOT_FOUND
+            message: messageConstants.apiResponses.SUBMISSION_NOT_FOUND
           });
         } else {
           const chunkOfSubmissionIds = _.chunk(
@@ -2826,7 +2826,7 @@ module.exports = class Reports {
         })();
 
         if (!submissionsIds.length) {
-          throw apiResponses.SUBMISSION_NOT_FOUND;
+          throw messageConstants.apiResponses.SUBMISSION_NOT_FOUND;
         } else {
           let chunkOfSubmissionsIdsDocument = _.chunk(submissionsIds, 10);
           let submissionId;
@@ -2975,7 +2975,7 @@ module.exports = class Reports {
         if (!entityProfileSubmissionDocuments.length) {
           return resolve({
             status: httpStatusCode.ok.status,
-            message: apiResponses.NO_DATA_FOUND
+            message: messageConstants.apiResponses.NO_DATA_FOUND
           });
         }
 
@@ -3087,7 +3087,7 @@ module.exports = class Reports {
         })();
 
         if (!submissionDocumentIdsToProcess) {
-          throw apiResponses.SUBMISSION_NOT_FOUND;
+          throw messageConstants.apiResponses.SUBMISSION_NOT_FOUND;
         } else {
           const chunkOfSubmissionIds = _.chunk(
             submissionDocumentIdsToProcess,
@@ -3237,7 +3237,7 @@ module.exports = class Reports {
         if (!Object.keys(allParentsInSolution).length) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.PARENT_NOT_FOUND
+            message: messageConstants.apiResponses.PARENT_NOT_FOUND
           });
         }
 
@@ -3283,7 +3283,7 @@ module.exports = class Reports {
         })();
 
         if (!parentRegistryIdsArray) {
-          throw apiResponses.SUBMISSION_NOT_FOUND;
+          throw messageConstants.apiResponses.SUBMISSION_NOT_FOUND;
         } else {
           const chunkOfParentRegistryDocumentIds = _.chunk(
             parentRegistryIdsArray,
@@ -3435,7 +3435,7 @@ module.exports = class Reports {
         })();
 
         if (!parentRegistryIdsArray) {
-          throw apiResponses.SUBMISSION_NOT_FOUND;
+          throw messageConstants.apiResponses.SUBMISSION_NOT_FOUND;
         } else {
           let arrayOfDate = [];
 
@@ -3575,7 +3575,7 @@ module.exports = class Reports {
         if (!entityDocumentList.length) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.ENTITY_NOT_FOUND
+            message: messageConstants.apiResponses.ENTITY_NOT_FOUND
           });
         } else {
           let chunkOfEntityDocument = _.chunk(entityDocumentList, 10);

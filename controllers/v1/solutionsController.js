@@ -211,7 +211,7 @@ module.exports = class Solutions extends Abstract {
       try {
 
         if (!req.query.programId || req.query.programId == "" || !req.query.frameworkId || req.query.frameworkId == "" || !req.query.entityType || req.query.entityType == "") {
-          throw apiResponses.INVALID_PARAMETER;
+          throw messageConstants.apiResponses.INVALID_PARAMETER;
         }
 
         let frameworkDocument = await database.models.frameworks.findOne({
@@ -219,7 +219,7 @@ module.exports = class Solutions extends Abstract {
         }).lean();
 
         if (!frameworkDocument._id) {
-          throw apiResponses.INVALID_PARAMETER;
+          throw messageConstants.apiResponses.INVALID_PARAMETER;
         }
 
         let programDocument = await database.models.programs.findOne({
@@ -232,7 +232,7 @@ module.exports = class Solutions extends Abstract {
           }).lean();
 
         if (!programDocument._id) {
-          throw apiResponses.INVALID_PARAMETER;
+          throw messageConstants.apiResponses.INVALID_PARAMETER;
         }
 
         let entityTypeDocument = await database.models.entityTypes.findOne({
@@ -243,7 +243,7 @@ module.exports = class Solutions extends Abstract {
           }).lean();
 
         if (!entityTypeDocument._id) {
-          throw apiResponses.INVALID_PARAMETER;
+          throw messageConstants.apiResponses.INVALID_PARAMETER;
         }
 
         let criteriasIdArray = gen.utils.getCriteriaIds(frameworkDocument.themes);
@@ -316,7 +316,7 @@ module.exports = class Solutions extends Abstract {
         }
 
         let response = {
-          message: apiResponses.MAP_SOLUTION_TO_PROGRAM,
+          message: messageConstants.apiResponses.MAP_SOLUTION_TO_PROGRAM,
           result: newSolutionId._id
         };
 
@@ -358,7 +358,7 @@ module.exports = class Solutions extends Abstract {
     return new Promise(async (resolve, reject) => {
       try {
 
-        let responseMessage = apiResponses.ENTITIES_UPDATED;
+        let responseMessage = messageConstants.apiResponses.ENTITIES_UPDATED;
 
         let entityIdsFromCSV = await csv().fromString(req.files.entities.data.toString());
 
@@ -370,7 +370,7 @@ module.exports = class Solutions extends Abstract {
 
         let entityIds = entitiesDocument.map(entity => entity._id);
 
-        if (entityIdsFromCSV.length != entityIds.length) responseMessage = apiResponses.ENTITIES_NOT_UPDATE;
+        if (entityIdsFromCSV.length != entityIds.length) responseMessage = messageConstants.apiResponses.ENTITIES_NOT_UPDATE;
 
         await database.models.solutions.updateOne(
           { externalId: req.params._id },
@@ -436,7 +436,7 @@ module.exports = class Solutions extends Abstract {
         if (!solutionDocument) {
           return resolve({
             status: httpStatusCode.not_found.status,
-            message: apiResponses.SOLUTION_NOT_FOUND
+            message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
           });
         }
 
@@ -500,7 +500,7 @@ module.exports = class Solutions extends Abstract {
         if (!solutionDocument) {
           return resolve({
             status: httpStatusCode.bad_request.status,
-            message: apiResponses.SOLUTION_NOT_FOUND
+            message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
           });
         }
 
@@ -522,7 +522,7 @@ module.exports = class Solutions extends Abstract {
 
         return resolve({
           status: httpStatusCode.ok.status,
-          message: apiResponses.SOLUTION_UPDATED
+          message: messageConstants.apiResponses.SOLUTION_UPDATED
         });
       }
       catch (error) {
@@ -570,7 +570,7 @@ module.exports = class Solutions extends Abstract {
         if (!solutionDocument) {
           return resolve({
             status: httpStatusCode.bad_request.status,
-            message: apiResponses.SOLUTION_NOT_FOUND
+            message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
           });
         }
 
@@ -611,7 +611,7 @@ module.exports = class Solutions extends Abstract {
         })();
 
         if(!themesWithRubricDetails.csvData) {
-          throw new Error(apiResponses.SOMETHING_WENT_WRONG +"No CSV Data found.");
+          throw new Error(messageConstants.apiResponses.SOMETHING_WENT_WRONG +"No CSV Data found.");
         }
 
         for (let pointerToThemeRow = 0; pointerToThemeRow < themesWithRubricDetails.csvData.length; pointerToThemeRow++) {
@@ -665,7 +665,7 @@ module.exports = class Solutions extends Abstract {
         if (!solutionDocument) {
           return resolve({
             status: httpStatusCode.bad_request.status,
-            message: apiResponses.SOLUTION_NOT_FOUND
+            message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
           });
         }
 
@@ -702,7 +702,7 @@ module.exports = class Solutions extends Abstract {
 
         if (!allCriteriaDocuments || allCriteriaDocuments.length < 1) {
           criteriaData = criteriaData.map(function(criteriaRow) {
-            criteriaRow.status = apiResponses.CRITERIA_NOT_FOUND;
+            criteriaRow.status = messageConstants.apiResponses.CRITERIA_NOT_FOUND;
             return criteriaRow;
           })
         } else {
@@ -722,7 +722,7 @@ module.exports = class Solutions extends Abstract {
             criteriaRow = gen.utils.valueParser(criteriaRow);
             
             if(!allCriteriaExternalIdToInternalIdMap[criteriaRow.externalId]) {
-              criteriaRow.status = apiResponses.INVALID_CRITERIA_ID;
+              criteriaRow.status = messageConstants.apiResponses.INVALID_CRITERIA_ID;
               allCriteriaRubricUpdatedSuccessfully = false;
               return criteriaRow;
             }
@@ -963,7 +963,7 @@ module.exports = class Solutions extends Abstract {
         solutionDocument = solutionDocument[0];
 
         if (!solutionDocument) {
-            throw new Error(apiResponses.SOLUTION_NOT_FOUND);
+            throw new Error(messageConstants.apiResponses.SOLUTION_NOT_FOUND);
         }
 
         let activeECMCodes = new Array;
@@ -1002,19 +1002,19 @@ module.exports = class Solutions extends Abstract {
         let allCriteriaDocument = await criteriaHelper.criteriaDocument(criteriaFindQuery,criteriaProjectionArray);
 
         if (allCriteriaDocument.length < 1) {
-          throw new Error(apiResponses.CRITERIA_NOT_FOUND);
+          throw new Error(messageConstants.apiResponses.CRITERIA_NOT_FOUND);
         }
 
         let allQuestionIdsInCrtieria = gen.utils.getAllQuestionId(allCriteriaDocument);
 
         if (allQuestionIdsInCrtieria.length < 1) {
-          throw new Error(apiResponses.CRITERIA_QUESTION_NOT_FOUND);
+          throw new Error(messageConstants.apiResponses.CRITERIA_QUESTION_NOT_FOUND);
         }
 
         let allQuestionDocuments = await questionsHelper.questionDocument({ _id: { $in: allQuestionIdsInCrtieria } });
 
         if (allQuestionDocuments.length < 1) {
-          throw new Error(apiResponses.QUESTION_NOT_FOUND);
+          throw new Error(messageConstants.apiResponses.QUESTION_NOT_FOUND);
         }
         
         let matrixQuestions = new Array;
@@ -1134,7 +1134,7 @@ module.exports = class Solutions extends Abstract {
       try {
 
         if (!(req.body)) {
-          let responseMessage = apiResponses.BODY_NOT_EMPTY;
+          let responseMessage = messageConstants.apiResponses.BODY_NOT_EMPTY;
           return resolve({ 
             status: httpStatusCode.bad_request.status, 
             message: responseMessage 
@@ -1146,7 +1146,7 @@ module.exports = class Solutions extends Abstract {
         }).lean();
 
         if (!solutionDocument._id) {
-          throw apiResponses.SOLUTION_NOT_FOUND;
+          throw messageConstants.apiResponses.SOLUTION_NOT_FOUND;
         }
 
         let programDocument = await database.models.programs.findOne({
@@ -1159,7 +1159,7 @@ module.exports = class Solutions extends Abstract {
           }).lean();
 
         if (!programDocument._id) {
-          throw apiResponses.PROGRAM_NOT_FOUND;
+          throw messageConstants.apiResponses.PROGRAM_NOT_FOUND;
         }
 
 
@@ -1191,14 +1191,14 @@ module.exports = class Solutions extends Abstract {
           await database.models.programs.updateOne({ _id: programDocument._id }, { $addToSet: { components: duplicateSolutionDocument._id } });
 
           let response = {
-            message: apiResponses.DUPLICATE_SOLUTION,
+            message: messageConstants.apiResponses.DUPLICATE_SOLUTION,
             result: duplicateSolutionDocument._id
           };
 
           return resolve(response);
 
         } else {
-          throw apiResponses.ERROR_CREATING_DUPLICATE
+          throw messageConstants.apiResponses.ERROR_CREATING_DUPLICATE
         }
 
       } catch (error) {

@@ -74,11 +74,11 @@ module.exports = class Configurations extends Abstract {
                 if (!tabControlsDocument) {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.CONFIGURATIONS_NOT_FOUND
+                        message: messageConstants.apiResponses.CONFIGURATIONS_NOT_FOUND
                     });
                 }
                 return resolve({
-                    message: apiResponses.CONFIGURATIONS_FETCHED,
+                    message: messageConstants.apiResponses.CONFIGURATIONS_FETCHED,
                     result: tabControlsDocument.result.tabGroups[userRole] ? tabControlsDocument.result.tabGroups[userRole] : tabControlsDocument.result.tabGroups["DEFAULT"]
                 });
             } catch (error) {

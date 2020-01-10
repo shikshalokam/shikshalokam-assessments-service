@@ -51,14 +51,14 @@ module.exports = class Import {
                 if (programDocument) {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.ROGRAM_EXISTS
+                        message: messageConstants.apiResponses.ROGRAM_EXISTS
                     });
                 }
 
                 programDocument = await database.models.programs.create(programData);
                 return resolve({
                     status: httpStatusCode.ok.status,
-                    message: apiResponses.PROGRAM_IMPORTED
+                    message: messageConstants.apiResponses.PROGRAM_IMPORTED
                 });
             } catch (error) {
                 return reject({
@@ -103,7 +103,7 @@ module.exports = class Import {
                 if (solutionDocument) {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.SOLUTION_EXISTS
+                        message: messageConstants.apiResponses.SOLUTION_EXISTS
                     });
                 }
 
@@ -111,7 +111,7 @@ module.exports = class Import {
 
                 return resolve({
                     status: httpStatusCode.ok.status,
-                    message: apiResponses.SOLUTION_IMPORTED
+                    message: messageConstants.apiResponses.SOLUTION_IMPORTED
                 });
 
             } catch (error) {
@@ -158,7 +158,7 @@ module.exports = class Import {
                 if (frameworkDocument) {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.FRAMEWORK_EXISTS
+                        message: messageConstants.apiResponses.FRAMEWORK_EXISTS
                     });
                 }
 
@@ -166,7 +166,7 @@ module.exports = class Import {
 
                 return resolve({
                     status: httpStatusCode.ok.status,
-                    message: apiResponses.FRAMEWORK_INSERTED
+                    message: messageConstants.apiResponses.FRAMEWORK_INSERTED
                 });
 
             } catch (error) {
@@ -205,7 +205,7 @@ module.exports = class Import {
                 //need to implement JOI to validate json
                 await database.models.criteria.create(criteriaData);
 
-                let responseMessage = apiResponses.CRITERIA_INSERTED;
+                let responseMessage = messageConstants.apiResponses.CRITERIA_INSERTED;
                 return resolve({ 
                     status: httpStatusCode.ok.status, 
                     message: responseMessage 
@@ -247,7 +247,7 @@ module.exports = class Import {
                 //need to implement JOI to validate json
                 await database.models.questions.create(questionData);
 
-                let responseMessage = apiResponses.QUESTION_INSERTED;
+                let responseMessage = messageConstants.apiResponses.QUESTION_INSERTED;
                 return resolve({ 
                     status: httpStatusCode.ok.status, 
                     message: responseMessage 

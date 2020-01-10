@@ -82,7 +82,7 @@ module.exports = class UserExtension extends Abstract {
         });
 
         return resolve({
-          message: apiResponses.USER_EXTENSION_FETCHED,
+          message: messageConstants.apiResponses.USER_EXTENSION_FETCHED,
           result: result
         });
 
@@ -128,7 +128,7 @@ module.exports = class UserExtension extends Abstract {
         let userRolesCSVData = await csv().fromString(req.files.userRoles.data.toString());
 
         if (!userRolesCSVData || userRolesCSVData.length < 1) {
-          throw apiResponses.FILE_DATA_MISSING;
+          throw messageConstants.apiResponses.FILE_DATA_MISSING;
         }
 
         let newUserRoleData = await userExtensionHelper.bulkCreateOrUpdate(userRolesCSVData, req.userDetails);
@@ -154,7 +154,7 @@ module.exports = class UserExtension extends Abstract {
           input.push(null);
 
         } else {
-          throw apiResponses.SOMETHING_WENT_WRONG;
+          throw messageConstants.apiResponses.SOMETHING_WENT_WRONG;
         }
 
       } catch (error) {
@@ -249,7 +249,7 @@ module.exports = class UserExtension extends Abstract {
         if (!allEntities.length > 0) {
           throw { 
             status: httpStatusCode.bad_request.status,
-            message: apiResponses.ENTITY_NOT_FOUND
+            message: messageConstants.apiResponses.ENTITY_NOT_FOUND
           };
         }
 
@@ -284,7 +284,7 @@ module.exports = class UserExtension extends Abstract {
         let result = await entitiesHelper.entityDocuments(queryObject, projection, req.pageSize, skippingValue);
 
         return resolve({
-          message: apiResponses.USER_EXTENSION_ENTITIES_FETCHED,
+          message: messageConstants.apiResponses.USER_EXTENSION_ENTITIES_FETCHED,
           result: result,
           count: allEntities.length
         });

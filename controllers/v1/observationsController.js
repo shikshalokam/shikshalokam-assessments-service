@@ -92,11 +92,11 @@ module.exports = class Observations extends Abstract {
                 let solutionDocument = await solutionsHelper.search(matchQuery, req.pageSize, req.pageNo);
 
 
-                messageData = apiResponses.SOLUTION_FETCHED;
+                messageData = messageConstants.apiResponses.SOLUTION_FETCHED;
 
                 if (!solutionDocument[0].count) {
                     solutionDocument[0].count = 0;
-                    messageData = apiResponses.SOLUTION_NOT_FOUND;
+                    messageData = messageConstants.apiResponses.SOLUTION_NOT_FOUND;
                 }
 
                 response.result = solutionDocument;
@@ -174,7 +174,7 @@ module.exports = class Observations extends Abstract {
                 let observationsMetaForm = await database.models.forms.findOne({ "name": (solutionsData.observationMetaFormKey && solutionsData.observationMetaFormKey != "") ? solutionsData.observationMetaFormKey : "defaultObservationMetaForm" }, { value: 1 }).lean();
 
                 return resolve({
-                    message: apiResponses.OBSERVATION_META_FETCHED,
+                    message: messageConstants.apiResponses.OBSERVATION_META_FETCHED,
                     result: observationsMetaForm.value
                 });
 
@@ -227,7 +227,7 @@ module.exports = class Observations extends Abstract {
                 let result = await observationsHelper.create(req.query.solutionId, req.body.data, req.userDetails);
 
                 return resolve({
-                    message: apiResponses.OBSERVATION_CREATED,
+                    message: messageConstants.apiResponses.OBSERVATION_CREATED,
                     result: result
                 });
 
@@ -308,7 +308,7 @@ module.exports = class Observations extends Abstract {
 
                 observations = await observationsHelper.list(req.userDetails.userId);
                 
-                let responseMessage = apiResponses.OBSERVATION_LIST;
+                let responseMessage = messageConstants.apiResponses.OBSERVATION_LIST;
 
                 return resolve({
                     message: responseMessage,
@@ -372,8 +372,8 @@ module.exports = class Observations extends Abstract {
                 if (observationDocument.status != "published") {
                     return resolve({
                         status: httpStatusCode.bad_request.status,
-                        message: apiResponses.OBSERVATION_ALREADY_COMPLETED +
-                        apiResponses.OBSERVATION_NOT_PUBLISHED
+                        message: messageConstants.apiResponses.OBSERVATION_ALREADY_COMPLETED +
+                        messageConstants.apiResponses.OBSERVATION_NOT_PUBLISHED
                     });
                 }
 
@@ -392,7 +392,7 @@ module.exports = class Observations extends Abstract {
 
 
                 if (entitiesToAdd.entityIds.length != req.body.data.length) {
-                    responseMessage = apiResponses.ENTITIES_NOT_UPDATE;
+                    responseMessage = messageConstants.apiResponses.ENTITIES_NOT_UPDATE;
                 }
 
                 return resolve({
@@ -455,7 +455,7 @@ module.exports = class Observations extends Abstract {
                 );
 
                 return resolve({
-                    message: apiResponses.ENTITY_REMOVED
+                    message: messageConstants.apiResponses.ENTITY_REMOVED
                 })
 
 
@@ -535,7 +535,7 @@ module.exports = class Observations extends Abstract {
                 if (!observationDocument) {
                     throw { 
                         status: httpStatusCode.bad_request.status, 
-                        message: apiResponses.OBSERVATION_NOT_FOUND 
+                        message: messageConstants.apiResponses.OBSERVATION_NOT_FOUND 
                     }
                 }
 
@@ -547,10 +547,10 @@ module.exports = class Observations extends Abstract {
                     eachMetaData.selected = (observationEntityIds.includes(eachMetaData._id.toString())) ? true : false;
                 })
 
-                let messageData = apiResponses.ENTITY_FETCHED;
+                let messageData = messageConstants.apiResponses.ENTITY_FETCHED;
                 if (!entityDocuments[0].count) {
                     entityDocuments[0].count = 0;
-                    messageData = apiResponses.ENTITY_NOT_FOUND;
+                    messageData = messageConstants.apiResponses.ENTITY_NOT_FOUND;
                 }
                 response.result = entityDocuments;
                 response["message"] = messageData;
@@ -602,7 +602,7 @@ module.exports = class Observations extends Abstract {
             try {
 
                 let response = {
-                    message : apiResponses.ASSESSMENT_FETCHED,
+                    message : messageConstants.apiResponses.ASSESSMENT_FETCHED,
                     result : {}
                 };
 
@@ -611,7 +611,7 @@ module.exports = class Observations extends Abstract {
                 if (!observationDocument) {
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
-                        message: apiResponses.OBSERVATION_NOT_FOUND 
+                        message: messageConstants.apiResponses.OBSERVATION_NOT_FOUND 
                     });
                 }
 
@@ -627,7 +627,7 @@ module.exports = class Observations extends Abstract {
                 ).lean();
 
                 if (!entityDocument) {
-                    let responseMessage = apiResponses.ENTITY_NOT_FOUND;
+                    let responseMessage = messageConstants.apiResponses.ENTITY_NOT_FOUND;
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
                         message: responseMessage 
@@ -649,7 +649,7 @@ module.exports = class Observations extends Abstract {
                 ).lean();
 
                 if (!solutionDocument) {
-                    let responseMessage = apiResponses.SOLUTION_NOT_FOUND;
+                    let responseMessage = messageConstants.apiResponses.SOLUTION_NOT_FOUND;
                     return resolve({ 
                         status:  httpStatusCode.bad_request.status, 
                         message: responseMessage 
@@ -667,7 +667,7 @@ module.exports = class Observations extends Abstract {
                 ).lean();
 
                 if (!entityProfileForm) {
-                    let responseMessage = apiResponses.ENTITY_PROFILE_FORM_NOT_FOUND;
+                    let responseMessage = messageConstants.apiResponses.ENTITY_PROFILE_FORM_NOT_FOUND;
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
                         message: responseMessage 
@@ -912,7 +912,7 @@ module.exports = class Observations extends Abstract {
                 );
 
                 return resolve({
-                    message: apiResponses.OBSERVATION_MARKED_COMPLETE
+                    message: messageConstants.apiResponses.OBSERVATION_MARKED_COMPLETE
                 })
 
             } catch (error) {
@@ -955,7 +955,7 @@ module.exports = class Observations extends Abstract {
             try {
 
                 if (!req.query.frameworkId || req.query.frameworkId == "" || !req.query.entityType || req.query.entityType == "") {
-                    throw apiResponses.INVALID_PARAMETER;
+                    throw messageConstants.apiResponses.INVALID_PARAMETER;
                 }
 
                 let frameworkDocument = await database.models.frameworks.findOne({
@@ -963,7 +963,7 @@ module.exports = class Observations extends Abstract {
                 }).lean();
 
                 if (!frameworkDocument._id) {
-                    throw apiResponses.INVALID_PARAMETER;
+                    throw messageConstants.apiResponses.INVALID_PARAMETER;
                 }
 
                 let entityTypeDocument = await database.models.entityTypes.findOne({
@@ -975,7 +975,7 @@ module.exports = class Observations extends Abstract {
                     }).lean();
 
                 if (!entityTypeDocument._id) {
-                    throw apiResponses.INVALID_PARAMETER;
+                    throw messageConstants.apiResponses.INVALID_PARAMETER;
                 }
 
                 let criteriasIdArray = gen.utils.getCriteriaIds(frameworkDocument.themes);
@@ -1034,14 +1034,14 @@ module.exports = class Observations extends Abstract {
                 if (newSolutionId._id) {
 
                     let response = {
-                        message: apiResponses.OBSERVATION_SOLUTION,
+                        message: messageConstants.apiResponses.OBSERVATION_SOLUTION,
                         result: newSolutionId._id
                     };
 
                     return resolve(response);
 
                 } else {
-                    throw apiResponses.ERROR_CREATING_OBSERVATION;
+                    throw messageConstants.apiResponses.ERROR_CREATING_OBSERVATION;
                 }
 
             } catch (error) {
@@ -1195,7 +1195,7 @@ module.exports = class Observations extends Abstract {
                         observationHelperData = await observationsHelper.bulkCreate(solution, entityDocument, userId);
                         status = observationHelperData.status;
                     } else {
-                        status = apiResponses.ENTITY_SOLUTION_USER_NOT_FOUND;
+                        status = messageConstants.apiResponses.ENTITY_SOLUTION_USER_NOT_FOUND;
                     }
 
                     csvResult["status"] = status;
@@ -1258,11 +1258,11 @@ module.exports = class Observations extends Abstract {
                 ).lean();
 
                 if (!observationDocument) {
-                    throw apiResponses.OBSERVATION_NOT_FOUND;
+                    throw messageConstants.apiResponses.OBSERVATION_NOT_FOUND;
                 }
 
                 return resolve({
-                    message: apiResponses.OBSERVATION_UPDATED,
+                    message: messageConstants.apiResponses.OBSERVATION_UPDATED,
                 });
 
             } catch (error) {
@@ -1317,7 +1317,7 @@ module.exports = class Observations extends Abstract {
                 );
 
                 return resolve({
-                    message: apiResponses.OBSERVATION_DELETED
+                    message: messageConstants.apiResponses.OBSERVATION_DELETED
                 })
 
             } catch (error) {
@@ -1377,7 +1377,7 @@ module.exports = class Observations extends Abstract {
                 let pendingObservationDocuments = await observationsHelper.pendingOrCompletedObservations(status);
 
                 return resolve({
-                    message: apiResponses.PENDING_OBSERVATION,
+                    message: messageConstants.apiResponses.PENDING_OBSERVATION,
                     result: pendingObservationDocuments
                 });
 
@@ -1436,7 +1436,7 @@ module.exports = class Observations extends Abstract {
                 let completedObservationDocuments = await observationsHelper.pendingOrCompletedObservations(status);
 
                 return resolve({
-                    message: apiResponses.COMPLETED_OBSERVATION,
+                    message: messageConstants.apiResponses.COMPLETED_OBSERVATION,
                     result: completedObservationDocuments
                 });
 
@@ -1538,7 +1538,7 @@ module.exports = class Observations extends Abstract {
                 let observationDetails = await observationsHelper.details(req.params._id);
 
                 return resolve({
-                    message: apiResponses.OBSERVATION_FETCHED,
+                    message: messageConstants.apiResponses.OBSERVATION_FETCHED,
                     result: observationDetails
                 });
 

@@ -108,7 +108,7 @@ module.exports = class EntityAssessorHelper {
 
                     throw { 
                         status: httpStatusCode.bad_request.status, 
-                        message: apiResponses.WRONG_ACTION
+                        message: messageConstants.apiResponses.WRONG_ACTION
                     };
 
                 }
@@ -485,7 +485,7 @@ module.exports = class EntityAssessorHelper {
             try {
 
                 if (userId == "") {
-                    throw new Error(apiResponses.INVALID_USER_ID);
+                    throw new Error(messageConstants.apiResponses.INVALID_USER_ID);
                 }
 
                 const kafakResponses = await Promise.all(entities.map(async entity => {
@@ -523,12 +523,12 @@ module.exports = class EntityAssessorHelper {
                 }));
 
                 if (kafakResponses.findIndex(response => response === undefined || response === null) >= 0) {
-                    throw new Error(apiResponses.SOMETHING_WENT_WRONG +"not all notifications were pushed.");
+                    throw new Error(messageConstants.apiResponses.SOMETHING_WENT_WRONG +"not all notifications were pushed.");
                 }
 
                 return resolve({
                     success: true,
-                    message: apiResponses.NOTIFICATIONS_PUSHED_TO_KAFKA
+                    message: messageConstants.apiResponses.NOTIFICATIONS_PUSHED_TO_KAFKA
                 });
 
             } catch (error) {
@@ -556,7 +556,7 @@ module.exports = class EntityAssessorHelper {
                 }, { _id: 1 }).lean();
 
                 if (!entityAssessorsDocument.length > 0) {
-                    throw { message: apiResponses.MISSING_ASSESSOR_LEAD_ASSESSOR };
+                    throw { message: messageConstants.apiResponses.MISSING_ASSESSOR_LEAD_ASSESSOR };
                 }
 
                 let entityAssessorChunkLength = 500;

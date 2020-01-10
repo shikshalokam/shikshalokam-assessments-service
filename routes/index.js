@@ -121,7 +121,7 @@ module.exports = function (app) {
   app.all(applicationBaseUrl + "api/:version/:controller/:method/:_id", inputValidator, router);
 
   app.use((req, res, next) => {
-    res.status(httpStatusCode.not_found.status).send(apiResponses.NOT_FOUND);
+    res.status(httpStatusCode.not_found.status).send(messageConstants.apiResponses.NOT_FOUND);
   });
 };
 

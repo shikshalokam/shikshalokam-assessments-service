@@ -150,7 +150,7 @@ module.exports = class Assessments {
                 req.body = req.body || {};
 
                 let response = {
-                    message: apiResponses.ASSESSMENT_FETCHED,
+                    message: messageConstants.apiResponses.ASSESSMENT_FETCHED,
                     result: {}
                 };
 
@@ -163,7 +163,7 @@ module.exports = class Assessments {
 
 
                 if (!programDocument) {
-                    let responseMessage = apiResponses.PROGRAM_NOT_FOUND;
+                    let responseMessage = messageConstants.apiResponses.PROGRAM_NOT_FOUND;
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
                         message: responseMessage 
@@ -181,7 +181,7 @@ module.exports = class Assessments {
                 ).lean();
 
                 if (!entityAssessorDocument) {
-                    let responseMessage = apiResponses.UNAUTHORIZED;
+                    let responseMessage = messageConstants.apiResponses.UNAUTHORIZED;
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
                         message: responseMessage 
@@ -201,7 +201,7 @@ module.exports = class Assessments {
                 ).lean();
 
                 if (!entityDocument) {
-                    let responseMessage = apiResponses.ENTITY_NOT_FOUND;
+                    let responseMessage = messageConstants.apiResponses.ENTITY_NOT_FOUND;
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
                         message: responseMessage 
@@ -224,7 +224,7 @@ module.exports = class Assessments {
 
 
                 if (!solutionDocument) {
-                    let responseMessage = apiResponses.SOLUTION_NOT_FOUND;
+                    let responseMessage = messageConstants.apiResponses.SOLUTION_NOT_FOUND;
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
                         message: responseMessage 
@@ -242,7 +242,7 @@ module.exports = class Assessments {
                 ).lean();
 
                 if (!entityProfileForm) {
-                    let responseMessage = apiResponses.ENTITY_PROFILE_FORM_NOT_FOUND;
+                    let responseMessage = messageConstants.apiResponses.ENTITY_PROFILE_FORM_NOT_FOUND;
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
                         message: responseMessage 

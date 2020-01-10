@@ -47,7 +47,7 @@ module.exports = class Criteria extends Abstract {
     return new Promise(async (resolve, reject) => {
       try {
         if (!req.files || !req.files.criteria) {
-          throw apiResponses.CRITERIA_FILE_NOT_FOUND;
+          throw messageConstants.apiResponses.CRITERIA_FILE_NOT_FOUND;
         }
 
         let criteriaData = await csv().fromString(req.files.criteria.data.toString());

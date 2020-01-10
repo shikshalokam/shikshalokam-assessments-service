@@ -137,10 +137,10 @@ module.exports = class Observations extends v1Observation {
                     })
                 }
 
-                let messageData = apiResponses.ENTITY_FETCHED;
+                let messageData = messageConstants.apiResponses.ENTITY_FETCHED;
                 if ( !(entityDocuments[0].count) ) {
                     entityDocuments[0].count = 0;
-                    messageData = apiResponses.ENTITY_NOT_FOUND;
+                    messageData = messageConstants.apiResponses.ENTITY_NOT_FOUND;
                 }
                 response.result = entityDocuments;
                 response["message"] = messageData;
@@ -365,7 +365,7 @@ module.exports = class Observations extends v1Observation {
             try {
 
                 let response = {
-                    message: apiResponses.ASSESSMENT_FETCHED,
+                    message: messageConstants.apiResponses.ASSESSMENT_FETCHED,
                     result: {}
                 };
 
@@ -374,7 +374,7 @@ module.exports = class Observations extends v1Observation {
                 if (!observationDocument) {
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
-                        message: apiResponses.OBSERVATION_NOT_FOUND
+                        message: messageConstants.apiResponses.OBSERVATION_NOT_FOUND
                     });
                 }
 
@@ -389,7 +389,7 @@ module.exports = class Observations extends v1Observation {
                 ).lean();
 
                 if (!entityDocument) {
-                    let responseMessage = apiResponses.ENTITY_NOT_FOUND;
+                    let responseMessage = messageConstants.apiResponses.ENTITY_NOT_FOUND;
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
                         message: responseMessage 
@@ -411,7 +411,7 @@ module.exports = class Observations extends v1Observation {
                 ).lean();
 
                 if (!solutionDocument) {
-                    let responseMessage = apiResponses.SOLUTION_NOT_FOUND;
+                    let responseMessage = messageConstants.apiResponses.SOLUTION_NOT_FOUND;
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
                         message: responseMessage 
@@ -429,7 +429,7 @@ module.exports = class Observations extends v1Observation {
                 ).lean();
 
                 if (!entityProfileForm) {
-                    let responseMessage = apiResponses.ENTITY_PROFILE_FORM_NOT_FOUND;
+                    let responseMessage = messageConstants.apiResponses.ENTITY_PROFILE_FORM_NOT_FOUND;
                     return resolve({ 
                         status: httpStatusCode.bad_request.status, 
                         message: responseMessage 
