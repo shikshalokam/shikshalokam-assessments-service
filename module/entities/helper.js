@@ -597,7 +597,7 @@ module.exports = class EntitiesHelper {
                 
                 return resolve({
                     success : true,
-                    message: messageConstants.apiResponses.ENTITY_INFORMATION_UPDATE
+                    message: messageConstants.apiResponses.INFORMATION_UPDATED
                 });
 
             } catch (error) {

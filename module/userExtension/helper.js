@@ -434,7 +434,7 @@ module.exports = class UserExtensionHelper {
                 }
 
                 if ( !entityType ) {
-                    throw messageConstants.apiResponses.ENTITY_ID_REQUIRED_CHECK;
+                    throw messageConstants.apiResponses.ENTITY_TYPE_REQUIRED;
                 }
 
                 let allEntities = new Array;

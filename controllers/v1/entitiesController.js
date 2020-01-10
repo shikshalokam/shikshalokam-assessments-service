@@ -199,7 +199,7 @@ module.exports = class Entities extends Abstract {
         let result = await entitiesHelper.list(req.query.type, req.params._id, req.pageSize, req.pageSize * (req.pageNo - 1));
 
         return resolve({
-          message: messageConstants.apiResponses.ENTITY_INFORMATION_FETCHED,
+          message: messageConstants.apiResponses.INFORMATION_FETCHED,
           result: result.entityData,
           count: result.count
         });
@@ -246,7 +246,7 @@ module.exports = class Entities extends Abstract {
         let result = await entitiesHelper.form(req.query.type);
 
         return resolve({
-          message: messageConstants.apiResponses.ENTITY_INFORMATION_FETCHED,
+          message: messageConstants.apiResponses.INFORMATION_FETCHED,
           result: result
         });
 
@@ -292,7 +292,7 @@ module.exports = class Entities extends Abstract {
         let result = await entitiesHelper.fetch(req.query.type, req.params._id);
 
         return resolve({
-          message: messageConstants.apiResponses.ENTITY_INFORMATION_FETCHED,
+          message: messageConstants.apiResponses.INFORMATION_FETCHED,
           result: result
         });
 
@@ -354,7 +354,7 @@ module.exports = class Entities extends Abstract {
         let result = await entitiesHelper.update(req.query.type, req.params._id, req.body);
 
         return resolve({
-          message: messageConstants.apiResponses.ENTITY_INFORMATION_UPDATE,
+          message: messageConstants.apiResponses.INFORMATION_UPDATED,
           result: result
         });
 
@@ -544,7 +544,7 @@ module.exports = class Entities extends Abstract {
         }
 
         return resolve({
-          message: messageConstants.apiResponses.ENTITY_INFORMATION_UPDATE
+          message: messageConstants.apiResponses.INFORMATION_UPDATED
         });
 
       } catch (error) {
@@ -589,7 +589,7 @@ module.exports = class Entities extends Abstract {
         await entitiesHelper.bulkCreate(req.query.type, req.query.programId, req.query.solutionId, req.userDetails, entityCsvData);
 
         return resolve({
-          message: messageConstants.apiResponses.ENTITY_INFORMATION_UPDATE
+          message: messageConstants.apiResponses.INFORMATION_UPDATED
         });
 
       } catch (error) {

@@ -8,6 +8,8 @@
 // Dependencies
 const csv = require("csvtojson");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
  /**
     * Criteria
@@ -50,143 +52,154 @@ module.exports = class Criteria extends Abstract {
           throw messageConstants.apiResponses.CRITERIA_FILE_NOT_FOUND;
         }
 
-        let criteriaData = await csv().fromString(req.files.criteria.data.toString());
+        if( req.criteriaData && req.criteriaData.length > 0 ) {
 
-        const fileName = `Criteria-Upload`;
-        let fileStream = new FileStream(fileName);
-        let input = fileStream.initStream();
+          const fileName = `Criteria-Upload`;
+          let fileStream = new FileStream(fileName);
+          let input = fileStream.initStream();
 
-        (async function () {
-          await fileStream.getProcessorPromise();
-          return resolve({
-            isResponseAStream: true,
-            fileNameWithPath: fileStream.fileNameWithPath()
-          });
-        }());
+          (async function () {
+            await fileStream.getProcessorPromise();
+          }());
 
+          let criteriaDataSize = req.criteriaData.length;
 
-        await Promise.all(criteriaData.map(async criteria => {
+          let countOfRecordUploaded = 0;
 
-          let csvData = {};
-          let rubric = {};
-          let parsedCriteria = gen.utils.valueParser(criteria);
+          await Promise.all(req.criteriaData.map(async criteria => {
 
-          rubric.name = parsedCriteria.criteriaName;
-          rubric.description = parsedCriteria.criteriaName;
-          rubric.type = parsedCriteria.type;
-          rubric.expressionVariables = {};
-          rubric.levels = {};
-          let countLabel = 1;
+            let csvData = {};
+            let rubric = {};
+            let parsedCriteria = gen.utils.valueParser(criteria);
 
-          Object.keys(parsedCriteria).forEach(eachCriteriaKey => {
+            rubric.name = parsedCriteria.criteriaName;
+            rubric.description = parsedCriteria.criteriaName;
+            rubric.type = parsedCriteria.type;
+            rubric.expressionVariables = {};
+            rubric.levels = {};
+            let countLabel = 1;
 
-            let regExpForLevels = /^L+[0-9]/;
-            if (regExpForLevels.test(eachCriteriaKey)) {
+            Object.keys(parsedCriteria).forEach(eachCriteriaKey => {
 
-              let label = "Level " + countLabel++;
+              let regExpForLevels = /^L+[0-9]/;
+              if (regExpForLevels.test(eachCriteriaKey)) {
 
-              rubric.levels[eachCriteriaKey] = {
-                level: eachCriteriaKey,
-                label: label,
-                description: parsedCriteria[eachCriteriaKey],
-                expression: ""
-              };
-            }
-          })
+                let label = "Level " + countLabel++;
 
-          let criteriaStructure = {
-            owner: req.userDetails.id,
-            name: parsedCriteria.criteriaName,
-            description: parsedCriteria.criteriaName,
-            resourceType: [
-              "Program",
-              "Framework",
-              "Criteria"
-            ],
-            language: [
-              "English"
-            ],
-            keywords: [
-              "Keyword 1",
-              "Keyword 2"
-            ],
-            concepts: [
-              {
-                identifier: "LPD20100",
-                name: "Teacher_Performance",
-                objectType: "Concept",
-                relation: "associatedTo",
-                description: null,
-                index: null,
-                status: null,
-                depth: null,
-                mimeType: null,
-                visibility: null,
-                compatibilityLevel: null
-              },
-              {
-                identifier: "LPD20400",
-                name: "Instructional_Programme",
-                objectType: "Concept",
-                relation: "associatedTo",
-                description: null,
-                index: null,
-                status: null,
-                depth: null,
-                mimeType: null,
-                visibility: null,
-                compatibilityLevel: null
-              },
-              {
-                identifier: "LPD20200",
-                name: "Teacher_Empowerment",
-                objectType: "Concept",
-                relation: "associatedTo",
-                description: null,
-                index: null,
-                status: null,
-                depth: null,
-                mimeType: null,
-                visibility: null,
-                compatibilityLevel: null
+                rubric.levels[eachCriteriaKey] = {
+                  level: eachCriteriaKey,
+                  label: label,
+                  description: parsedCriteria[eachCriteriaKey],
+                  expression: ""
+                };
               }
-            ],
-            createdFor: [
-              "0125747659358699520",
-              "0125748495625912324"
-            ],
-            evidences: [],
-            deleted: false,
-            externalId: criteria.criteriaID,
-            owner: req.userDetails.id,
-            timesUsed: 12,
-            weightage: 20,
-            remarks: "",
-            name: parsedCriteria.criteriaName,
-            description: parsedCriteria.criteriaName,
-            criteriaType: "auto",
-            score: "",
-            flag: "",
-            rubric: rubric
-          };
+            })
 
-          let criteriaDocuments = await database.models.criteria.create(
-            criteriaStructure
-          );
+            let criteriaStructure = {
+              owner: req.userDetails.id,
+              name: parsedCriteria.criteriaName,
+              description: parsedCriteria.criteriaName,
+              resourceType: [
+                "Program",
+                "Framework",
+                "Criteria"
+              ],
+              language: [
+                "English"
+              ],
+              keywords: [
+                "Keyword 1",
+                "Keyword 2"
+              ],
+              concepts: [
+                {
+                  identifier: "LPD20100",
+                  name: "Teacher_Performance",
+                  objectType: "Concept",
+                  relation: "associatedTo",
+                  description: null,
+                  index: null,
+                  status: null,
+                  depth: null,
+                  mimeType: null,
+                  visibility: null,
+                  compatibilityLevel: null
+                },
+                {
+                  identifier: "LPD20400",
+                  name: "Instructional_Programme",
+                  objectType: "Concept",
+                  relation: "associatedTo",
+                  description: null,
+                  index: null,
+                  status: null,
+                  depth: null,
+                  mimeType: null,
+                  visibility: null,
+                  compatibilityLevel: null
+                },
+                {
+                  identifier: "LPD20200",
+                  name: "Teacher_Empowerment",
+                  objectType: "Concept",
+                  relation: "associatedTo",
+                  description: null,
+                  index: null,
+                  status: null,
+                  depth: null,
+                  mimeType: null,
+                  visibility: null,
+                  compatibilityLevel: null
+                }
+              ],
+              createdFor: [
+                "0125747659358699520",
+                "0125748495625912324"
+              ],
+              evidences: [],
+              deleted: false,
+              externalId: criteria.criteriaID,
+              owner: req.userDetails.id,
+              timesUsed: 12,
+              weightage: 20,
+              remarks: "",
+              name: parsedCriteria.criteriaName,
+              description: parsedCriteria.criteriaName,
+              criteriaType: "auto",
+              score: "",
+              flag: "",
+              rubric: rubric
+            };
 
-          csvData["Criteria Name"] = parsedCriteria.criteriaName;
-          csvData["Criteria External Id"] = parsedCriteria.criteriaID;
+            let criteriaDocuments = await database.models.criteria.create(
+              criteriaStructure
+            );
 
-          if (criteriaDocuments._id) {
-            csvData["Criteria Internal Id"] = criteriaDocuments._id;
-          } else {
-            csvData["Criteria Internal Id"] = "Not inserted";
-          }
+            csvData["Criteria Name"] = parsedCriteria.criteriaName;
+            csvData["Criteria External Id"] = parsedCriteria.criteriaID;
 
-          input.push(csvData);
-        }))
+            if (criteriaDocuments._id) {
+              csvData["Criteria Internal Id"] = criteriaDocuments._id;
 
-        input.push(null);
+              countOfRecordUploaded += 1;
+                   
+              await dataSetUploadRequestsHelper.updateUploadedCsvData(
+                 criteriaDataSize,
+                 req.requestId,
+                 fileStream.fileName,
+                 countOfRecordUploaded
+             );
+
+            } else {
+              csvData["Criteria Internal Id"] = "Not inserted";
+            }
+
+            input.push(csvData);
+          }))
+
+          input.push(null);
+
+        }
 
       }
       catch (error) {
