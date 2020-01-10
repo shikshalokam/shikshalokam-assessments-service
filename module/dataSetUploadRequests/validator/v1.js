@@ -1,20 +1,14 @@
 module.exports = (req) => {
 
-    let entityAssessorValidator = {
+    let requestValidator = {
 
-        entities: function () {
-            req.checkQuery('type').exists().withMessage("required type")
-            req.checkQuery('subType').exists().withMessage("required subType")
-        },
-        
-        uploadForPortal: function () {
-            req.checkQuery('programId').exists().withMessage("required programId")
-            req.checkQuery('solutionId').exists().withMessage("required solutionId")
+        status: function () {
+            req.checkParams('_id').exists().withMessage("required request id")
         }
-
-
     }
 
-    if (entityAssessorValidator[req.params.method]) entityAssessorValidator[req.params.method]();
+    if (requestValidator[req.params.method]) {
+        requestValidator[req.params.method]();
+    }
 
 };
