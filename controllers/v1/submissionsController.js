@@ -223,8 +223,8 @@ module.exports = class Submission extends Abstract {
       } catch (error) {
 
         return reject({
-          status: 500,
-          message: "Oops! Something went wrong!",
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,
           errorObject: error
         });
 
@@ -258,7 +258,7 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = "Parent Interview completed successfully.";
+        let message = apiResponses.PARENT_INTERVIEW_COMPLETED;
         const parentInterviewEvidenceMethod = "PAI";
         let runUpdateQuery = false;
 
@@ -412,7 +412,7 @@ module.exports = class Submission extends Abstract {
           //isParentInterviewCompleted
 
           let response = {
-            message: "Already completed."
+            message: apiResponses.ALREADY_COMPLETED
           };
 
           return resolve(response);
@@ -462,7 +462,7 @@ module.exports = class Submission extends Abstract {
         } else {
 
           let response = {
-            message: "Failed to complete parent interview."
+            message: apiResponses.PARENT_INTERVIEW_FAILED
           };
 
           return resolve(response);
@@ -470,8 +470,8 @@ module.exports = class Submission extends Abstract {
 
       } catch (error) {
         return reject({
-          status: 500,
-          message: "Oops! Something went wrong!",
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,
           errorObject: error
         });
       }
@@ -505,7 +505,7 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = "General question submitted successfully.";
+        let message = apiResponses.GENERAL_QUESTION_SUBMITTED;
         let runUpdateQuery = false;
 
         let queryObject = {
@@ -612,7 +612,7 @@ module.exports = class Submission extends Abstract {
         } else {
 
           let response = {
-            message: "Failed to submit general questions"
+            message: apiResponses.GENERAL_QUESTION_FAILED
           };
 
           return resolve(response);
@@ -620,8 +620,8 @@ module.exports = class Submission extends Abstract {
 
       } catch (error) {
         return reject({
-          status: 500,
-          message: "Oops! Something went wrong!",
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,
           errorObject: error
         });
       }
@@ -655,7 +655,7 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = "Parent interview submitted successfully.";
+        let message = apiResponses.PARENT_INTERVIEW_SUBMITTED;
 
         let queryObject = {
           _id: ObjectId(req.params._id)
@@ -723,11 +723,11 @@ module.exports = class Submission extends Abstract {
             );
 
           } else {
-            throw "No parent information found.";
+            throw apiResponses.PARENT_INFORMATION_NOT_FOUND;
           }
 
         } else {
-          throw "No submission document found.";
+          throw apiResponses.SUBMISSION_NOT_FOUND;
         }
 
 
@@ -739,8 +739,8 @@ module.exports = class Submission extends Abstract {
 
       } catch (error) {
         return reject({
-          status: 500,
-          message: "Oops! Something went wrong!",
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,
           errorObject: error
         });
       }
@@ -772,7 +772,7 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = "Parent interview response fetched successfully.";
+        let message = apiResponses.PARENT_INTERVIEW_FETCHED;
         let result = {};
 
         let queryObject = {
@@ -806,7 +806,7 @@ module.exports = class Submission extends Abstract {
           else {
             let noSubmissionResponse = {
               result: [],
-              message: "No submissions for parent found"
+              message: apiResponses.SUBMISSION_NOT_FOUND +"for parent interview"
             };
 
             return resolve(noSubmissionResponse);
@@ -817,7 +817,7 @@ module.exports = class Submission extends Abstract {
 
           let noSubmissionResponse = {
             result: [],
-            message: "No submissions found"
+            message: apiResponses.SUBMISSION_NOT_FOUND
           };
 
           return resolve(noSubmissionResponse);
@@ -833,8 +833,8 @@ module.exports = class Submission extends Abstract {
 
       } catch (error) {
         return reject({
-          status: 500,
-          message: "Oops! Something went wrong!",
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,
           errorObject: error
         });
       }
@@ -873,22 +873,22 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = "Crtieria rating completed successfully";
+        let message = apiResponses.CRITERIA_RATING;
 
         let programId = req.query.programId;
         let solutionId = req.query.solutionId;
         let entityId = req.params._id;
 
         if (!programId) {
-          throw "Program Id is not found";
+          throw apiResponses.PROGRAM_NOT_FOUND;
         }
 
         if (!solutionId) {
-          throw "Solution Id is not found";
+          throw apiResponses.SOLUTION_NOT_FOUND;
         }
 
         if (!entityId) {
-          throw "Entity Id is not found";
+          throw apiResponses.ENTITY_NOT_FOUND;
         }
 
 
@@ -898,8 +898,8 @@ module.exports = class Submission extends Abstract {
 
         if (!solutionDocument) {
           return resolve({
-            status: 400,
-            message: "Solution does not exist"
+            status: httpStatusCode.bad_request.status,
+            message: apiResponses.SOLUTION_NOT_FOUND
           });
         }
 
@@ -915,13 +915,13 @@ module.exports = class Submission extends Abstract {
         ).lean();
 
         if (!submissionDocument._id) {
-          throw "Couldn't find the submission document"
+          throw apiResponses.SUBMISSION_NOT_FOUND;
         }
 
 
         if(solutionDocument.scoringSystem == "pointsBasedScoring") {
 
-          submissionDocument.scoringSystem = "pointsBasedScoring"
+          submissionDocument.scoringSystem = "pointsBasedScoring";
 
           let allCriteriaInSolution = new Array;
           let allQuestionIdInSolution = new Array;
@@ -1004,7 +1004,7 @@ module.exports = class Submission extends Abstract {
 
       } catch (error) {
         return reject({
-          status: 500,
+          status: error.status || httpStatusCode.internal_server_error.status,
           message: error,
           errorObject: error
         });
@@ -1044,22 +1044,22 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = "Crtieria rating completed successfully";
+        let message = apiResponses.CRITERIA_RATING;
 
         let programId = req.query.programId;
         let solutionId = req.query.solutionId;
         let entityId = req.query.entityId.split(",");
 
         if (!programId) {
-          throw "Program Id is not found";
+          throw apiResponses.PROGRAM_NOT_FOUND;
         }
 
         if (!solutionId) {
-          throw "Solution Id is not found";
+          throw apiResponses.SOLUTION_NOT_FOUND;
         }
 
         if (!req.query.entityId || !(req.query.entityId.length >= 1)) {
-          throw "Entity Id is not found";
+          throw apiResponses.ENTITY_NOT_FOUND;
         }
 
         let solutionDocument = await database.models.solutions.findOne({
@@ -1068,8 +1068,8 @@ module.exports = class Submission extends Abstract {
 
         if (!solutionDocument) {
           return resolve({
-            status: 400,
-            message: "Solution does not exist"
+            status: httpStatusCode.bad_request.status,
+            message: apiResponses.SOLUTION_NOT_FOUND
           });
         }
 
@@ -1085,7 +1085,7 @@ module.exports = class Submission extends Abstract {
         ).lean();
 
         if (!submissionDocuments) {
-          throw "Couldn't find the submission document";
+          throw apiResponses.SUBMISSION_NOT_FOUND;
         }
 
         let commonSolutionDocumentParameters = {};
@@ -1183,7 +1183,7 @@ module.exports = class Submission extends Abstract {
 
       } catch (error) {
         return reject({
-          status: 500,
+          status: error.status || httpStatusCode.internal_server_error.status,
           message: error,
           errorObject: error
         });
@@ -1207,7 +1207,7 @@ module.exports = class Submission extends Abstract {
       try {
 
         req.body = req.body || {};
-        let message = "Dummy Crtieria rating completed successfully";
+        let message = apiResponses.DUMMY_RATE;
 
         let queryObject = {
           "entityExternalId": req.params._id
@@ -1219,7 +1219,7 @@ module.exports = class Submission extends Abstract {
         ).lean();
 
         if (!submissionDocument._id) {
-          throw "Couldn't find the submission document";
+          throw customElements.SUBMISSION_NOT_FOUND;
         }
 
         let result = {};
@@ -1271,7 +1271,7 @@ module.exports = class Submission extends Abstract {
 
       } catch (error) {
         return reject({
-          status: 500,
+          status: error.status || httpStatusCode.internal_server_error.status,
           message: error,
           errorObject: error
         });
@@ -1317,7 +1317,7 @@ module.exports = class Submission extends Abstract {
           allowed: true
         };
         req.body = req.body || {};
-        let message = "Submission check completed successfully";
+        let message = apiResponses.SUBMISSION_CHECK;
 
         let queryObject = {
           "_id": req.params._id
@@ -1332,7 +1332,7 @@ module.exports = class Submission extends Abstract {
         );
 
         if (!submissionDocument || !submissionDocument._id) {
-          throw "Couldn't find the submission document";
+          throw apiResponses.SUBMISSION_NOT_FOUND;
         } else {
           if (submissionDocument.evidences[req.query.evidenceId].isSubmitted && submissionDocument.evidences[req.query.evidenceId].isSubmitted == true) {
             submissionDocument.evidences[req.query.evidenceId].submissions.forEach(submission => {
@@ -1352,7 +1352,7 @@ module.exports = class Submission extends Abstract {
 
       } catch (error) {
         return reject({
-          status: 500,
+          status: error.status || httpStatusCode.internal_server_error.status,
           message: error,
           errorObject: error
         });
@@ -1642,7 +1642,7 @@ module.exports = class Submission extends Abstract {
         };
 
       } else {
-        responseMessage = "Atleast one evidence method has to be completed before giving feedback.";
+        responseMessage = apiResponses.FEEDBACK_ERROR;
       }
 
       if (runUpdateQuery) {
@@ -1651,7 +1651,7 @@ module.exports = class Submission extends Abstract {
           updateObject
         );
 
-        responseMessage = "Feedback submitted successfully.";
+        responseMessage = apiResponses.FEEDBACK_SUBMITTED;
 
       }
 
@@ -1705,7 +1705,7 @@ module.exports = class Submission extends Abstract {
         result.evidences = submissionDocument.evidences;
       }
 
-      let response = { message: "Submission status fetched successfully", result: result };
+      let response = { message: apiResponses.SUBMISSION_STATUS_FETCHED, result: result };
 
       return resolve(response);
     }).catch(error => {
@@ -1744,15 +1744,15 @@ module.exports = class Submission extends Abstract {
       try {
 
         if (!req.query.solutionId) {
-          throw "solution id is required";
+          throw apiResponses.SOLUTION_ID_NOT_FOUND;
         }
 
         if (!req.query.entityId) {
-          throw "Entity id is required";
+          throw apiResponses.ENTITY_ID_NOT_FOUND;
         }
 
         if (!req.query.ecm) {
-          throw "Ecm is required";
+          throw apiResponses.ECM_REQUIRED;
         }
 
         let ecmMethod = "evidences." + req.query.ecm;
@@ -1763,7 +1763,7 @@ module.exports = class Submission extends Abstract {
         }, { answers: 1, [ecmMethod]: 1 }).lean();
 
         if (!submissionDocuments) {
-          throw "Submissions is not found for given schools";
+          throw apiResponses.SUBMISSION_NOT_FOUND;
         }
 
         let ecmData = submissionDocuments.evidences[req.query.ecm];
@@ -1834,10 +1834,10 @@ module.exports = class Submission extends Abstract {
             }
           );
 
-          messageData = "Answers merged successfully";
+          messageData = apiResponses.ANSWER_MERGED;
 
         } else {
-          messageData = "isSubmitted False";
+          messageData = apiResponses.INSUBMITTED_FALSE;
         }
 
         return resolve({
@@ -2011,7 +2011,7 @@ module.exports = class Submission extends Abstract {
               let questionValueConversion = await submissionsHelper.questionValueConversion(questionExternalId[eachQuestionRow.questionCode], eachQuestionRow.oldResponse, eachQuestionRow.newResponse);
 
               if (!questionValueConversion.oldValue || !questionValueConversion.newValue || questionValueConversion.oldValue == "" || questionValueConversion.newValue == "") {
-                eachQuestionRow["status"] = "Invalid new or old response!";
+                eachQuestionRow["status"] = apiResponses.VALID_INVALID_RESPONSE;
               }
 
               else {
@@ -2035,9 +2035,9 @@ module.exports = class Submission extends Abstract {
 
                 let submissionCheck = await database.models.submissions.findOneAndUpdate(findQuery, updateQuery).lean();
 
-                eachQuestionRow["status"] = "Done";
+                eachQuestionRow["status"] = apiResponses.DONE;
                 if (submissionCheck == null) {
-                  eachQuestionRow["status"] = "Not Done";
+                  eachQuestionRow["status"] = apiResponses.NOT_DONE;
                 }
 
               }
@@ -2050,8 +2050,8 @@ module.exports = class Submission extends Abstract {
       }
       catch (error) {
         reject({
-          status: 500,
-          message: error
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message          
         });
       }
     })
@@ -2089,7 +2089,7 @@ module.exports = class Submission extends Abstract {
         let programId = req.params._id;
 
         if (!programId) {
-          throw "Program id is missing";
+          throw apiResponses.PROGRAM_ID_REQUIRED;
         }
 
         let entityId = req.query.entityId;
@@ -2098,7 +2098,7 @@ module.exports = class Submission extends Abstract {
         let submissionUpdated = new Array;
 
         if (!entityId) {
-          throw "Entity id is missing";
+          throw apiResponses.ENTITY_ID_NOT_FOUND;
         }
 
         let findQuery = {
@@ -2125,17 +2125,17 @@ module.exports = class Submission extends Abstract {
         let updatedQuery = await database.models.submissions.findOneAndUpdate(findQuery, updateQuery).lean();
 
         if (updatedQuery == null) {
-          throw "Ecm doesnot exists";
+          throw apiResponses.ECM_NOT_EXIST;
         }
 
         return resolve({
-          message: "ECM Reset successfully"
+          message: apiResponses.ECM_RESET
         });
 
       } catch (error) {
         return reject({
-          status: 500,
-          message: error,
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,          
           errorObject: error
         });
       }
@@ -2176,8 +2176,8 @@ module.exports = class Submission extends Abstract {
 
     } catch (error) {
       return reject({
-        status: 500,
-        message: error
+        status: error.status || httpStatusCode.internal_server_error.status,
+        message: error.message || httpStatusCode.internal_server_error.message        
       });
     }
   })

@@ -32,14 +32,18 @@ module.exports = class insightsHelper {
                   submissionsProjectionObject
                 ).lean();
                 
-                if(!submissionDocument._id) throw "No submission found"
+                if(!submissionDocument._id) {
+                  throw apiResponses.SUBMISSION_NOT_FOUND;
+                }
           
                 let solutionDocument = await database.models.solutions.findOne(
                   {_id : submissionDocument.solutionId},
                   {themes : 1, scoringSystem : 1, levelToScoreMapping : 1}
                 );
           
-                if(!solutionDocument._id) throw "No solution document found."
+                if(!solutionDocument._id) {
+                  throw apiResponses.SOLUTION_NOT_FOUND;
+                }
                 
                 let criteriaScore = _.keyBy(submissionDocument.criteria, '_id')
           
@@ -170,7 +174,7 @@ module.exports = class insightsHelper {
                   }
                 );
           
-                return resolve({message : "Insights generated successfully."});
+                return resolve({message : apiResponses.INSIGHTS_FETCHED});
           
           
               } catch (error) {
