@@ -27,7 +27,7 @@ module.exports = function () {
   gen.utils = require(ROOT_PATH + "/generics/helpers/utils");
   global.config = require(".");
 
-  global.apiResponses = require(ROOT_PATH +"/generics/helpers/apiResponses");
+  global.apiResponses = require(ROOT_PATH +"/generics/messageConstants/apiResponses");
 
   global.httpStatusCode = 
   require(ROOT_PATH + "/generics/httpStatusCodes");
