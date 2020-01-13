@@ -8,7 +8,8 @@
 const solutionsHelper = require(MODULES_BASE_PATH + "/solutions/helper");
 const frameworksHelper = require(MODULES_BASE_PATH + "/frameworks/helper");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
-const csv = require("csvtojson");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
 /**
     * Frameworks
@@ -53,41 +54,45 @@ module.exports = class Frameworks extends Abstract {
 
         (async function () {
           await fileStream.getProcessorPromise();
-          return resolve({
-            isResponseAStream: true,
-            fileNameWithPath: fileStream.fileNameWithPath()
-          });
         })();
-
 
         let frameworkDocument = await database.models.frameworks
           .findOne({ externalId: req.params._id }, { _id: 1 })
           .lean();
 
         if (!frameworkDocument) {
-          return resolve({
+          throw {
             status: httpStatusCode.not_found.status,
             message: messageConstants.apiResponses.FRAMEWORK_NOT_FOUND
-          });
+          };
         }
 
-        let headerSequence
-        let themes = await csv().fromString(req.files.themes.data.toString()).on('header', (headers) => { headerSequence = headers });
-
-        let frameworkThemes = await solutionsHelper.uploadTheme("frameworks", frameworkDocument._id, themes, headerSequence);
+        let frameworkThemes = await solutionsHelper.uploadTheme("frameworks", frameworkDocument._id, req.themesData, req.themesHeader);
 
         for (let pointerToFrameworkTheme = 0; pointerToFrameworkTheme < frameworkThemes.length; pointerToFrameworkTheme++) {
           input.push(frameworkThemes[pointerToFrameworkTheme]);
+
+          // dataSetUploadRequestsHelper.updateUploadedCsvData(
+          //   req.requestId
+          // );
         }
+
+        let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          resultFilePath
+        );
 
         input.push(null);
       }
       catch (error) {
-        reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message,
+          false
+        );
       }
     })
   }

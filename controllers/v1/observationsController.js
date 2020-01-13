@@ -7,13 +7,14 @@
 
 // Dependencies
 
-const observationsHelper = require(MODULES_BASE_PATH + "/observations/helper")
-const entitiesHelper = require(MODULES_BASE_PATH + "/entities/helper")
-const assessmentsHelper = require(MODULES_BASE_PATH + "/assessments/helper")
-const solutionsHelper = require(MODULES_BASE_PATH + "/solutions/helper")
-const csv = require("csvtojson");
+const observationsHelper = require(MODULES_BASE_PATH + "/observations/helper");
+const entitiesHelper = require(MODULES_BASE_PATH + "/entities/helper");
+const assessmentsHelper = require(MODULES_BASE_PATH + "/assessments/helper");
+const solutionsHelper = require(MODULES_BASE_PATH + "/solutions/helper");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
-const assessorsHelper = require(MODULES_BASE_PATH + "/entityAssessors/helper")
+const assessorsHelper = require(MODULES_BASE_PATH + "/entityAssessors/helper");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
 /**
     * Observations
@@ -1060,7 +1061,7 @@ module.exports = class Observations extends Abstract {
      * @apiVersion 1.0.0
      * @apiName Bulk Create Observations CSV
      * @apiGroup Observations
-     * @apiParam {File} observation  Mandatory observation file of type CSV.
+     * @apiParam {File} observation Mandatory observation file of type CSV.
      * @apiUse successBody
      * @apiUse errorBody
      */
@@ -1080,10 +1081,9 @@ module.exports = class Observations extends Abstract {
             try {
                 if (!req.files || !req.files.observation) {
                     let responseMessage = httpStatusCode.bad_request.message;
-                    return resolve({ 
-                        status: httpStatusCode.bad_request.status, 
+                    throw {
                         message: responseMessage 
-                    });
+                    };
                 }
 
                 const fileName = `Observation-Upload-Result`;
@@ -1092,13 +1092,9 @@ module.exports = class Observations extends Abstract {
 
                 (async function () {
                     await fileStream.getProcessorPromise();
-                    return resolve({
-                        isResponseAStream: true,
-                        fileNameWithPath: fileStream.fileNameWithPath()
-                    });
                 })();
 
-                let observationData = await csv().fromString(req.files.observation.data.toString());
+                let observationData =  req.observationData;
 
                 let users = [];
                 let solutionExternalIds = [];
@@ -1158,7 +1154,6 @@ module.exports = class Observations extends Abstract {
                     })
                 }
 
-
                 for (let pointerToObservation = 0; pointerToObservation < observationData.length; pointerToObservation++) {
                     let solution;
                     let entityDocument;
@@ -1178,7 +1173,7 @@ module.exports = class Observations extends Abstract {
                     } else {
 
                         if (userIdByExternalId[currentData.user] === "") {
-                            throw { status: httpStatusCode.bad_request.status, message: "Keycloak id for user is not present" };
+                            throw { message: "Keycloak id for user is not present" };
                         }
 
                         userId = userIdByExternalId[currentData.user]
@@ -1200,14 +1195,27 @@ module.exports = class Observations extends Abstract {
 
                     csvResult["status"] = status;
                     input.push(csvResult);
+
+                    // dataSetUploadRequestsHelper.updateUploadedCsvData(
+                    //   req.requestId
+                    // );
                 }
+
+                let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+                dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+                  req.requestId,
+                  resultFilePath
+                );
+
                 input.push(null);
             } catch (error) {
-                return reject({
-                    status: error.status || httpStatusCode.internal_server_error.status,
-                    message: error.message || httpStatusCode.internal_server_error.message,
-                    errorObject: error
-                });
+                dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+                    req.requestId,
+                    "",
+                    error.message,
+                    false
+                );
             }
         });
     }

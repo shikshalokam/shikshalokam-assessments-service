@@ -6,9 +6,10 @@
  */
 
 // Dependencies
-const csv = require("csvtojson");
 const staticLinksHelper = require(MODULES_BASE_PATH + "/staticLinks/helper")
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
 /**
     * StaticLinks
@@ -117,7 +118,7 @@ module.exports = class StaticLinks extends Abstract {
 
       try {
 
-        let staticLinksCSVData = await csv().fromString(req.files.staticLinks.data.toString());
+        let staticLinksCSVData = staticLinksData;
 
         if (!staticLinksCSVData || staticLinksCSVData.length < 1) {
           throw messageConstants.apiResponses.FILE_DATA_MISSING;
@@ -133,15 +134,23 @@ module.exports = class StaticLinks extends Abstract {
 
           (async function () {
             await fileStream.getProcessorPromise();
-            return resolve({
-              isResponseAStream: true,
-              fileNameWithPath: fileStream.fileNameWithPath()
-            });
           }());
 
           await Promise.all(newStaticLinkData.map(async staticLink => {
             input.push(staticLink);
+            
+            // dataSetUploadRequestsHelper.updateUploadedCsvData(
+            //   req.requestId
+            // );
+
           }))
+
+          let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+            req.requestId,
+            resultFilePath
+          );
 
           input.push(null);
 
@@ -150,12 +159,13 @@ module.exports = class StaticLinks extends Abstract {
         }
 
       } catch (error) {
-
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        })
+        
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false
+        );
 
       }
 
@@ -168,7 +178,7 @@ module.exports = class StaticLinks extends Abstract {
   * @apiVersion 1.0.0
   * @apiName Upload Static Links Information CSV
   * @apiGroup Static Links
-  * @apiParam {File} staticLinks     Mandatory static links file of type CSV.
+  * @apiParam {File} staticLinks Mandatory static links file of type CSV.
   * @apiSampleRequest /assessment/api/v1/staticLinks/bulkUpdate
   * @apiUse successBody
   * @apiUse errorBody
@@ -188,7 +198,7 @@ module.exports = class StaticLinks extends Abstract {
 
       try {
 
-        let staticLinksCSVData = await csv().fromString(req.files.staticLinks.data.toString());
+        let staticLinksCSVData = staticLinksData;
 
         if (!staticLinksCSVData || staticLinksCSVData.length < 1) {
           throw messageConstants.apiResponses.FILE_DATA_MISSING;
@@ -204,15 +214,23 @@ module.exports = class StaticLinks extends Abstract {
 
           (async function () {
             await fileStream.getProcessorPromise();
-            return resolve({
-              isResponseAStream: true,
-              fileNameWithPath: fileStream.fileNameWithPath()
-            });
           }());
 
           await Promise.all(newStaticLinkData.map(async staticLink => {
             input.push(staticLink);
+
+            // dataSetUploadRequestsHelper.updateUploadedCsvData(
+            //   req.requestId
+            // );
+
           }))
+
+          let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+            req.requestId,
+            resultFilePath
+          );
 
           input.push(null);
 
@@ -221,13 +239,12 @@ module.exports = class StaticLinks extends Abstract {
         }
 
       } catch (error) {
-
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        })
-
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false
+        );
       }
 
 

@@ -6,7 +6,6 @@
  */
 
 //Dependencies
-const csv = require("csvtojson");
 const moment = require("moment");
 let shikshalokam = require(ROOT_PATH + "/generics/helpers/shikshalokam");
 const slackClient = require(ROOT_PATH + "/generics/helpers/slackCommunications");
@@ -206,17 +205,9 @@ module.exports = class EntityAssessorHelper {
    * @param {String} token - Logged in user token.
    */
 
-    static upload(files, programId, solutionId, userId, token) {
+    static upload(assessorData, programId, solutionId, userId, token) {
         return new Promise(async (resolve, reject) => {
             try {
-                if (!files || !files.assessors) {
-                    throw { 
-                        status: httpStatusCode.bad_request.status, 
-                        message: httpStatusCode.bad_request.message
-                    };
-                }
-
-                let assessorData = await csv().fromString(files.assessors.data.toString());
 
                 let entityIds = [];
                 let programIds = [];

@@ -30,6 +30,9 @@ module.exports = function () {
   global.httpStatusCode = 
   require(ROOT_PATH + "/generics/httpStatusCodes");
 
+  global.BASE_HOST_URL = gen.utils.checkIfEnvDataExistsOrNot("APPLICATION_BASE_HOST")+
+  gen.utils.checkIfEnvDataExistsOrNot("APPLICATION_BASE_URL");
+
   global.ENABLE_DEBUG_LOGGING = process.env.ENABLE_DEBUG_LOGGING || "ON";
   global.ENABLE_BUNYAN_LOGGING = process.env.ENABLE_BUNYAN_LOGGING || "ON";
 

@@ -6,7 +6,6 @@
  */
 
 // Dependencies
-const csv = require("csvtojson");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
 const dataSetUploadRequestsHelper = 
 require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
@@ -61,10 +60,6 @@ module.exports = class Criteria extends Abstract {
           (async function () {
             await fileStream.getProcessorPromise();
           }());
-
-          let criteriaDataSize = req.criteriaData.length;
-
-          let countOfRecordUploaded = 0;
 
           await Promise.all(req.criteriaData.map(async criteria => {
 
@@ -180,22 +175,23 @@ module.exports = class Criteria extends Abstract {
 
             if (criteriaDocuments._id) {
               csvData["Criteria Internal Id"] = criteriaDocuments._id;
-
-              countOfRecordUploaded += 1;
-                   
-              await dataSetUploadRequestsHelper.updateUploadedCsvData(
-                 criteriaDataSize,
-                 req.requestId,
-                 fileStream.fileName,
-                 countOfRecordUploaded
-             );
-
             } else {
               csvData["Criteria Internal Id"] = "Not inserted";
             }
 
+            // dataSetUploadRequestsHelper.updateUploadedCsvData(
+            //    req.requestId
+            // );
+
             input.push(csvData);
           }))
+
+          let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+            req.requestId,
+            resultFilePath
+          );
 
           input.push(null);
 
@@ -203,11 +199,12 @@ module.exports = class Criteria extends Abstract {
 
       }
       catch (error) {
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message,
+          false
+        );
       }
     })
   }

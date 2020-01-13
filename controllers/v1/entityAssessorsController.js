@@ -7,6 +7,8 @@
 
 // Dependencies
 const entityAssessorsHelper = require(MODULES_BASE_PATH + "/entityAssessors/helper");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
 /**
     * EntityAssessors
@@ -264,19 +266,29 @@ module.exports = class EntityAssessors extends Abstract {
 
       try {
 
-        await entityAssessorsHelper.upload(req.files, null, null, req.userDetails.userId, req.rspObj.userToken);
+        if (!req.files || !req.files.assessors) {
+          throw messageConstants.apiResponses.ENTITY_ASSESSOR_FILE_NOT_FOUND;
+        }
 
-        let response = { message : messageConstants.apiResponses.ASSESSOR_CREATED };
+        await entityAssessorsHelper.upload(req.assessorsData, null, null, req.userDetails.userId, req.rspObj.userToken);
 
-        return resolve(response);
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          "",
+          true,
+          false
+        );
 
       } catch (error) {
 
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message,
+          false,
+          false
+        );
 
       }
 
@@ -314,21 +326,31 @@ module.exports = class EntityAssessors extends Abstract {
 
       try {
 
+        if (!req.files || !req.files.assessors) {
+          throw messageConstants.apiResponses.ENTITY_ASSESSOR_FILE_NOT_FOUND;
+        }
+
         let programId = req.query.programId;
         let solutionId = req.query.solutionId;
 
-        await entityAssessorsHelper.upload(req.files, programId, solutionId, req.userDetails.userId, req.rspObj.userToken);
+        await entityAssessorsHelper.upload(req.assessorsData, programId, solutionId, req.userDetails.userId, req.rspObj.userToken);
 
-        let response = { message: messageConstants.apiResponses.ASSESSOR_CREATED };
-
-        return resolve(response);
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          "",
+          true,
+          false
+        );
 
       } catch (error) {
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message,
+          false,
+          false
+        );
       }
 
     })

@@ -21,6 +21,10 @@ module.exports = {
 "ENTITY_LIST" : "List of entities fetched successfully",
 "ENTITY_SOLUTION_USER_NOT_FOUND" : "Entity Id or User or solution is not present",
 "ENTITY_INFORMATION_NOT_INSERTED" : "Some entity information was not inserted!",
+"ENTITIES_FILE_NOT_FOUND" : "Csv file for entities should be selected",
+"ENTITY_MAP_FILE_NOT_FOUND" : "Csv file for entity map should be selected",
+
+"ENTITY_ASSESSOR_FILE_NOT_FOUND" : "Csv file for entity assessor should be selected",
 
 "INVALID_ENTITY_TYPE" : "Invalid entity type.",
 "ENTITY_TYPE_REQUIRED" : "Entity type is required.",
@@ -193,6 +197,8 @@ module.exports = {
 "ZONE_LIST" : "List of zones fetched successfully",
 "UPLOADED_REQUEST" : "Uploaded request submitted successfully",
 "INVALID_REQUEST_ID" : "Invalid request ID.",
-"FETCH_REQUEST" : "Request document fetched successfully."
+"FETCH_REQUEST" : "Request document fetched successfully.",
+
+"THEMES_DATA_NOT_FOUND" : "Csv for themes data could not be found"
 
 }

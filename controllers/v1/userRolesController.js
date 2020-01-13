@@ -6,9 +6,10 @@
  */
 
 // Dependencies
-const csv = require("csvtojson");
 const userRolesHelper = require(MODULES_BASE_PATH + "/userRoles/helper")
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
 /**
     * UserRoles
@@ -113,7 +114,7 @@ module.exports = class UserRoles extends Abstract {
 
       try {
 
-        let userRolesCSVData = await csv().fromString(req.files.userRoles.data.toString());
+        let userRolesCSVData = req.userRolesData;
 
         if (!userRolesCSVData || userRolesCSVData.length < 1) {
           throw messageConstants.apiResponses.FILE_DATA_MISSING;
@@ -129,15 +130,23 @@ module.exports = class UserRoles extends Abstract {
 
           (async function () {
             await fileStream.getProcessorPromise();
-            return resolve({
-              isResponseAStream: true,
-              fileNameWithPath: fileStream.fileNameWithPath()
-            });
           }());
 
           await Promise.all(newUserRoleData.map(async userRole => {
             input.push(userRole);
+
+            // dataSetUploadRequestsHelper.updateUploadedCsvData(
+            //   req.requestId
+            // );
+
           }))
+
+          let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+            req.requestId,
+            resultFilePath
+          );
 
           input.push(null);
 
@@ -146,12 +155,12 @@ module.exports = class UserRoles extends Abstract {
         }
 
       } catch (error) {
-
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false
+        );
 
       }
 
@@ -184,7 +193,7 @@ module.exports = class UserRoles extends Abstract {
 
       try {
 
-        let userRolesCSVData = await csv().fromString(req.files.userRoles.data.toString());
+        let userRolesCSVData = req.userRolesData;
 
         if (!userRolesCSVData || userRolesCSVData.length < 1) {
           throw messageConstants.apiResponses.FILE_DATA_MISSING;
@@ -200,15 +209,24 @@ module.exports = class UserRoles extends Abstract {
 
           (async function () {
             await fileStream.getProcessorPromise();
-            return resolve({
-              isResponseAStream: true,
-              fileNameWithPath: fileStream.fileNameWithPath()
-            });
           }());
 
           await Promise.all(newUserRoleData.map(async userRole => {
+
+            // dataSetUploadRequestsHelper.updateUploadedCsvData(
+            //   req.requestId
+            // );
+
             input.push(userRole);
           }));
+
+
+          let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+            req.requestId,
+            resultFilePath
+          );
 
           input.push(null);
 
@@ -218,12 +236,12 @@ module.exports = class UserRoles extends Abstract {
 
       } catch (error) {
 
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        })
-
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false
+        );
       }
 
 

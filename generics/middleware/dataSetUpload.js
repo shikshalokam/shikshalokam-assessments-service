@@ -25,20 +25,17 @@ module.exports = async (req, res, next) => {
                     let existingRequestedFile = 
                     requestedCsvFiles[pointerToRequestedFile];
 
+                    let headerSequence;
                     let csvData = await csv().fromString(
                         req.files[existingRequestedFile].data.toString()
-                    );
+                    ).on('header', (headers) => { headerSequence = headers });
+
 
                     let requesteData = {
-                        url : req.url
+                        url : req.url,
+                        headers : req.headers,
+                        totalSize : csvData.length
                     }
-
-                    requesteData["headers"] = {};
-                    requesteData["headers"]["userId"] = 
-                    req.headers['x-authenticated-userid'];
-
-                    requesteData["headers"]["channelId"] = 
-                    req.headers['x-channel-id'];
 
                     let createRequestId = 
                     await dataSetUploadRequestsHelper.create(requesteData);
@@ -55,7 +52,9 @@ module.exports = async (req, res, next) => {
 
                         req.requestId = createRequestId.requestId;
                         req[existingRequestedFile+"Data"] = csvData;
+                        req[existingRequestedFile+"DataSize"] = csvData.length;
                         req.file = existingRequestedFile;
+                        req[existingRequestedFile+"Header"] = headerSequence;
                     }
                 }
         }

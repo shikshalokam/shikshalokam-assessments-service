@@ -105,12 +105,6 @@ module.exports = class Observations extends v1Observation {
 
                 let userAllowedEntities = new Array;
 
-                try {
-                    userAllowedEntities = await userExtensionHelper.getUserEntitiyUniverseByEntityType(userId, result.entityType);
-                } catch (error) {
-                    userAllowedEntities = [];
-                }
-
                 if( !(userAllowedEntities.length > 0) && req.query.parentEntityId ) {
 
                     let entityType = entitiesHelper.entitiesSchemaData().SCHEMA_ENTITY_GROUP+"."+result.entityType;

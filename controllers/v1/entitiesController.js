@@ -6,9 +6,10 @@
  */
 
 // Dependencies
-const csv = require("csvtojson");
 const entitiesHelper = require(MODULES_BASE_PATH + "/entities/helper");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
  /**
     * Entities
@@ -400,8 +401,12 @@ module.exports = class Entities extends Abstract {
 
       try {
 
-        let entityCSVData = await csv().fromString(req.files.entities.data.toString());
-        let newEntityData = await entitiesHelper.bulkCreate(req.query.type, null, null, req.userDetails, entityCSVData);
+        if (!req.files || !req.files.entities) {
+          throw messageConstants.apiResponses.ENTITIES_FILE_NOT_FOUND;
+        }
+        
+        let newEntityData = 
+        await entitiesHelper.bulkCreate(req.query.type, null, null, req.userDetails, req.entitiesData);
 
         if (newEntityData.length > 0) {
 
@@ -411,15 +416,22 @@ module.exports = class Entities extends Abstract {
 
           (async function () {
             await fileStream.getProcessorPromise();
-            return resolve({
-              isResponseAStream: true,
-              fileNameWithPath: fileStream.fileNameWithPath()
-            });
           }());
 
           await Promise.all(newEntityData.map(async newEntity => {
             input.push(newEntity);
+            
+            // dataSetUploadRequestsHelper.updateUploadedCsvData(
+            //    req.requestId
+            // );
           }))
+
+          let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+            req.requestId,
+            resultFilePath
+          );
 
           input.push(null);
 
@@ -429,11 +441,12 @@ module.exports = class Entities extends Abstract {
 
       } catch (error) {
 
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        })
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message,
+          false
+        );
 
       }
 
@@ -468,9 +481,11 @@ module.exports = class Entities extends Abstract {
 
       try {
 
-        let entityCSVData = await csv().fromString(req.files.entities.data.toString());
+        if (!req.files || !req.files.entities) {
+          throw messageConstants.apiResponses.ENTITIES_FILE_NOT_FOUND;
+        }
         
-        let newEntityData = await entitiesHelper.bulkUpdate(req.userDetails, entityCSVData);
+        let newEntityData = await entitiesHelper.bulkUpdate(req.userDetails, req.entitiesData);
 
         if (newEntityData.length > 0) {
 
@@ -480,15 +495,22 @@ module.exports = class Entities extends Abstract {
 
           (async function () {
             await fileStream.getProcessorPromise();
-            return resolve({
-              isResponseAStream: true,
-              fileNameWithPath: fileStream.fileNameWithPath()
-            });
           }());
 
           await Promise.all(newEntityData.map(async newEntity => {
             input.push(newEntity);
+
+            // dataSetUploadRequestsHelper.updateUploadedCsvData(
+            //   req.requestId
+            // );
           }))
+
+          let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+            req.requestId,
+            resultFilePath
+          );
 
           input.push(null);
 
@@ -498,11 +520,12 @@ module.exports = class Entities extends Abstract {
 
       } catch (error) {
 
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        })
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message,
+          false
+        );
 
       }
 
@@ -531,29 +554,38 @@ module.exports = class Entities extends Abstract {
    * @returns {JSON} - Message of successfully updated.
    */
 
-  mappingUpload(req) {
+  async mappingUpload(req) {
+
     return new Promise(async (resolve, reject) => {
 
       try {
 
-        let entityCSVData = await csv().fromString(req.files.entityMap.data.toString());
+        if (!req.files || !req.files.entityMap) {
+          throw messageConstants.apiResponses.ENTITY_MAP_FILE_NOT_FOUND;
+        }
 
-        let entityMappingUploadResponse = await entitiesHelper.processEntityMappingUploadData(entityCSVData);
+        let entityMappingUploadResponse = await entitiesHelper.processEntityMappingUploadData(req.entityMapData);
         if(!entityMappingUploadResponse.success) {
           throw new Error (messageConstants.apiResponses.SOMETHING_WENT_WRONG);
         }
 
-        return resolve({
-          message: messageConstants.apiResponses.INFORMATION_UPDATED
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          "",
+          true,
+          false
+        );
 
       } catch (error) {
 
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        })
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message,
+          true,
+          false
+        );
 
       }
 
@@ -584,21 +616,29 @@ module.exports = class Entities extends Abstract {
 
       try {
 
-        let entityCsvData = await csv().fromString(req.files.entities.data.toString());
+        if (!req.files || !req.files.entities) {
+          throw messageConstants.apiResponses.ENTITIES_FILE_NOT_FOUND;
+        }
 
-        await entitiesHelper.bulkCreate(req.query.type, req.query.programId, req.query.solutionId, req.userDetails, entityCsvData);
+        await entitiesHelper.bulkCreate(req.query.type, req.query.programId, req.query.solutionId, req.userDetails, req.entitiesData);
 
-        return resolve({
-          message: messageConstants.apiResponses.INFORMATION_UPDATED
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          "",
+          true,
+          false
+        );
 
       } catch (error) {
 
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        })
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message,
+          true,
+          false
+        );
 
       }
 

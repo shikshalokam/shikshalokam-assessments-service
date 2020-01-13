@@ -7,10 +7,11 @@
 
 // Dependencies
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
-const csv = require("csvtojson");
 const submissionsHelper = require(MODULES_BASE_PATH + "/submissions/helper")
 const criteriaHelper = require(MODULES_BASE_PATH + "/criteria/helper")
-const questionsHelper = require(MODULES_BASE_PATH + "/questions/helper")
+const questionsHelper = require(MODULES_BASE_PATH + "/questions/helper");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
 /**
     * Submission
@@ -1926,7 +1927,7 @@ module.exports = class Submission extends Abstract {
     return new Promise(async (resolve, reject) => {
 
       try {
-        const submissionUpdateData = await csv().fromString(req.files.questions.data.toString());
+        const submissionUpdateData = req.questionsData;
 
         let questionCodeIds = [];
 
@@ -1963,10 +1964,6 @@ module.exports = class Submission extends Abstract {
 
         (async function () {
           await fileStream.getProcessorPromise();
-          return resolve({
-            isResponseAStream: true,
-            fileNameWithPath: fileStream.fileNameWithPath()
-          });
         }());
 
         const chunkOfsubmissionUpdateData = _.chunk(submissionUpdateData, 10);
@@ -2044,15 +2041,30 @@ module.exports = class Submission extends Abstract {
             }
 
             input.push(eachQuestionRow);
+
+            dataSetUploadRequestsHelper.updateUploadedCsvData(
+              req.requestId
+            );
           }))
         }
+
+
+        let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          resultFilePath
+        );
+
         input.push(null);
       }
       catch (error) {
-        reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message          
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false
+        );
       }
     })
   }
@@ -2181,6 +2193,6 @@ module.exports = class Submission extends Abstract {
       });
     }
   })
-}
+ }
 
 };

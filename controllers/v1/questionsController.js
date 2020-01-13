@@ -6,9 +6,10 @@
  */
 
 // Dependencies
-const csv = require("csvtojson");
 const questionsHelper = require(MODULES_BASE_PATH + "/questions/helper");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
 /**
     * Questions
@@ -46,17 +47,12 @@ module.exports = class Questions extends Abstract {
   bulkCreate(req){
     return new Promise(async (resolve, reject) => {
       try {
+        
         if (!req.files || !req.files.questions) {
-          let responseMessage = httpStatusCode.bad_request.message;
-          return resolve({ 
-            status: httpStatusCode.bad_request.status, 
-            message: responseMessage 
-          });
+          throw { message: httpStatusCode.bad_request.message };
         }
 
-        let questionData = await csv().fromString(
-          req.files.questions.data.toString()
-        );
+        let questionData = req.questionsData;
 
         let criteriaIds = new Array();
         let criteriaObject = {};
@@ -68,8 +64,8 @@ module.exports = class Questions extends Abstract {
           .findOne(
             { externalId: questionData[0]["solutionId"] },
             { evidenceMethods: 1, sections: 1, themes: 1 }
-          )
-          .lean();
+          ).lean();
+
         let criteriasIdArray = gen.utils.getCriteriaIds(
           solutionDocument.themes
         );
@@ -79,7 +75,6 @@ module.exports = class Questions extends Abstract {
           criteriasArray.push(eachCriteriaIdArray._id.toString());
         });
 
-        // No changes required here.
         questionData.forEach(eachQuestionData => {
           let parsedQuestion = gen.utils.valueParser(eachQuestionData);
 
@@ -141,15 +136,10 @@ module.exports = class Questions extends Abstract {
 
         (async function () {
           await fileStream.getProcessorPromise();
-          return resolve({
-            isResponseAStream: true,
-            fileNameWithPath: fileStream.fileNameWithPath()
-          });
         })();
 
         let pendingItems = new Array();
 
-        // Question from csv
         function questionInCsv(parsedQuestionData) {
           let question = {};
 
@@ -176,7 +166,6 @@ module.exports = class Questions extends Abstract {
           return question;
         }
 
-        // Create question
         function createQuestion(parsedQuestion, question, criteria, ecm, section) {
           let resultFromCreateQuestions = questionsHelper.createQuestions(
             parsedQuestion,
@@ -237,6 +226,11 @@ module.exports = class Questions extends Abstract {
               questionCollection[resultFromCreateQuestions.result.externalId] =
                 resultFromCreateQuestions.result;
             }
+
+          //   dataSetUploadRequestsHelper.updateUploadedCsvData(
+          //     req.requestId
+          //    );
+
             input.push(resultFromCreateQuestions.total[0]);
           }
         }
@@ -254,15 +248,29 @@ module.exports = class Questions extends Abstract {
 
             let csvQuestionData = await createQuestion(eachPendingItem.parsedQuestion, question, eachPendingItem.criteriaToBeSent, eachPendingItem.evaluationFrameworkMethod, eachPendingItem.section);
 
+            // dataSetUploadRequestsHelper.updateUploadedCsvData(
+            //   req.requestId
+            // );
+
             input.push(csvQuestionData.total[0]);
           }
         }
 
+        let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          resultFilePath
+        );
+
         input.push(null);
       } catch (error) {
-        reject({
-          message: error
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false
+      );
       }
     });
   }
@@ -293,16 +301,10 @@ module.exports = class Questions extends Abstract {
       try {
 
         if (!req.files || !req.files.questions) {
-          let responseMessage = httpStatusCode.bad_request.message;
-          return resolve({ 
-            status: httpStatusCode.bad_request.status, 
-            message: responseMessage 
-          });
+          throw { message: httpStatusCode.bad_request.message };
         }
 
-        let questionData = await csv().fromString(
-          req.files.questions.data.toString()
-        );
+        let questionData = req.questionsData;
 
         let solutionDocument = await database.models.solutions
           .findOne(
@@ -395,10 +397,6 @@ module.exports = class Questions extends Abstract {
 
         (async function () {
           await fileStream.getProcessorPromise();
-          return resolve({
-            isResponseAStream: true,
-            fileNameWithPath: fileStream.fileNameWithPath()
-          });
         })();
 
         let pendingItems = new Array();
@@ -587,14 +585,29 @@ module.exports = class Questions extends Abstract {
           );
 
           input.push(_.omitBy(updateQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
+
+          // dataSetUploadRequestsHelper.updateUploadedCsvData(
+          //   req.requestId
+          // );
+
         }
+
+        let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          resultFilePath
+        );
 
         input.push(null);
 
       } catch (error) {
-        reject({
-          message: error
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false
+        );
       }
     });
   }

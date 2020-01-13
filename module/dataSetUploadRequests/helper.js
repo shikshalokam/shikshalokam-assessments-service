@@ -128,43 +128,56 @@ module.exports = class DataSetUploadRequestsHelper {
    */
 
     static updateUploadedCsvData(
-        sizeOfUploadedCsv,
-        requestId,
-        fileName,
-        recordsUploaded
+        requestId
     ) {
-        return new Promise(async (resolve,reject)=>{
             try {
 
-                let noOfRecordsUploaded = recordsUploaded;
-
-                let noOfRecordsToUpload = 
-                sizeOfUploadedCsv - noOfRecordsUploaded;
-
-                let updateRequestDocument = {
-                    noOfRecordsUploaded:
-                    noOfRecordsUploaded,
-
-                    noOfRecordsToUpload : noOfRecordsToUpload,
-
-                    resultFileUrl : fileName,
-
-                    status : noOfRecordsToUpload === 0 ? "completed" :
-                    "inProgress"
-                }
-
-                let updatedDocument = 
-                await database.models.dataSetUploadRequests.findOneAndUpdate({
-                        _id : requestId
-                    },{$set:updateRequestDocument}
-                );
-
-                return resolve(updatedDocument);
+                _update(requestId,{ status:"inProgress" },{
+                    noOfRecordsUploaded : 1
+                });
+                
+                return;
 
             } catch (error) {
-                return reject(error);
+                return error;
             }
-        })
 
     }
+
+    static onSuccessOrFailureUpload(requestId,resultFilePath = "",failureRemarks = "",success = true,resultAsCsv = true) {
+        try {
+
+            let updateDataSet = {
+                status : "completed" ,
+                remarks : "Successfully uploaded csv."
+            };
+
+            if(success && resultAsCsv) {
+                updateDataSet.remarks = "You can download the csv file";
+                updateDataSet["resultFileUrl"] = resultFilePath;
+            } else if(!success) {
+                updateDataSet.status = "Fail";
+                updateDataSet.remarks = failureRemarks;
+            } 
+    
+            _update(requestId,updateDataSet);
+            return;
+        } catch(error) {
+            console.log(error)
+        }
+    }
 };
+
+function _update(requestId,updateObj,incrementUpload = {}) {
+
+    let updatedData = {
+        $set:updateObj
+    };
+    if( incrementUpload && !(_.isEmpty(incrementUpload)) ) {
+        updatedData["$inc"] = incrementUpload;
+    }
+    database.models.dataSetUploadRequests.findOneAndUpdate(
+        {_id : requestId},updatedData
+    ).then();
+    return;
+}

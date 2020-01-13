@@ -51,7 +51,7 @@ module.exports = class DataSetUploadRequests extends Abstract {
         if(result.success) {
           return resolve({
             message: messageConstants.apiResponses.INFORMATION_FETCHED,
-            result: result.data
+            result: _.omit(result.data,["headers","createdAt","updatedAt","__v"])
           });
         } else {
           throw new Error(result.message)

@@ -6,11 +6,12 @@
  */
 
 // Dependencies
-const csv = require("csvtojson");
 const solutionsHelper = require(MODULES_BASE_PATH + "/solutions/helper");
 const criteriaHelper = require(MODULES_BASE_PATH + "/criteria/helper");
 const questionsHelper = require(MODULES_BASE_PATH + "/questions/helper");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
+const dataSetUploadRequestsHelper = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
 
 /**
     * Solutions
@@ -358,9 +359,11 @@ module.exports = class Solutions extends Abstract {
     return new Promise(async (resolve, reject) => {
       try {
 
-        let responseMessage = messageConstants.apiResponses.ENTITIES_UPDATED;
+        if (!req.files || !req.files.entities) {
+          throw { message: messageConstants.apiResponses.ENTITIES_UPDATED };
+        }
 
-        let entityIdsFromCSV = await csv().fromString(req.files.entities.data.toString());
+        let entityIdsFromCSV = req.entitiesData;
 
         entityIdsFromCSV = entityIdsFromCSV.map(entity => ObjectId(entity.entityIds));
 
@@ -370,21 +373,30 @@ module.exports = class Solutions extends Abstract {
 
         let entityIds = entitiesDocument.map(entity => entity._id);
 
-        if (entityIdsFromCSV.length != entityIds.length) responseMessage = messageConstants.apiResponses.ENTITIES_NOT_UPDATE;
+        if (entityIdsFromCSV.length != entityIds.length) {
+          throw messageConstants.apiResponses.ENTITIES_NOT_UPDATE;
+        }
 
         await database.models.solutions.updateOne(
           { externalId: req.params._id },
           { $addToSet: { entities: entityIds } }
         )
-
-        return resolve({ message: responseMessage });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          "",
+          true,
+          false
+        );
 
       } catch (error) {
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false,
+          false
+        );
       }
     });
   }
@@ -417,16 +429,16 @@ module.exports = class Solutions extends Abstract {
     return new Promise(async (resolve, reject) => {
       try {
 
+        if (!req.files || !req.files.themes) {
+          throw { message: messageConstants.apiResponses.THEMES_DATA_NOT_FOUND };
+        }
+
         const fileName = `Solution-Upload-Result`;
         let fileStream = new FileStream(fileName);
         let input = fileStream.initStream();
 
         (async function () {
           await fileStream.getProcessorPromise();
-          return resolve({
-            isResponseAStream: true,
-            fileNameWithPath: fileStream.fileNameWithPath()
-          });
         })();
 
         let solutionDocument = await database.models.solutions
@@ -434,30 +446,39 @@ module.exports = class Solutions extends Abstract {
           .lean();
 
         if (!solutionDocument) {
-          return resolve({
-            status: httpStatusCode.not_found.status,
-            message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
-          });
+          throw { message: messageConstants.apiResponses.SOLUTION_NOT_FOUND };
         }
 
-        let headerSequence;
-        let themes = await csv().fromString(req.files.themes.data.toString()).on('header', (headers) => { headerSequence = headers });
+        let headerSequence = req.themesHeader;
+        let themes = req.themesData;
 
         let solutionThemes = await solutionsHelper.uploadTheme("solutions", solutionDocument._id, themes, headerSequence);
 
         for (let pointerToEditTheme = 0; pointerToEditTheme < solutionThemes.length; pointerToEditTheme++) {
           input.push(solutionThemes[pointerToEditTheme]);
+          
+          // dataSetUploadRequestsHelper.updateUploadedCsvData(
+          //   req.requestId
+          // );
         }
+
+        let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          resultFilePath
+        );
 
         input.push(null);
 
       }
       catch (error) {
-        reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        })
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false
+        );
       }
     })
   }
@@ -568,13 +589,10 @@ module.exports = class Solutions extends Abstract {
         }, { themes: 1, levelToScoreMapping : 1 }).lean();
 
         if (!solutionDocument) {
-          return resolve({
-            status: httpStatusCode.bad_request.status,
-            message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
-          });
+          throw { message: messageConstants.apiResponses.SOLUTION_NOT_FOUND };
         }
 
-        let themeData = await csv().fromString(req.files.themes.data.toString());
+        let themeData = req.themesData;
 
         if(!themeData.length>0) {
           throw new Error("Bad data.");
@@ -604,10 +622,6 @@ module.exports = class Solutions extends Abstract {
 
         (async function () {
           await fileStream.getProcessorPromise();
-          return resolve({
-            isResponseAStream: true,
-            fileNameWithPath: fileStream.fileNameWithPath()
-          });
         })();
 
         if(!themesWithRubricDetails.csvData) {
@@ -616,16 +630,29 @@ module.exports = class Solutions extends Abstract {
 
         for (let pointerToThemeRow = 0; pointerToThemeRow < themesWithRubricDetails.csvData.length; pointerToThemeRow++) {
           input.push(themesWithRubricDetails.csvData[pointerToThemeRow]);
+
+          dataSetUploadRequestsHelper.updateUploadedCsvData(
+            req.requestId
+          );
+
         }
+
+        let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          resultFilePath
+        );
 
         input.push(null);
 
       } catch (error) {
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false
+        );
       }
 
     })
@@ -663,13 +690,12 @@ module.exports = class Solutions extends Abstract {
         }, { themes: 1, levelToScoreMapping: 1, type : 1, subType : 1 }).lean();
 
         if (!solutionDocument) {
-          return resolve({
-            status: httpStatusCode.bad_request.status,
+          throw {
             message: messageConstants.apiResponses.SOLUTION_NOT_FOUND
-          });
+          };
         }
 
-        let criteriaData = await csv().fromString(req.files.criteria.data.toString());
+        let criteriaData = req.criteriaData;
 
         if(!criteriaData.length>0) {
           throw new Error("Bad data.");
@@ -830,24 +856,32 @@ module.exports = class Solutions extends Abstract {
 
         (async function () {
           await fileStream.getProcessorPromise();
-          return resolve({
-            isResponseAStream: true,
-            fileNameWithPath: fileStream.fileNameWithPath()
-          });
         })();
 
         for (let pointerToCriteriaRow = 0; pointerToCriteriaRow < criteriaData.length; pointerToCriteriaRow++) {
           input.push(criteriaData[pointerToCriteriaRow]);
+          
+          // dataSetUploadRequestsHelper.updateUploadedCsvData(
+          //   req.requestId
+          // );
         }
+
+        let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
+
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          resultFilePath
+        );
 
         input.push(null);
 
       } catch (error) {
-        return reject({
-          status: error.status || httpStatusCode.internal_server_error.status,
-          message: error.message || httpStatusCode.internal_server_error.message,
-          errorObject: error
-        });
+        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          req.requestId,
+          "",
+          error.message ? error.message : error,
+          false
+        );
       }
 
     })
