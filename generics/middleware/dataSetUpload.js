@@ -37,20 +37,21 @@ module.exports = async (req, res, next) => {
                         totalSize : csvData.length
                     }
 
-                    let createRequestId = 
+                    let requestTracker = 
                     await dataSetUploadRequestsHelper.create(requesteData);
 
-                    if(createRequestId.requestId.toString()) {
+                    if(requestTracker.getRequestId()) {
                         
                         res.status(httpStatusCode.ok.status).json({
                             message: messageConstants.apiResponses.UPLOADED_REQUEST,
                             status: httpStatusCode.ok.status,
                             result: {
-                                requestId : createRequestId.requestId.toString()
+                                requestId : requestTracker.getRequestId()
                             }
                         })
 
-                        req.requestId = createRequestId.requestId;
+                        req.requestId = requestTracker.getRequestId();
+                        req.requestTracker = requestTracker;
                         req[existingRequestedFile+"Data"] = csvData;
                         req[existingRequestedFile+"DataSize"] = csvData.length;
                         req.file = existingRequestedFile;

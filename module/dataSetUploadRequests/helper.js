@@ -5,6 +5,10 @@
  * Description : Bulk dataset upload helper functionality.
  */
 
+ // Dependencies
+ const dataSetRequestTracker = 
+require(MODULES_BASE_PATH + "/dataSetUploadRequests/requestTracker");
+
 /**
     * DataSetUploadRequestsHelper
     * @class
@@ -105,8 +109,10 @@ module.exports = class DataSetUploadRequestsHelper {
                 let requestedData = 
                 await database.models.dataSetUploadRequests.create(requestData);
 
+                let requestTracker = new dataSetRequestTracker(requestedData._id.toString());
+
                 return resolve({
-                    requestId : requestedData._id
+                    requestTracker : requestTracker
                 });
 
             } catch (error) {
