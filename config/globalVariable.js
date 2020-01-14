@@ -19,7 +19,7 @@ module.exports = function () {
   // );
   // let readStream = fs.createReadStream(__dirname +'/../logs/'+process.env.NODE_ENV + '/logs.log');
   global.async = require("async");
-  global.ROOT_PATH = path.join(__dirname, '..')
+  global.ROOT_PATH = path.join(__dirname, '..');
   global.GENERIC_HELPERS_PATH = ROOT_PATH + "/generics/helpers"
   global.MODULES_BASE_PATH = ROOT_PATH + "/module"
   global.log = new Log(global.config.log);

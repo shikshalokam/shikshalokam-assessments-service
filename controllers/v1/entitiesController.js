@@ -420,18 +420,21 @@ module.exports = class Entities extends Abstract {
 
           await Promise.all(newEntityData.map(async newEntity => {
             input.push(newEntity);
-            
-            // dataSetUploadRequestsHelper.updateUploadedCsvData(
-            //    req.requestId
-            // );
+
+            req.requestTracker.updateDocumentProcessedCount();
+
           }))
 
           let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
 
-          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          await req.requestTracker.updateRequestStatus();
+          
+          await dataSetUploadRequestsHelper.onSuccess(
             req.requestId,
             resultFilePath
           );
+
+          delete req.requestTracker;
 
           input.push(null);
 
@@ -441,15 +444,13 @@ module.exports = class Entities extends Abstract {
 
       } catch (error) {
 
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message,
-          false
+          error.message
         );
 
+        delete req.requestTracker;
       }
-
 
     })
   }
@@ -499,18 +500,19 @@ module.exports = class Entities extends Abstract {
 
           await Promise.all(newEntityData.map(async newEntity => {
             input.push(newEntity);
-
-            // dataSetUploadRequestsHelper.updateUploadedCsvData(
-            //   req.requestId
-            // );
+            req.requestTracker.updateDocumentProcessedCount();
           }))
 
           let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
 
-          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          await req.requestTracker.updateRequestStatus();
+          
+          await dataSetUploadRequestsHelper.onSuccess(
             req.requestId,
             resultFilePath
           );
+
+          delete req.requestTracker;
 
           input.push(null);
 
@@ -520,12 +522,12 @@ module.exports = class Entities extends Abstract {
 
       } catch (error) {
 
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message,
-          false
+          error.message
         );
+
+        delete req.requestTracker;
 
       }
 
@@ -564,28 +566,27 @@ module.exports = class Entities extends Abstract {
           throw messageConstants.apiResponses.ENTITY_MAP_FILE_NOT_FOUND;
         }
 
-        let entityMappingUploadResponse = await entitiesHelper.processEntityMappingUploadData(req.entityMapData);
+        let entityMappingUploadResponse = await entitiesHelper.processEntityMappingUploadData( req.entityMapData,req.requestTracker );
         if(!entityMappingUploadResponse.success) {
           throw new Error (messageConstants.apiResponses.SOMETHING_WENT_WRONG);
         }
 
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
-          req.requestId,
-          "",
-          "",
-          true,
-          false
+        await req.requestTracker.updateRequestStatus();
+          
+        await dataSetUploadRequestsHelper.onSuccess(
+          req.requestId
         );
+
+        delete req.requestTracker;
 
       } catch (error) {
 
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message,
-          true,
-          false
+          error.message
         );
+
+        delete req.requestTracker;
 
       }
 
@@ -620,25 +621,28 @@ module.exports = class Entities extends Abstract {
           throw messageConstants.apiResponses.ENTITIES_FILE_NOT_FOUND;
         }
 
-        await entitiesHelper.bulkCreate(req.query.type, req.query.programId, req.query.solutionId, req.userDetails, req.entitiesData);
-
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
-          req.requestId,
-          "",
-          "",
-          true,
-          false
+        await entitiesHelper.bulkCreate(
+          req.query.type, 
+          req.query.programId, 
+          req.query.solutionId, 
+          req.userDetails, 
+          req.entitiesData
         );
+          
+        await dataSetUploadRequestsHelper.onSuccess(
+          req.requestId
+        );
+
+        delete req.requestTracker;
 
       } catch (error) {
 
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message,
-          true,
-          false
+          error.message
         );
+
+        delete req.requestTracker;
 
       }
 

@@ -375,7 +375,7 @@ module.exports = class EntitiesHelper {
    * @returns {JSON} - uploaded entity information.
    */
 
-    static bulkCreate(entityType, programId, solutionId, userDetails, entityCSVData) {
+    static bulkCreate(entityType, programId, solutionId, userDetails, entityCSVData,) {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -554,7 +554,7 @@ module.exports = class EntitiesHelper {
    * @returns {JSON} - Success and message .
    */
 
-    static processEntityMappingUploadData(mappingData = []) {
+    static processEntityMappingUploadData(mappingData = [], requestTracker) {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -571,6 +571,7 @@ module.exports = class EntitiesHelper {
                 for (let indexToEntityMapData = 0; indexToEntityMapData < mappingData.length; indexToEntityMapData++) {
                   if (mappingData[indexToEntityMapData].parentEntiyId != "" && mappingData[indexToEntityMapData].childEntityId != "") {
                     await this.addSubEntityToParent(mappingData[indexToEntityMapData].parentEntiyId, mappingData[indexToEntityMapData].childEntityId);
+                    requestTracker.updateDocumentProcessedCount();
                   }
                 }
 

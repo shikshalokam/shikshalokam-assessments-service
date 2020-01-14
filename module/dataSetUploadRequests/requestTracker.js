@@ -1,6 +1,3 @@
-const dataSetUploadRequestsHelper = 
-require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
-
 const requestUpdateInterval = 10000;
 
 class RequestTracker {
@@ -8,19 +5,23 @@ class RequestTracker {
   constructor(requestId) {
     this.documentProcessedCount = 0;
     this.requestId = requestId;
-    setInterval(this.updateRequestStatus,requestUpdateInterval)
+    setInterval(this.updateRequestStatus.bind(this),requestUpdateInterval);
   }
 
-  updateDocumentUpdateCount(){
+  updateDocumentProcessedCount(){
     this.documentProcessedCount += 1;
   }
 
-  getRequestId(){
+  getRequestId() {
     return this.requestId;
   }
 
-  updateRequestStatus(){
-    dataSetUploadRequestsHelper.updateUploadedCsvData(
+  async updateRequestStatus() {
+
+    const dataSetUploadRequestsHelper = 
+    require(MODULES_BASE_PATH + "/dataSetUploadRequests/helper");
+
+    await dataSetUploadRequestsHelper.updateUploadedCsvData(
         this.requestId,
         this.documentProcessedCount
     );

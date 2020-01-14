@@ -271,25 +271,20 @@ module.exports = class EntityAssessors extends Abstract {
         }
 
         await entityAssessorsHelper.upload(req.assessorsData, null, null, req.userDetails.userId, req.rspObj.userToken);
-
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
-          req.requestId,
-          "",
-          "",
-          true,
-          false
+          
+        await dataSetUploadRequestsHelper.onSuccess(
+          req.requestId
         );
+
+        delete req.requestTracker;
 
       } catch (error) {
-
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message,
-          false,
-          false
+          error.message
         );
 
+        delete req.requestTracker;
       }
 
     })
@@ -334,23 +329,21 @@ module.exports = class EntityAssessors extends Abstract {
         let solutionId = req.query.solutionId;
 
         await entityAssessorsHelper.upload(req.assessorsData, programId, solutionId, req.userDetails.userId, req.rspObj.userToken);
-
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
-          req.requestId,
-          "",
-          "",
-          true,
-          false
+          
+        await dataSetUploadRequestsHelper.onSuccess(
+          req.requestId
         );
+
+        delete req.requestTracker;
 
       } catch (error) {
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message,
-          false,
-          false
+          error.message
         );
+
+        delete req.requestTracker;
       }
 
     })

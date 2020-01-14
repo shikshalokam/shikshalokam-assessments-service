@@ -1195,27 +1195,29 @@ module.exports = class Observations extends Abstract {
 
                     csvResult["status"] = status;
                     input.push(csvResult);
+                    req.requestTracker.updateDocumentProcessedCount();
 
-                    // dataSetUploadRequestsHelper.updateUploadedCsvData(
-                    //   req.requestId
-                    // );
                 }
 
                 let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
 
-                dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
-                  req.requestId,
-                  resultFilePath
+                await req.requestTracker.updateRequestStatus();
+          
+                await dataSetUploadRequestsHelper.onSuccess(
+                    req.requestId,
+                    resultFilePath
                 );
+
+                delete req.requestTracker;
 
                 input.push(null);
             } catch (error) {
-                dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+                await dataSetUploadRequestsHelper.onFail(
                     req.requestId,
-                    "",
-                    error.message,
-                    false
-                );
+                    error.message
+                  );
+                  
+                delete req.requestTracker;
             }
         });
     }

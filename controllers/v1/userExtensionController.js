@@ -146,20 +146,18 @@ module.exports = class UserExtension extends Abstract {
 
           await Promise.all(newUserRoleData.map(async userRole => {
             input.push(userRole);
-            
-            // dataSetUploadRequestsHelper.updateUploadedCsvData(
-            //   req.requestId
-            // );
-
+            req.requestTracker.updateDocumentProcessedCount();
           }));
 
           let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
 
-          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          await req.requestTracker.updateRequestStatus();
+          await dataSetUploadRequestsHelper.onSuccess(
             req.requestId,
             resultFilePath
           );
-
+  
+          delete req.requestTracker;
           input.push(null);
 
         } else {
@@ -167,13 +165,12 @@ module.exports = class UserExtension extends Abstract {
         }
 
       } catch (error) {
-
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message ? error.message : error,
-          false
+          error.message
         );
+        
+        delete req.requestTracker;
       }
 
 

@@ -381,22 +381,23 @@ module.exports = class Solutions extends Abstract {
           { externalId: req.params._id },
           { $addToSet: { entities: entityIds } }
         )
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+
+        await req.requestTracker.updateRequestStatus();
+          
+        await dataSetUploadRequestsHelper.onSuccess(
           req.requestId,
-          "",
-          "",
-          true,
-          false
+          resultFilePath
         );
 
+        delete req.requestTracker;
+
       } catch (error) {
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message ? error.message : error,
-          false,
-          false
+          error.message
         );
+        
+        delete req.requestTracker;
       }
     });
   }
@@ -456,29 +457,30 @@ module.exports = class Solutions extends Abstract {
 
         for (let pointerToEditTheme = 0; pointerToEditTheme < solutionThemes.length; pointerToEditTheme++) {
           input.push(solutionThemes[pointerToEditTheme]);
-          
-          // dataSetUploadRequestsHelper.updateUploadedCsvData(
-          //   req.requestId
-          // );
+          req.requestTracker.updateDocumentProcessedCount();
         }
 
         let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
 
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await req.requestTracker.updateRequestStatus();
+          
+        await dataSetUploadRequestsHelper.onSuccess(
           req.requestId,
           resultFilePath
         );
+
+        delete req.requestTracker;
 
         input.push(null);
 
       }
       catch (error) {
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message ? error.message : error,
-          false
+          error.message
         );
+        
+        delete req.requestTracker;
       }
     })
   }
@@ -630,29 +632,29 @@ module.exports = class Solutions extends Abstract {
 
         for (let pointerToThemeRow = 0; pointerToThemeRow < themesWithRubricDetails.csvData.length; pointerToThemeRow++) {
           input.push(themesWithRubricDetails.csvData[pointerToThemeRow]);
-
-          dataSetUploadRequestsHelper.updateUploadedCsvData(
-            req.requestId
-          );
-
+          req.requestTracker.updateDocumentProcessedCount();
         }
 
         let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
 
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await req.requestTracker.updateRequestStatus();
+          
+        await dataSetUploadRequestsHelper.onSuccess(
           req.requestId,
           resultFilePath
         );
 
+        delete req.requestTracker;
+
         input.push(null);
 
       } catch (error) {
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message ? error.message : error,
-          false
+          error.message
         );
+        
+        delete req.requestTracker;
       }
 
     })
@@ -860,28 +862,30 @@ module.exports = class Solutions extends Abstract {
 
         for (let pointerToCriteriaRow = 0; pointerToCriteriaRow < criteriaData.length; pointerToCriteriaRow++) {
           input.push(criteriaData[pointerToCriteriaRow]);
-          
-          // dataSetUploadRequestsHelper.updateUploadedCsvData(
-          //   req.requestId
-          // );
+          req.requestTracker.updateDocumentProcessedCount();
         }
 
         let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
 
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await req.requestTracker.updateRequestStatus();
+          
+        await dataSetUploadRequestsHelper.onSuccess(
           req.requestId,
           resultFilePath
         );
 
+        delete req.requestTracker;
+
         input.push(null);
 
       } catch (error) {
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message ? error.message : error,
-          false
+          error.message
         );
+        
+        delete req.requestTracker;
+
       }
 
     })

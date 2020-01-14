@@ -179,19 +179,21 @@ module.exports = class Criteria extends Abstract {
               csvData["Criteria Internal Id"] = "Not inserted";
             }
 
-            // dataSetUploadRequestsHelper.updateUploadedCsvData(
-            //    req.requestId
-            // );
+            req.requestTracker.updateDocumentProcessedCount();
 
             input.push(csvData);
           }))
 
           let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
 
-          dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+          await req.requestTracker.updateRequestStatus();
+
+          await dataSetUploadRequestsHelper.onSuccess(
             req.requestId,
             resultFilePath
           );
+
+          delete req.requestTracker;
 
           input.push(null);
 
@@ -199,12 +201,12 @@ module.exports = class Criteria extends Abstract {
 
       }
       catch (error) {
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message,
-          false
+          error.message
         );
+        
+        delete req.requestTracker;
       }
     })
   }

@@ -69,10 +69,6 @@ module.exports = class DataSetUploadRequestsHelper {
                     throw new Error(messageConstants.apiResponses.INVALID_REQUEST_ID);
                 }
 
-                // if(typeof requestId == "string") {
-                //     requestId = ObjectId(requestId);
-                // }
-
                 let requestDocument = await this.dataSetUploadRequestDocuments({
                     _id:requestId
                 });
@@ -111,9 +107,7 @@ module.exports = class DataSetUploadRequestsHelper {
 
                 let requestTracker = new dataSetRequestTracker(requestedData._id.toString());
 
-                return resolve({
-                    requestTracker : requestTracker
-                });
+                return resolve( requestTracker );
 
             } catch (error) {
                 return reject(error);
@@ -134,56 +128,67 @@ module.exports = class DataSetUploadRequestsHelper {
    */
 
     static updateUploadedCsvData(
-        requestId
+        requestId,
+        noOfRecordsUploaded
     ) {
+        return new Promise(async (resolve, reject) => {
             try {
+                let updatedData = { 
+                        status : messageConstants.apiResponses.INPROGRESS_STATUS ,
+                        noOfRecordsUploaded : noOfRecordsUploaded 
+                }
 
-                _update(requestId,{ status:"inProgress" },{
-                    noOfRecordsUploaded : 1
-                });
-                
-                return;
+                let updatedDocument = 
+                await database.models.dataSetUploadRequests.findOneAndUpdate(
+                    {_id : requestId},updatedData
+                );
 
+                return resolve(updatedDocument); 
             } catch (error) {
-                return error;
+                return reject(error);
             }
+        });
 
     }
 
-    static onSuccessOrFailureUpload(requestId,resultFilePath = "",failureRemarks = "",success = true,resultAsCsv = true) {
-        try {
-
-            let updateDataSet = {
-                status : "completed" ,
-                remarks : "Successfully uploaded csv."
-            };
-
-            if(success && resultAsCsv) {
-                updateDataSet.remarks = "You can download the csv file";
-                updateDataSet["resultFileUrl"] = resultFilePath;
-            } else if(!success) {
-                updateDataSet.status = "Fail";
-                updateDataSet.remarks = failureRemarks;
-            } 
-    
-            _update(requestId,updateDataSet);
-            return;
-        } catch(error) {
-            console.log(error)
+    static onSuccess( requestId, resultFilePath = "" ) {
+      return new Promise(async (resolve, reject) => {
+        
+        let updateObj = {
+            $set : { 
+                resultFileUrl : resultFilePath,
+                remarks : messageConstants.apiResponses.DOWNLOAD_CSV_FILE,
+                status : messageConstants.apiResponses.COMPLETED_STATUS
+            }
         }
+        
+        let updatedRequests = 
+        await database.models.dataSetUploadRequests.findOneAndUpdate(
+            { _id : requestId },updateObj
+        );
+
+        return resolve(updatedRequests);
+    })
+        
+    }
+
+    static onFail( requestId, failureRemarks ) {
+      return new Promise(async (resolve, reject) => {
+        let updateObj = {
+            $set : {
+                remarks : failureRemarks,
+                status : messageConstants.apiResponses.FAILURE_STATUS
+             }
+        };
+
+        let updatedRequests = 
+        await database.models.dataSetUploadRequests.findOneAndUpdate(
+            { _id : requestId },updateObj
+        );
+
+        return resolve(updatedRequests);
+
+      })
+
     }
 };
-
-function _update(requestId,updateObj,incrementUpload = {}) {
-
-    let updatedData = {
-        $set:updateObj
-    };
-    if( incrementUpload && !(_.isEmpty(incrementUpload)) ) {
-        updatedData["$inc"] = incrementUpload;
-    }
-    database.models.dataSetUploadRequests.findOneAndUpdate(
-        {_id : requestId},updatedData
-    ).then();
-    return;
-}

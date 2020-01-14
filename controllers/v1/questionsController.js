@@ -227,11 +227,8 @@ module.exports = class Questions extends Abstract {
                 resultFromCreateQuestions.result;
             }
 
-          //   dataSetUploadRequestsHelper.updateUploadedCsvData(
-          //     req.requestId
-          //    );
-
             input.push(resultFromCreateQuestions.total[0]);
+            req.requestTracker.updateDocumentProcessedCount();
           }
         }
 
@@ -248,29 +245,30 @@ module.exports = class Questions extends Abstract {
 
             let csvQuestionData = await createQuestion(eachPendingItem.parsedQuestion, question, eachPendingItem.criteriaToBeSent, eachPendingItem.evaluationFrameworkMethod, eachPendingItem.section);
 
-            // dataSetUploadRequestsHelper.updateUploadedCsvData(
-            //   req.requestId
-            // );
-
             input.push(csvQuestionData.total[0]);
+            req.requestTracker.updateDocumentProcessedCount();
           }
         }
 
         let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
 
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await req.requestTracker.updateRequestStatus();
+          
+        await dataSetUploadRequestsHelper.onSuccess(
           req.requestId,
           resultFilePath
         );
 
+        delete req.requestTracker;
+
         input.push(null);
       } catch (error) {
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message ? error.message : error,
-          false
-      );
+          error.message
+        );
+        
+        delete req.requestTracker;
       }
     });
   }
@@ -585,29 +583,29 @@ module.exports = class Questions extends Abstract {
           );
 
           input.push(_.omitBy(updateQuestion, (value, key) => { return _.startsWith(key, "_") && key != "_SYSTEM_ID" }));
-
-          // dataSetUploadRequestsHelper.updateUploadedCsvData(
-          //   req.requestId
-          // );
-
+          req.requestTracker.updateDocumentProcessedCount();
         }
 
         let resultFilePath = global.BASE_HOST_URL + fileStream.fileName.replace("./","");
 
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await req.requestTracker.updateRequestStatus();
+          
+        await dataSetUploadRequestsHelper.onSuccess(
           req.requestId,
           resultFilePath
         );
 
+        delete req.requestTracker;
+
         input.push(null);
 
       } catch (error) {
-        dataSetUploadRequestsHelper.onSuccessOrFailureUpload(
+        await dataSetUploadRequestsHelper.onFail(
           req.requestId,
-          "",
-          error.message ? error.message : error,
-          false
+          error.message
         );
+        
+        delete req.requestTracker;
       }
     });
   }

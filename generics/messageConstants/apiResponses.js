@@ -199,6 +199,11 @@ module.exports = {
 "INVALID_REQUEST_ID" : "Invalid request ID.",
 "FETCH_REQUEST" : "Request document fetched successfully.",
 
-"THEMES_DATA_NOT_FOUND" : "Csv for themes data could not be found"
+"THEMES_DATA_NOT_FOUND" : "Csv for themes data could not be found",
+"COMPLETED_STATUS" : "completed",
+"INPROGRESS_STATUS" : "inprogress",
+"UPLOADED_CSV_SUCCESSFULLY" : "Successfully uploaded csv.",
+"FAILURE_STATUS" : "FAIL",
+"DOWNLOAD_CSV_FILE" : "You can download the csv file"
 
 }
