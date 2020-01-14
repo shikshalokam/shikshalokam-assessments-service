@@ -117,7 +117,7 @@ module.exports = class Observations extends v1Observation {
 
                     let entitiesData = await entitiesHelper.entityDocuments({
                         _id : req.query.parentEntityId,
-                        groups : { $exists : true , $ne: {} }
+                        [entityType] : { $exists : true }
                       }, [
                         entityType
                       ]);
