@@ -133,7 +133,7 @@ module.exports = class Observations extends v1Observation {
                         response.result.push({
                             "count":0,
                             "data" : []
-                        })  
+                        });  
 
                         return resolve(response);
                     }
