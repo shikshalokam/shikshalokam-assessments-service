@@ -11,6 +11,7 @@ const moment = require("moment");
 let shikshalokam = require(ROOT_PATH + "/generics/helpers/shikshalokam");
 const slackClient = require(ROOT_PATH + "/generics/helpers/slackCommunications");
 const kafkaClient = require(ROOT_PATH + "/generics/helpers/kafkaCommunications");
+const chunkOfSubmissionsLength = 500;
 
 /**
     * EntityAssessorHelper
@@ -19,18 +20,18 @@ const kafkaClient = require(ROOT_PATH + "/generics/helpers/kafkaCommunications")
 module.exports = class EntityAssessorHelper {
 
     /**
-   * Get track of entity assessor.
-   * @method
-   * @name createInidvidualEntityAssessor
-   * @param {Object} entityAssessor - entityAssessor data.
-   * @param {String} programId - program id.
-   * @param {String} solutionId - solution id.
-   * @param {String} entityId - entity id.
-   * @param {Object} userEntityDetails
-   * @param {Object} userDetails - logged in user details. 
-   * @param {Object} userDetails.id - logged in user id. 
-   * @returns {Object} Entity assessor data.
-   */
+     * Get track of entity assessor.
+     * @method
+     * @name createInidvidualEntityAssessor
+     * @param {Object} entityAssessor - entityAssessor data.
+     * @param {String} programId - program id.
+     * @param {String} solutionId - solution id.
+     * @param {String} entityId - entity id.
+     * @param {Object} userEntityDetails
+     * @param {Object} userDetails - logged in user details. 
+     * @param {Object} userDetails.id - logged in user id. 
+     * @returns {Object} Entity assessor data.
+     */
 
     static createInidvidualEntityAssessor(programId, solutionId, entityId, userEntityDetails, userDetails) {
         return new Promise(async (resolve, reject) => {
@@ -52,13 +53,13 @@ module.exports = class EntityAssessorHelper {
         })
     }
 
-        /**
-   * Get track of entity assessor.
-   * @method
-   * @name uploadEntityAssessorTracker
-   * @param {Object} entityAssessor - entityAssessor data.
-   * @returns {Object} Uploaded entity assessor tracker data.
-   */
+    /**
+     * Get track of entity assessor.
+     * @method
+     * @name uploadEntityAssessorTracker
+     * @param {Object} entityAssessor - entityAssessor data.
+     * @returns {Object} Uploaded entity assessor tracker data.
+     */
 
     static uploadEntityAssessorTracker(entityAssessor) {
         return new Promise(async (resolve, reject) => {
@@ -196,15 +197,15 @@ module.exports = class EntityAssessorHelper {
     }
 
     /**
-   * Entity Assessors upload helper function.
-   * @method
-   * @name upload
-   * @param {Object} files -uploaded files.
-   * @param {String} programId - program id.
-   * @param {String} solutionId - solution id. 
-   * @param {String} userId - Logged in user id.
-   * @param {String} token - Logged in user token.
-   */
+     * Entity Assessors upload helper function.
+     * @method
+     * @name upload
+     * @param {Object} files -uploaded files.
+     * @param {String} programId - program id.
+     * @param {String} solutionId - solution id. 
+     * @param {String} userId - Logged in user id.
+     * @param {String} token - Logged in user token.
+     */
 
     static upload(files, programId, solutionId, userId, token) {
         return new Promise(async (resolve, reject) => {
@@ -429,13 +430,13 @@ module.exports = class EntityAssessorHelper {
     }
 
      /**
-   * Get user id from external id.
-   * @method
-   * @name getInternalUserIdByExternalId
-   * @param {Array} userExternalIds - Array of externalIds.
-   * @param {String} token - user logged in token.
-   * @returns {Array} Array of userId for external ids.
-   */
+     * Get user id from external id.
+     * @method
+     * @name getInternalUserIdByExternalId
+     * @param {Array} userExternalIds - Array of externalIds.
+     * @param {String} token - user logged in token.
+     * @returns {Array} Array of userId for external ids.
+     */
 
     static getInternalUserIdByExternalId(token, userExternalIds) {
 
@@ -472,13 +473,13 @@ module.exports = class EntityAssessorHelper {
     }
 
       /**
-   * Send notifications to user.
-   * @method
-   * @name sendUserNotifications
-   * @param {String} [userId = ""] - Logged in userId.
-   * @param {Array} [entities = []] - Array of entities. 
-   * @returns {Object} Consisting of success and message. 
-   */
+     * Send notifications to user.
+     * @method
+     * @name sendUserNotifications
+     * @param {String} [userId = ""] - Logged in userId.
+     * @param {Array} [entities = []] - Array of entities. 
+     * @returns {Object} Consisting of success and message. 
+     */
 
     static sendUserNotifications(userId = "", entities = []) {
         return new Promise(async (resolve, reject) => {
@@ -504,7 +505,7 @@ module.exports = class EntityAssessorHelper {
                         },
                         title: "New Assessment",
                         created_at: new Date(),
-                        "appName": "samiksha"
+                        appType: process.env.MOBILE_APPLICATION_APP_TYPE
                     });
 
                     if (kafkaMessage.status != "success") {
@@ -537,100 +538,240 @@ module.exports = class EntityAssessorHelper {
         })
     }
 
-      /**
-   * Entity Assessors upload helper function.
-   * @method
-   * @name pendingOrCompletedAssessment
-   * @param {Object} assessmentStatus - status of the assessments.
-   * @param {String} assessmentStatus.pending - pending assessments.
-   * @param {String} assessmentStatus.completed - completed assessments. 
-   * @returns {Array} Array of pending or completed assessments.
-   */
+    /**
+     * Pending Assessments.
+     * @method
+     * @name pendingAssessment
+     * @returns {Array} List of pending assessments.
+     */
 
-    static pendingOrCompletedAssessment(assessmentStatus) {
+    static pendingAssessment() {
         return new Promise(async (resolve, reject) => {
             try {
 
-                let entityAssessorsDocument = await database.models.entityAssessors.find({
-                    role: { $in: ["ASSESSOR", "LEAD_ASSESSOR"] },
-                }, { _id: 1 }).lean();
-
-                if (!entityAssessorsDocument.length > 0) {
-                    throw { message: messageConstants.apiResponses.MISSING_ASSESSOR_LEAD_ASSESSOR };
+                let queryData = {
+                    status : {
+                        $ne : messageConstants.apiResponses.STATUS_COMPLETED
+                    }
                 }
 
-                let entityAssessorChunkLength = 500;
+                let submissions = await database.models.submissions.find(
+                    queryData, 
+                    {
+                    _id: 1
+                }).lean();
 
-                let chunkOfEntityAssessors = _.chunk(entityAssessorsDocument, entityAssessorChunkLength);
-
-                let entityAssessorsDocuments;
-
-                let entityAssessorsData = [];
-                let entityAssessorsIds;
-                let status;
-
-                if (assessmentStatus.pending) {
-                    status = {
-                        $ne: "completed"
-                    };
+                if( submissions.length < 1 ) {
+                    throw {
+                        message : 
+                        messageConstants.apiResponses.SUBMISSION_NOT_FOUND
+                    }
                 }
 
-                if (assessmentStatus.completed) {
-                    status = "completed";
-                }
+                let chunkOfSubmissionDocuments = 
+                _.chunk(submissions,chunkOfSubmissionsLength);
 
-                for (let pointerToAssessors = 0; pointerToAssessors < chunkOfEntityAssessors.length; pointerToAssessors++) {
+                let submissionDocuments;
 
-                    entityAssessorsIds = chunkOfEntityAssessors[pointerToAssessors].map(eachAssessor => {
-                        return eachAssessor._id
+                let pendingAssessmentsData = [];
+                let submissionsIds;
+
+                for (let pointerToSubmissions = 0; 
+                    pointerToSubmissions < chunkOfSubmissionDocuments.length; 
+                    pointerToSubmissions++
+                ) {
+
+                    submissionsIds = 
+                    chunkOfSubmissionDocuments[pointerToSubmissions].map(submission => {
+                        return submission._id
                     });
 
-                    entityAssessorsDocuments = await database.models.entityAssessors.find({
-                        _id: { $in: entityAssessorsIds }
-                    }, { solutionId: 1, entityTypeId: 1, entities: 1, programId: 1, userId: 1, entityTypeId: 1 }).lean();
+                    submissionDocuments = 
+                    await database.models.submissions.find({
+                        _id: { $in: submissionsIds }
+                    },{
+                        _id: 1, 
+                        createdAt: 1,
+                        entityId: 1, 
+                        "entityInformation.name": 1, 
+                        "entityInformation.externalId": 1,
+                        "assessors.userId" : 1,
+                        "assessors.role" : 1,
+                        solutionId : 1,
+                        programId : 1
+                    }).lean();
 
-                    await Promise.all(entityAssessorsDocuments.map(async eachAssessor => {
+                    await Promise.all(submissionDocuments.map(async submissionDocument=>{
 
-                        let queryObj = {
-                            programId: eachAssessor.programId,
-                            solutionId: eachAssessor.solutionId,
-                            status: status,
-                            entityTypeId: eachAssessor.entityTypeId,
-                            entityId: { $in: eachAssessor.entities }
-                        };
-
-                        let assessmentSubmissionsDoc = await database.models.submissions.find(queryObj, {
-                            _id: 1, createdAt: 1, entityId: 1, "entityInformation.name": 1
-                        }).lean();
-
-
-                        if (assessmentSubmissionsDoc.length > 0) {
-
-                            let userId = eachAssessor.userId;
-                            let solutionId = eachAssessor.solutionId;
-                            let programId = eachAssessor.programId;
-
-                            assessmentSubmissionsDoc.forEach(eachAssessmentSubmissions => {
-
-                                entityAssessorsData.push({
-                                    _id: eachAssessmentSubmissions._id,
-                                    userId: userId,
-                                    solutionId: solutionId,
-                                    createdAt: eachAssessmentSubmissions.createdAt,
-                                    entityId: eachAssessmentSubmissions.entityId,
-                                    programId: programId,
-                                    entityName: eachAssessmentSubmissions.entityInformation.name
-                                });
-
+                        if( 
+                            submissionDocument.assessors &&
+                            submissionDocument.assessors.length > 0 
+                        ) {
+                            
+                            let entityName = "";
+                            
+                            if(
+                                submissionDocument.entityInformation && 
+                                submissionDocument.entityInformation.name
+                            ) {
+                                entityName = 
+                                submissionDocument.entityInformation.name;
+                            } else if (
+                                submissionDocument.entityInformation && 
+                                submissionDocument.entityInformation.externalId
+                            ) {
+                                entityName = 
+                                submissionDocument.entityInformation.externalId;
+                            }
+                            
+                            let result = {
+                                _id : submissionDocument._id,
+                                solutionId : submissionDocument.solutionId,
+                                createdAt : submissionDocument.createdAt,
+                                completedDate : submissionDocument.completedDate,
+                                entityId : submissionDocument.entityId,
+                                programId : submissionDocument.programId,
+                                entityName: entityName
+                            }
+                            
+                            submissionDocument.assessors.forEach(assessor=>{
+                                if(assessor.role && 
+                                    gen.utils.fetchAssessorsLeadAssessorRole().includes(assessor.role)
+                                ) {
+                                    result["userId"] = assessor.userId;
+                                    pendingAssessmentsData.push(result);
+                                }
+                                
                             })
-
                         }
-
-                    })
-                    )
+                    }))
                 }
 
-                return resolve(entityAssessorsData);
+                return resolve(pendingAssessmentsData);
+
+            } catch (error) {
+                return reject(error);
+            }
+        })
+    }
+
+      /**
+     * Entity Assessors upload helper function.
+     * @method
+     * @name completedAssessment
+     * @param {String} fromDate - from Date.
+     * @param {String} toDate - to date. 
+     * @returns {Array} List of completed assessments.
+     */
+
+    static completedAssessment( 
+        fromDate,
+        toDate 
+    ) {
+        return new Promise(async (resolve, reject) => {
+            try {
+
+                let queryData = {
+                    status : messageConstants.apiResponses.STATUS_COMPLETED,
+                    completedDate : {
+                        $exists : true,
+                        $gte : fromDate,
+                        $lte : toDate
+                    }
+                }
+
+                let submissions = await database.models.submissions.find(
+                    queryData, 
+                    {
+                    _id: 1
+                }).lean();
+
+                if( submissions.length < 1 ) {
+                    throw {
+                        message : messageConstants.apiResponses.SUBMISSION_NOT_FOUND
+                    }
+                }
+
+                let chunkOfSubmissionDocuments = 
+                _.chunk(submissions,chunkOfSubmissionsLength);
+
+                let submissionDocuments;
+
+                let completedAssessmentsData = [];
+                let submissionsIds;
+
+                for (let pointerToSubmissions = 0; 
+                    pointerToSubmissions < chunkOfSubmissionDocuments.length; 
+                    pointerToSubmissions++
+                ) {
+
+                    submissionsIds = 
+                    chunkOfSubmissionDocuments[pointerToSubmissions].map(submission => {
+                        return submission._id
+                    });
+
+                    submissionDocuments = 
+                    await database.models.submissions.find({
+                        _id: { $in: submissionsIds }
+                    },{
+                        _id: 1, 
+                        completedDate : 1, 
+                        entityId: 1, 
+                        "entityInformation.name": 1, 
+                        "entityInformation.externalId": 1,
+                        "assessors.userId" : 1,
+                        "assessors.role" : 1,
+                        solutionId : 1,
+                        programId : 1
+                    }).lean();
+
+                    await Promise.all(
+                        submissionDocuments.map(async submissionDocument=>{
+
+                        if( 
+                            submissionDocument.assessors && 
+                            submissionDocument.assessors.length > 0 
+                        ) {
+                            
+                            let entityName = "";
+                            
+                            if(
+                                submissionDocument.entityInformation && 
+                                submissionDocument.entityInformation.name
+                            ) {
+                                entityName = 
+                                submissionDocument.entityInformation.name;
+                            } else if (
+                                submissionDocument.entityInformation && 
+                                submissionDocument.entityInformation.externalId
+                            ) {
+                                entityName = 
+                                submissionDocument.entityInformation.externalId;
+                            }
+                            
+                            let result = {
+                                _id : submissionDocument._id,
+                                solutionId : submissionDocument.solutionId,
+                                completedDate : submissionDocument.completedDate,
+                                entityId : submissionDocument.entityId,
+                                programId : submissionDocument.programId,
+                                entityName: entityName
+                            }
+                            
+                            submissionDocument.assessors.forEach(assessor=>{
+
+                                if(assessor.role && 
+                                    gen.utils.fetchAssessorsLeadAssessorRole().includes(assessor.role)
+                                ) {
+                                    result["userId"] = assessor.userId;
+                                    completedAssessmentsData.push(result);
+                                }
+                            })
+                        }
+                    }))
+                }
+
+                return resolve(completedAssessmentsData);
 
             } catch (error) {
                 return reject(error);

@@ -335,32 +335,32 @@ module.exports = class EntityAssessors extends Abstract {
   }
 
   /**
-* @api {get} /assessment/api/v1/entityAssessors/pendingAssessments Pending Assessments
-* @apiVersion 1.0.0
-* @apiName Pending Assessments
-* @apiGroup Entity Assessor
-* @apiHeader {String} X-authenticated-user-token Authenticity token
-* @apiSampleRequest /assessment/api/v1/entityAssessors/pendingAssessments
-* @apiUse successBody
-* @apiUse errorBody
-* @apiParamExample {json} Response:
-{
-    "message": "Pending Assessments",
-    "status": 200,
-    "result": [
-        {
-            "_id": "5dca4478284feccded8f35c6",
-            "userId": "e97b5582-471c-4649-8401-3cc4249359bb",
-            "solutionId": "5b98fa069f664f7e1ae7498c",
-            "createdAt": "2019-01-01T00:00:00.000Z",
-            "entityId": "5c0bbab881bdbe330655d83c",
-            "programId": "5b98d7b6d4f87f317ff615ee"
-        }
-      ]
-  }
-*/
+  * @api {get} /assessment/api/v1/entityAssessors/pendingAssessments Pending Assessments
+  * @apiVersion 1.0.0
+  * @apiName Pending Assessments
+  * @apiGroup Entity Assessor
+  * @apiHeader {String} X-authenticated-user-token Authenticity token
+  * @apiSampleRequest /assessment/api/v1/entityAssessors/pendingAssessments
+  * @apiUse successBody
+  * @apiUse errorBody
+  * @apiParamExample {json} Response:
+  {
+      "message": "Pending Assessments",
+      "status": 200,
+      "result": [
+          {
+              "_id": "5dca4478284feccded8f35c6",
+              "userId": "e97b5582-471c-4649-8401-3cc4249359bb",
+              "solutionId": "5b98fa069f664f7e1ae7498c",
+              "createdAt": "2019-01-01T00:00:00.000Z",
+              "entityId": "5c0bbab881bdbe330655d83c",
+              "programId": "5b98d7b6d4f87f317ff615ee"
+          }
+        ]
+    }
+  */
 
-/**
+  /**
    * Pending Assessments.
    * @method
    * @name pendingAssessments
@@ -371,11 +371,8 @@ module.exports = class EntityAssessors extends Abstract {
     return new Promise(async (resolve, reject) => {
       try {
 
-        let status = {
-          pending: true,
-        };
-
-        let pendingAssessmentDocument = await entityAssessorsHelper.pendingOrCompletedAssessment(status);
+        let pendingAssessmentDocument = 
+        await entityAssessorsHelper.pendingAssessment();
 
         return resolve({
           message: messageConstants.apiResponses.PENDING_ASSESSMENT,
@@ -394,47 +391,48 @@ module.exports = class EntityAssessors extends Abstract {
 
 
   /**
-* @api {get} /assessment/api/v1/entityAssessors/completedAssessments Completed Assessments
-* @apiVersion 1.0.0
-* @apiName Completed Assessments
-* @apiGroup Entity Assessor
-* @apiHeader {String} X-authenticated-user-token Authenticity token
-* @apiSampleRequest /assessment/api/v1/entityAssessors/completedAssessments
-* @apiUse successBody
-* @apiUse errorBody
-* @apiParamExample {json} Response:
-{
-    "message": "Completed Assessments",
-    "status": 200,
-    "result": [
-        {
-            "_id": "5dca4478284feccded8f35c6",
-            "userId": "e97b5582-471c-4649-8401-3cc4249359bb",
-            "solutionId": "5b98fa069f664f7e1ae7498c",
-            "createdAt": "2019-01-01T00:00:00.000Z",
-            "entityId": "5c0bbab881bdbe330655d83c",
-            "programId": "5b98d7b6d4f87f317ff615ee"
-        }
-      ]
-}
-*/
+  * @api {get} /assessment/api/v1/entityAssessors/completedAssessments Completed Assessments
+  * @apiVersion 1.0.0
+  * @apiName Completed Assessments
+  * @apiGroup Entity Assessor
+  * @apiParam {String} fromDate From Date
+  * @apiHeader {String} X-authenticated-user-token Authenticity token
+  * @apiSampleRequest /assessment/api/v1/entityAssessors/completedAssessments
+  * @apiUse successBody
+  * @apiUse errorBody
+  * @apiParamExample {json} Response:
+    {
+        "message": "Completed Assessments",
+        "status": 200,
+        "result": [
+            {
+                "_id": "5dca4478284feccded8f35c6",
+                "userId": "e97b5582-471c-4649-8401-3cc4249359bb",
+                "solutionId": "5b98fa069f664f7e1ae7498c",
+                "createdAt": "2019-01-01T00:00:00.000Z",
+                "entityId": "5c0bbab881bdbe330655d83c",
+                "programId": "5b98d7b6d4f87f317ff615ee"
+            }
+          ]
+    }
+  */
 
-/**
+  /**
    * Completed Assessments.
    * @method
    * @name completedAssessments
    * @returns {JSON} - List of completed assessments.
   */
 
-  async completedAssessments() {
+  async completedAssessments(req) {
     return new Promise(async (resolve, reject) => {
       try {
 
-        let status = {
-          completed: true
-        }
-
-        let completedAssessmentDocument = await entityAssessorsHelper.pendingOrCompletedAssessment(status)
+        let completedAssessmentDocument = 
+        await entityAssessorsHelper.completedAssessment(
+          req.query.fromDate,
+          req.query.toDate
+        );
 
         return resolve({
           message: messageConstants.apiResponses.COMPLETED_ASSESSMENT,
