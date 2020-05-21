@@ -26,6 +26,15 @@ module.exports = (req) => {
 
         pushIncompleteObservationSubmissionForReporting: function () {
             req.checkParams('_id').exists().withMessage("required submission id")
+        },
+
+        list: function () {
+            req.checkParams('_id').exists().withMessage("required observation id")
+            .isMongoId().withMessage("Invalid observation id");
+            req.checkQuery('entityId').exists().withMessage("required entity id")
+            .isMongoId().withMessage("Invalid entity id");
+            req.checkQuery('solutionId').exists().withMessage("required solution id")
+            .isMongoId().withMessage("Invalid solution id");
         }
     }
 

@@ -7,6 +7,14 @@ module.exports = {
     frameworkId: "ObjectId",
     frameworkExternalId: String,
     solutionId: "ObjectId",
+    programId: {
+      type: "ObjectId",
+      required: true
+    },
+    programExternalId: {
+      type: String,
+      required: true
+    },
     solutionExternalId: String,
     startDate: Date,
     endDate: Date,
