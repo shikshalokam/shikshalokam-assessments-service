@@ -23,6 +23,14 @@ module.exports = {
     submissionsUpdatedHistory: Array,
     entityTypeId: "ObjectId",
     entityType: String,
+    programId: {
+      type: "ObjectId",
+      required: true
+    },
+    programExternalId: {
+      type: String,
+      required: true
+    },
     submissionNumber: Number,
     pointsBasedMaxScore : { type : Number, default: 0 },
     pointsBasedScoreAchieved : { type : Number, default: 0 },

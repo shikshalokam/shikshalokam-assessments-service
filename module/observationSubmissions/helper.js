@@ -21,6 +21,76 @@ const questionsHelper = require(MODULES_BASE_PATH + "/questions/helper")
 module.exports = class ObservationSubmissionsHelper {
 
       /**
+   * List of observation submissions
+   * @method
+   * @name observationSubmissionsDocument
+   * @param {Object} [findQuery = "all"] - filtered data.
+   * @param {Array} [fields = "all"] - projected data.
+   * @param {Array} [sortedData = "all"] - sorted field.
+   * @param {Array} [skipFields = "none"] - fields to skip.
+   * @returns {Array} - List of observation submissions data.
+   */
+
+  static observationSubmissionsDocument(
+      findQuery = "all", 
+      fields = "all",
+      sortedData = "all",
+      skipFields = "none"
+    ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            
+            let queryObject = {};
+
+            if (findQuery != "all") {
+                queryObject = findQuery;
+            }
+
+            let projection = {};
+
+            if (fields != "all") {
+                fields.forEach(element => {
+                    projection[element] = 1;
+                });
+            }
+
+            if (skipFields != "none") {
+                skipFields.forEach(element => {
+                    projection[element] = 0;
+                });
+            }
+
+            let submissionDocuments;
+
+            if ( sortedData !== "all" ) {
+                
+                submissionDocuments = 
+                await database.models.observationSubmissions.find(
+                    queryObject, 
+                    projection
+                ).sort(sortedData).lean();
+
+            } else {
+                
+                submissionDocuments = 
+                await database.models.observationSubmissions.find(
+                    queryObject, 
+                    projection
+                ).lean();
+            }   
+            
+            return resolve(submissionDocuments);
+        } catch (error) {
+            return reject({
+                status: error.status || httpStatusCode.internal_server_error.status,
+                message: error.message || httpStatusCode.internal_server_error.message,
+                errorObject: error
+            });
+        }
+    });
+}
+
+      /**
    * Push completed observation submission in kafka for reporting.
    * @method
    * @name pushCompletedObservationSubmissionForReporting
@@ -355,6 +425,64 @@ module.exports = class ObservationSubmissionsHelper {
             }
         })
     }
+
+    /**
+    * List observation submissions
+    * @method
+    * @name list
+    * @param {String} - entityId
+    * @param {String} - solutionId
+    * @param {String} - observationId
+    * @returns {Object} - list of submissions
+    */
+
+   static list(entityId, solutionId, observationId) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            
+            let queryObject = {
+                entityId: entityId,
+                solutionId: solutionId,
+                observationId: observationId
+            };
+
+            let projection = [
+                "status",
+                "submissionNumber",
+                "entityId",
+                "entityExternalId",
+                "entityType",
+                "createdAt",
+                "updatedAt",
+                "title"
+            ];
+
+            let result = await this.observationSubmissionsDocument
+            (
+                 queryObject,
+                 projection,
+                 {
+                     "createdAt" : -1 
+                }
+            );
+
+            if( !result.length > 0 ) {
+                throw {
+                    status : httpStatusCode.bad_request.status,
+                    message : messageConstants.apiResponses.SUBMISSION_NOT_FOUND
+                }
+            }
+
+            return resolve({
+                message:
+                    messageConstants.apiResponses.OBSERVATION_SUBMISSIONS_LIST_FETCHED,
+                result: result
+            })
+        } catch (error) {
+            return reject(error);
+        }
+    });
+   }
 
 };
 
