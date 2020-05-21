@@ -173,5 +173,12 @@ module.exports = {
 "USER_ORGANISATION_DETAILS_NOT_FOUND" : "Cannot create an observation for user whose organisation details are not available",
 "QUESTIONS_FILE_REQUIRED" : "Required questions key in form-data",
 "ENTITY_GROUPS_NOT_FOUND" : "Entity groups could not be found",
-"UNNATI_SERVICE_DOWN" : "Unnati service is down"
+"UNNATI_SERVICE_DOWN" : "Unnati service is down",
+"PROGRAM_NOT_MAPPED_TO_USER" : "No program mapped to user",
+"SOLUTION_NOT_MAPPED_TO_USER" : "No solution mapped to user",
+"ENTITIES_NOT_MAPPED_TO_USER" : "No solution mapped to user",
+"USER_ENTITIES_FETCHED_SUCCESSFULLY" : "Successfully fetched user entities",
+"USER_PROGRAMS_LIST_FETCHED" : "Sucessfully fectched user programs",
+"OBSERVATION_SUBMISSIONS_LIST_FETCHED" : "Successfully fetched observation submissions"
+
 }
