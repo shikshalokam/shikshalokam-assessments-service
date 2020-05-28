@@ -1,5 +1,6 @@
 module.exports = {
 "CONFIGURATIONS_NOT_FOUND" : "No configurations available for given params.",
+"ENTITY_TYPES_NOT_FOUND" : "No entity type found",
 "ENTITY_INFORMATION_FETCHED" : "Information fetched successfully.",
 "ENTITY_INFORMATION_UPDATE" : "Information updated successfully.",
 "ENTITY_ADDED" : "Entity information added successfully.",

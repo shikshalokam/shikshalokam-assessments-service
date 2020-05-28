@@ -94,7 +94,9 @@ module.exports = class ObservationsHelper {
                         frameworkExternalId: 1,
                         externalId: 1,
                         entityTypeId: 1,
-                        entityType: 1
+                        entityType: 1,
+                        programId : 1,
+                        programExternalId : 1
                     }).lean();
 
                 if (!solutionDocument) {
@@ -110,6 +112,8 @@ module.exports = class ObservationsHelper {
                     _.merge(data, {
                         "solutionId": solutionDocument._id,
                         "solutionExternalId": solutionDocument.externalId,
+                        "programId" : solutionDocument.programId,
+                        "programExternalId" : solutionDocument.programExternalId,
                         "frameworkId": solutionDocument.frameworkId,
                         "frameworkExternalId": solutionDocument.frameworkExternalId,
                         "entityTypeId": solutionDocument.entityTypeId,
@@ -537,6 +541,8 @@ module.exports = class ObservationsHelper {
                     observation["deleted"] = "false";
                     observation["solutionId"] = solution._id;
                     observation["solutionExternalId"] = solution.externalId;
+                    observation["programId"] = solution.programId;
+                    observation["programExternalId"] = solution.programExternalId;
                     observation["frameworkId"] = solution.frameworkId;
                     observation["frameworkExternalId"] = solution.frameworkExternalId;
                     observation["entityTypeId"] = solution.entityTypeId;
@@ -547,6 +553,7 @@ module.exports = class ObservationsHelper {
                     observation["name"] = solution.name;
                     observation["description"] = solution.description;
                     observation["entities"] = new Array;
+                    
                     if(isEntityDocumentValid) {
                         observation["entities"].push(entityDocument._id);
                     }
@@ -560,6 +567,7 @@ module.exports = class ObservationsHelper {
                         await this.sendUserNotifications(userId, {
                             solutionType: solution.type,
                             solutionId: solution._id.toString(),
+                            programId : solution.programId,
                             observationId: observationDocument._id.toString()
                         });
                     }
@@ -884,6 +892,8 @@ module.exports = class ObservationsHelper {
             return resolve({
                 name: 1,
                 externalId: 1,
+                programId : 1,
+                programExternalId : 1,
                 description: 1,
                 themes: 1,
                 entityProfileFieldsPerEntityTypes: 1,

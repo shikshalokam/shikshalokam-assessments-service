@@ -14,7 +14,8 @@ const solutionsHelper = require(MODULES_BASE_PATH + "/solutions/helper")
 const userExtensionHelper = require(MODULES_BASE_PATH + "/userExtension/helper");
 const csv = require("csvtojson");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
-const assessorsHelper = require(MODULES_BASE_PATH + "/entityAssessors/helper")
+const assessorsHelper = require(MODULES_BASE_PATH + "/entityAssessors/helper");
+const programsHelper = require(MODULES_BASE_PATH + "/programs/helper");
 
 /**
     * Observations
@@ -91,7 +92,6 @@ module.exports = class Observations extends Abstract {
                 matchQuery["$match"]["$or"].push({ "name": new RegExp(req.searchText, 'i') }, { "description": new RegExp(req.searchText, 'i') }, { "keywords": new RegExp(req.searchText, 'i') });
 
                 let solutionDocument = await solutionsHelper.search(matchQuery, req.pageSize, req.pageNo);
-
 
                 messageData = messageConstants.apiResponses.SOLUTION_FETCHED;
 
@@ -225,7 +225,12 @@ module.exports = class Observations extends Abstract {
 
             try {
 
-                let result = await observationsHelper.create(req.query.solutionId, req.body.data, req.userDetails, req.rspObj.userToken);
+                let result = await observationsHelper.create(
+                    req.query.solutionId, 
+                    req.body.data, 
+                    req.userDetails, 
+                    req.rspObj.userToken
+                );
 
                 return resolve({
                     message: messageConstants.apiResponses.OBSERVATION_CREATED,
@@ -678,6 +683,25 @@ module.exports = class Observations extends Abstract {
                         message: responseMessage 
                     });
                 }
+                
+                let programQueryObject = {
+                    _id: observationDocument.programId,
+                    status: "active",
+                    components: { $in: [ObjectId(observationDocument.solutionId)] }
+                };
+
+                let programDocument = await programsHelper.list(
+                    programQueryObject,[
+                        "externalId",
+                        "name",
+                        "description",
+                        "imageCompression"
+                    ]
+                );
+                
+                if ( !programDocument[0]._id ) {
+                    throw messageConstants.apiResponses.PROGRAM_NOT_FOUND;
+                }
 
                 let currentUserAssessmentRole = await assessmentsHelper.getUserRole(req.userDetails.allRoles);
                 let profileFieldAccessibility = (solutionDocument.roles && solutionDocument.roles[currentUserAssessmentRole] && solutionDocument.roles[currentUserAssessmentRole].acl && solutionDocument.roles[currentUserAssessmentRole].acl.entityProfile) ? solutionDocument.roles[currentUserAssessmentRole].acl.entityProfile : "";
@@ -730,6 +754,7 @@ module.exports = class Observations extends Abstract {
                 let solutionDocumentFieldList = await observationsHelper.solutionDocumentFieldListInResponse()
 
                 response.result.solution = await _.pick(solutionDocument, solutionDocumentFieldList);
+                response.result.program = programDocument[0];
 
                 let submissionDocument = {
                     entityId: entityDocument._id,
@@ -737,6 +762,11 @@ module.exports = class Observations extends Abstract {
                     entityInformation: entityDocument.metaInformation,
                     solutionId: solutionDocument._id,
                     solutionExternalId: solutionDocument.externalId,
+                    programId : programDocument[0]._id,
+                    programExternalId : programDocument[0].externalId,
+                    programInformation : {
+                        ..._.omit(programDocument[0], ["_id", "components"])
+                    },
                     frameworkId: solutionDocument.frameworkId,
                     frameworkExternalId: solutionDocument.frameworkExternalId,
                     entityTypeId: solutionDocument.entityTypeId,
@@ -952,14 +982,14 @@ module.exports = class Observations extends Abstract {
     }
 
     /**
-     * @api {get} /assessment/api/v1/observations/importFromFramework?frameworkId:frameworkExternalId&entityType=entityType Create observation solution from framework.
+     * @api {get} /assessment/api/v1/observations/importFromFramework?programId:programExternalId&frameworkId:frameworkExternalId&entityType=entityType Create observation solution from framework.
      * @apiVersion 1.0.0
      * @apiName Create observation solution from framework.
      * @apiGroup Observations
      * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiParam {String} frameworkId Framework External ID.
      * @apiParam {String} entityType Entity Type.
-     * @apiSampleRequest /assessment/api/v1/observations/importFromFramework?frameworkId=EF-SMC&entityType=school
+     * @apiSampleRequest /assessment/api/v1/observations/importFromFramework?programId=CRO-VERSION2-2019-TEMPLATE&frameworkId=CRO-VERSION2-2019&entityType=school
      * @apiUse successBody
      * @apiUse errorBody
      */
@@ -970,7 +1000,8 @@ module.exports = class Observations extends Abstract {
     * @name importFromFramework
     * @param {Object} req -request Data.
     * @param {String} req.query.frameworkId -framework id.
-    * @param {String} req.query.entityType - entity type name.   
+    * @param {String} req.query.entityType - entity type name. 
+    * @param {String} req.query.programId - program id is required.  
     * @returns {JSON} 
     */
 
@@ -982,12 +1013,31 @@ module.exports = class Observations extends Abstract {
                     throw messageConstants.apiResponses.INVALID_PARAMETER;
                 }
 
+                let programDocument;
+
+                if( req.query.programId ) {
+                    
+                    programDocument = await programsHelper.list(
+                    {
+                        externalId : req.query.programId
+                    },[
+                        "externalId",
+                        "name",
+                        "description"
+                    ]);
+                    
+                    if ( !programDocument[0]._id ) {
+                        throw messageConstants.apiResponses.PROGRAM_NOT_FOUND;
+                    }
+
+                }
+
                 let frameworkDocument = await database.models.frameworks.findOne({
                     externalId: req.query.frameworkId
                 }).lean();
 
                 if (!frameworkDocument._id) {
-                    throw messageConstants.apiResponses.INVALID_PARAMETER;
+                    throw messageConstants.apiResponses.FRAMEWORK_NOT_FOUND;
                 }
 
                 let entityTypeDocument = await database.models.entityTypes.findOne({
@@ -999,7 +1049,7 @@ module.exports = class Observations extends Abstract {
                     }).lean();
 
                 if (!entityTypeDocument._id) {
-                    throw messageConstants.apiResponses.INVALID_PARAMETER;
+                    throw messageConstants.apiResponses.ENTITY_TYPES_NOT_FOUND;
                 }
 
                 let criteriasIdArray = gen.utils.getCriteriaIds(frameworkDocument.themes);
@@ -1044,7 +1094,8 @@ module.exports = class Observations extends Abstract {
                 newSolutionDocument.type = "observation";
                 newSolutionDocument.subType = (frameworkDocument.subType && frameworkDocument.subType != "") ? frameworkDocument.subType : entityTypeDocument.name;
 
-                newSolutionDocument.externalId = frameworkDocument.externalId + "-OBSERVATION-TEMPLATE";
+                newSolutionDocument.externalId = 
+                frameworkDocument.externalId + "-OBSERVATION-TEMPLATE";
 
                 newSolutionDocument.frameworkId = frameworkDocument._id;
                 newSolutionDocument.frameworkExternalId = frameworkDocument.externalId;
@@ -1053,13 +1104,60 @@ module.exports = class Observations extends Abstract {
                 newSolutionDocument.entityType = entityTypeDocument.name;
                 newSolutionDocument.isReusable = true;
 
-                let newSolutionId = await database.models.solutions.create(_.omit(newSolutionDocument, ["_id"]));
+                let newBaseSolution = 
+                await database.models.solutions.create(
+                    _.omit(
+                        newSolutionDocument, 
+                        ["_id"]
+                    )
+                );
 
-                if (newSolutionId._id) {
+                if (newBaseSolution._id) {
+
+                    let result = {
+                        templateId : newBaseSolution._id
+                    };
+
+                    if( programDocument[0]._id ) {
+
+                        newSolutionDocument["programId"] = programDocument[0]._id;
+                        newSolutionDocument["programName"] = programDocument[0].name;
+                        newSolutionDocument["programDescription"] = 
+                        programDocument[0].description;
+                        newSolutionDocument["programExternalId"] = 
+                        programDocument[0].externalId;
+
+                        newSolutionDocument.parentSolutionId = newBaseSolution._id;
+                        newSolutionDocument.isReusable = false;
+                        newSolutionDocument.externalId = frameworkDocument.externalId;
+
+                        let newSolution = 
+                        await database.models.solutions.create(
+                            _.omit(
+                                newSolutionDocument, 
+                                ["_id"]
+                            )
+                        );
+
+                        if ( newSolution._id ) {
+
+                            result["observationSolutionId"] =  newSolution._id;
+
+                            await database.models.programs.updateOne(
+                                { 
+                                    _id: programDocument[0]._id 
+                                }, { 
+                                    $addToSet: { components : newSolution._id } 
+                                }
+                            );
+
+                        }
+
+                    }
 
                     let response = {
-                        message: messageConstants.apiResponses.OBSERVATION_SOLUTION,
-                        result: newSolutionId._id
+                        message : messageConstants.apiResponses.OBSERVATION_SOLUTION,
+                        result : result
                     };
 
                     return resolve(response);
@@ -1102,6 +1200,7 @@ module.exports = class Observations extends Abstract {
     async bulkCreate(req) {
         return new Promise(async (resolve, reject) => {
             try {
+                
                 if (!req.files || !req.files.observation) {
                     let responseMessage = httpStatusCode.bad_request.message;
                     return resolve({ 
@@ -1122,7 +1221,8 @@ module.exports = class Observations extends Abstract {
                     });
                 })();
 
-                let observationData = await csv().fromString(req.files.observation.data.toString());
+                let observationData = 
+                await csv().fromString(req.files.observation.data.toString());
 
                 let users = [];
                 let usersKeycloakIdMap = {};
@@ -1201,6 +1301,7 @@ module.exports = class Observations extends Abstract {
                     isReusable: true,
                     type: "observation"
                 };
+
                 let solutionProjection = [
                     "externalId",
                     "frameworkExternalId",
@@ -1210,7 +1311,9 @@ module.exports = class Observations extends Abstract {
                     "type",
                     "subType",
                     "entityTypeId",
-                    "entityType"
+                    "entityType",
+                    "programId",
+                    "programExternalId"
                 ];
 
                 let solutionDocument = await solutionsHelper.solutionDocuments(solutionQuery, solutionProjection);
@@ -1222,7 +1325,6 @@ module.exports = class Observations extends Abstract {
                         solutionObject[eachSolutionDocument.externalId] = eachSolutionDocument;
                     })
                 }
-
 
                 for (let pointerToObservation = 0; pointerToObservation < observationData.length; pointerToObservation++) {
                     
@@ -1535,7 +1637,7 @@ module.exports = class Observations extends Abstract {
         });
     }
 
-           /**
+    /**
 * @api {get} /assessment/api/v1/observations/details/:observationId 
 * Observations details.
 * @apiVersion 1.0.0

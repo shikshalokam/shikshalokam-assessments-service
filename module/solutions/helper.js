@@ -613,7 +613,8 @@ module.exports = class SolutionsHelper {
 
         solutionDocument.push(filteredData, projection1, facetQuery, projection2);
 
-        let solutionDocuments = await database.models.solutions.aggregate(solutionDocument);
+        let solutionDocuments = 
+        await database.models.solutions.aggregate(solutionDocument);
 
         return resolve(solutionDocuments);
 

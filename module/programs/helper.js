@@ -11,6 +11,55 @@
 */
 module.exports = class ProgramsHelper {
 
+    /**
+   * Programs list.
+   * @method
+   * @name list
+   * @param {Array} [filterQuery = "all"] - filter query data.
+   * @param {Array} [fields = "all"] - projected data
+   * @param {Array} [skipFields = "none"] - fields to skip
+   * @returns {JSON} - Programs list.
+   */
+
+  static list(filterQuery = "all" , fields = "all", skipFields = "none") {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        let filteredData = {};
+
+        if( filterQuery !== "all" ) {
+          filteredData = filterQuery;
+        }
+
+        let projection = {};
+
+        if (fields != "all") {
+          fields.forEach(element => {
+            projection[element] = 1;
+          });
+        }
+
+        if (skipFields != "none") {
+          
+          skipFields.forEach(element => {
+            projection[element] = 0;
+          });
+        }
+        
+        const programs = 
+        await database.models.programs.find(
+          filteredData, 
+          projection
+        ).lean();
+
+        return resolve(programs);
+
+      } catch(error) {
+        return reject(error);
+      }
+    })
+  }
+
    /**
    * List of programs.
    * @method

@@ -135,7 +135,9 @@ module.exports = class ObservationSubmissions extends Abstract {
           "frameworkExternalId",
           "evidenceMethods",
           "entityTypeId",
-          "entityType"
+          "entityType",
+          "programId",
+          "programExternalId"
         ]);
 
         if (!solutionDocument[0]) {
@@ -176,6 +178,8 @@ module.exports = class ObservationSubmissions extends Abstract {
           entityInformation: entityDocument.metaInformation,
           solutionId: solutionDocument._id,
           solutionExternalId: solutionDocument.externalId,
+          programId : solutionDocument.programId,
+          programExternalId : solutionDocument.programExternalId,
           frameworkId: solutionDocument.frameworkId,
           frameworkExternalId: solutionDocument.frameworkExternalId,
           entityTypeId: solutionDocument.entityTypeId,

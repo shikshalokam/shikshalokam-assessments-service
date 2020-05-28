@@ -12,6 +12,7 @@ const observationsHelper = require(MODULES_BASE_PATH + "/observations/helper");
 const solutionsHelper = require(MODULES_BASE_PATH + "/solutions/helper");
 const v1Observation = require(ROOT_PATH + "/controllers/v1/observationsController");
 const assessmentsHelper = require(MODULES_BASE_PATH + "/assessments/helper");
+const programsHelper = require(MODULES_BASE_PATH + "/programs/helper");
 
 /**
     * Observations
@@ -541,6 +542,25 @@ module.exports = class Observations extends v1Observation {
                     });
                 }
 
+                let programQueryObject = {
+                    _id: observationDocument.programId,
+                    status: "active",
+                    components: { $in: [ObjectId(observationDocument.solutionId)] }
+                };
+
+                let programDocument = await programsHelper.list(
+                    programQueryObject,[
+                        "externalId",
+                        "name",
+                        "description",
+                        "imageCompression"
+                    ]
+                );
+
+                if ( !programDocument[0]._id ) {
+                    throw messageConstants.apiResponses.PROGRAM_NOT_FOUND;
+                }
+
                 let currentUserAssessmentRole = await assessmentsHelper.getUserRole(req.userDetails.allRoles);
                 let profileFieldAccessibility = (solutionDocument.roles && solutionDocument.roles[currentUserAssessmentRole] && solutionDocument.roles[currentUserAssessmentRole].acl && solutionDocument.roles[currentUserAssessmentRole].acl.entityProfile) ? solutionDocument.roles[currentUserAssessmentRole].acl.entityProfile : "";
 
@@ -593,6 +613,7 @@ module.exports = class Observations extends v1Observation {
                 let solutionDocumentFieldList = await observationsHelper.solutionDocumentFieldListInResponse()
 
                 response.result.solution = await _.pick(solutionDocument, solutionDocumentFieldList);
+                response.result.program = programDocument;
 
                 let submissionDocument = {
                     entityId: entityDocument._id,
@@ -600,6 +621,11 @@ module.exports = class Observations extends v1Observation {
                     entityInformation: entityDocument.metaInformation,
                     solutionId: solutionDocument._id,
                     solutionExternalId: solutionDocument.externalId,
+                    programId : programDocument._id,
+                    programExternalId : programDocument.externalId,
+                    programInformation : {
+                        ..._.omit(programDocument, ["_id", "components"])
+                    },
                     frameworkId: solutionDocument.frameworkId,
                     frameworkExternalId: solutionDocument.frameworkExternalId,
                     entityTypeId: solutionDocument.entityTypeId,
@@ -613,7 +639,7 @@ module.exports = class Observations extends v1Observation {
                     entityProfile: {},
                     status: "started"
                 };
-
+                
                 let assessment = {};
 
                 assessment.name = solutionDocument.name;
