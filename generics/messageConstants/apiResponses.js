@@ -173,5 +173,9 @@ module.exports = {
 "USER_ORGANISATION_DETAILS_NOT_FOUND" : "Cannot create an observation for user whose organisation details are not available",
 "QUESTIONS_FILE_REQUIRED" : "Required questions key in form-data",
 "ENTITY_GROUPS_NOT_FOUND" : "Entity groups could not be found",
-"UNNATI_SERVICE_DOWN" : "Unnati service is down"
+"UNNATI_SERVICE_DOWN" : "Unnati service is down",
+"TEMPLATE_SOLUTIONS_FETCHED" : "Template solutions fetched successfully",
+"SOLUTION_META_FORM_FETCHED" : "Solution meta form fetched successfully",
+"CREATED_SOLUTION" : "Successfully created solution",
+"TEMPLATE_SOLUTION_DETAILS_FETCHED" : "Template solution details fetched successfully"
 }

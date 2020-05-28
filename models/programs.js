@@ -15,6 +15,10 @@ module.exports = {
     createdFor: [String],
     imageCompression: {},
     components: ["json"],
-    components: ["json"]
+    components: ["json"],
+    isAnIndividualProgram : {
+      default : false,
+      type : Boolean
+    }
   }
 };

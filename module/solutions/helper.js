@@ -5,6 +5,13 @@
  * Description : Solution related helper functionality.
  */
 
+//Dependencies
+const observationsHelper = require(MODULES_BASE_PATH + "/observations/helper");
+const entityAssessorsHelper = require(MODULES_BASE_PATH + "/entityAssessors/helper");
+const programsHelper = require(MODULES_BASE_PATH + "/programs/helper");
+const criteriaHelper = require(MODULES_BASE_PATH + "/criteria/helper");
+const questionsHelper = require(MODULES_BASE_PATH + "/questions/helper");
+
 /**
     * SolutionsHelper
     * @class
@@ -20,21 +27,35 @@ module.exports = class SolutionsHelper {
    * @returns {Array} List of solutions. 
    */
   
-  static solutionDocuments(solutionFilter = "all", fieldsArray = "all") {
+  static solutionDocuments(
+    solutionFilter = "all", 
+    fieldsArray = "all",
+    skipFields = "none"
+  ) {
     return new Promise(async (resolve, reject) => {
         try {
     
             let queryObject = (solutionFilter != "all") ? solutionFilter : {};
     
-            let projectionObject = {}
+            let projection = {}
     
             if (fieldsArray != "all") {
                 fieldsArray.forEach(field => {
-                    projectionObject[field] = 1;
+                    projection[field] = 1;
                 });
             }
+
+            if( skipFields !== "none" ) {
+              skipFields.forEach(field=>{
+                projection[field] = 0;
+              })
+            }
     
-            let solutionDocuments = await database.models.solutions.find(queryObject, projectionObject).lean();
+            let solutionDocuments = 
+            await database.models.solutions.find(
+              queryObject, 
+              projection
+            ).lean();
             
             return resolve(solutionDocuments);
             
@@ -44,6 +65,30 @@ module.exports = class SolutionsHelper {
     });
   }
 
+   /**
+   * Create solution.
+   * @method create
+   * @name details
+   * @param {Object} data - solution creation data.
+   * @returns {JSON} solution creation data. 
+   */
+  
+  static create(data) {
+    return new Promise(async (resolve, reject) => {
+        try {
+    
+            let solutionData = 
+            await database.models.solutions.create(
+              data
+            );
+            
+            return resolve(solutionData);
+            
+        } catch (error) {
+            return reject(error);
+        }
+    });
+  }
 
     /**
    * Check if the solution is rubric driven i.e isRubricDriven flag as true is present
@@ -318,7 +363,6 @@ module.exports = class SolutionsHelper {
       }
     });
   }
-
 
    /**
    * Set theme rubric expression. 
@@ -694,4 +738,411 @@ module.exports = class SolutionsHelper {
     return mandatoryFields;
 
   }
+
+   /**
+     * Get library solutions.
+     * @method
+     * @name template
+     * @param {String} - userId 
+     * @param {string} - type
+     * @returns {Array} - List of library solutions.
+     */
+
+    static templates( userId, type) {
+      return new Promise(async (resolve, reject) => {
+          try {
+
+              let solutionIds = [];
+
+              let queryObject = {
+                 isReusable : true
+              };
+            
+              if (type == "observation") {
+
+              solutionIds =  await observationsHelper.observationDocuments
+              (
+               {createdBy : userId},
+               [
+                   "solutionId"
+               ]
+              );
+              } 
+              
+              else if (type == "individual" || type == "institutional") {
+              
+              solutionIds =  await entityAssessorsHelper.assessorsDocument
+              (
+               { 
+                 userId : userId,
+               },
+               [
+                   "solutionId"
+               ]
+              );
+
+              queryObject.type = "assessment";
+              queryObject.subType = type;
+
+              }
+              
+              let solutionArray = [];
+
+              if (solutionIds.length > 0) {
+                  solutionIds.forEach(solutionData => {
+                      if(!solutionArray.includes(solutionData.solutionId.toString()) ) {
+                        solutionArray.push(solutionData.solutionId.toString());
+                      }
+                  })
+              }
+
+              queryObject._id = { $in : solutionArray };
+
+              let templateSolutions = 
+               await this.solutionDocuments
+               (
+                queryObject,
+                [
+                  "externalId",
+                  "name",
+                  "description",
+                  "programId",
+                  "programExternalId",
+                  "programName",
+                  "programDescription",
+                  "startDate",
+                  "endDate",
+                  "status"
+               ])
+
+              return resolve({
+                  message: messageConstants.apiResponses.TEMPLATE_SOLUTIONS_FETCHED,
+                  result : templateSolutions
+              });
+          } catch (error) {
+              return reject(error);
+          }
+      });
+  }
+
+    /**
+     * Solution metaform information. 
+     * @method
+     * @name metaForm
+     * @param {string} solutionType - solution type
+     * @returns {Array} - solution metaForm information
+     */
+
+    static metaForm( solutionType,userId ) {
+      return new Promise(async (resolve, reject) => {
+          try {
+
+            let formName;
+
+            if( solutionType === messageConstants.common.OBSERVATION ) {
+              formName = messageConstants.common.OBSERVATION_SOLUTIONS_METAFORM;
+            } else if ( solutionType === messageConstants.common.INSTITUTIONS ) {
+              formName = messageConstants.common.INSTITUTIONS_SOLUTIONS_METAFORM;
+            } else {
+              formName = messageConstants.common.INDIVIDUAL_SOLUTIONS_METAFORM;
+            }
+
+            let solutionsMetaForm = await database.models.forms.findOne(
+              { 
+                "name": formName
+              }, { 
+                value: 1 
+              }).lean();
+
+            let programsDocument = await programsHelper.list({
+              createdBy : userId
+            },["_id"]);
+
+            let programFormIndex = 
+              solutionsMetaForm.value.findIndex(form=>form.field === "program");
+
+            if ( programsDocument.length > 0 ) {
+              solutionsMetaForm.value[programFormIndex]["enableSelect"] = true; 
+            } else {
+              solutionsMetaForm.value[programFormIndex]["enableSelect"] = false;
+            }
+
+            return resolve({
+              message: messageConstants.apiResponses.SOLUTION_META_FORM_FETCHED,
+              result : solutionsMetaForm.value
+          });
+          } catch (error) {
+              return reject(error);
+          }
+        });
+      }
+
+     /**
+     * Create solution from library template. 
+     * @method
+     * @name make
+     * @param {string} solutionType - solution type
+     * @returns {Array} - Create solution from library template.
+     */
+
+    static make( templateId,type,userId,requestedData,token ) {
+      return new Promise(async (resolve, reject) => {
+          try {
+
+            let formData = {};
+
+            requestedData.forEach(data=>{
+              formData[data.field] = data.value;
+            })
+
+            let programDocument;
+            
+            if ( !_.isEmpty(formData.program) && formData.program.id !== "" ) {
+              
+              programDocument = await programsHelper.list(
+                {
+                  _id : formData.program.id
+                },[
+                  "name",
+                  "externalId",
+                  "description"
+                ]
+              );
+
+              if( !programDocument[0]._id ) {
+                throw {
+                  status : httpStatusCode.bad_request.status,
+                  message : messageConstants.apiResponses.PROGRAM_NOT_FOUND
+                }
+              }
+
+              programDocument = programDocument[0];
+
+            } else {
+
+              programDocument = await programsHelper.create(
+                {
+                  name : formData.program.name,
+                  description : formData.program.name + " program",
+                  userId : userId,
+                  isAnIndividualProgram : true
+                }
+              )
+            }
+
+            let filterQueryData = {
+              _id : templateId
+            }
+
+            if( type === messageConstants.common.OBSERVATION ) {
+              filterQueryData["type"] = type;
+            } else {
+              filterQueryData["type"] = "assessment";
+              filterQueryData["subType"] = type;
+            }
+
+            let solutionDocument = await this.solutionDocuments(
+              filterQueryData,
+              "all",
+              [
+                "author",
+                "createdAt",
+                "updatedAt",
+                "createdBy",
+                "updatedBy"
+              ]
+            );
+
+            if( !solutionDocument[0] ) {
+              throw {
+                status : httpStatusCode.bad_request.status,
+                message : messageConstants.apiResponses.SOLUTION_NOT_FOUND
+              }
+            }
+
+            let solutionData = {...solutionDocument[0]};
+            solutionData["author"] = userId;
+            solutionData["createdBy"] = userId;
+            solutionData["updatedBy"] = userId;
+            solutionData["isReusable"] = false;
+            solutionData["programId"] = programDocument._id;
+            solutionData["programExternalId"] = programDocument.externalId;
+            solutionData["programName"] = programDocument.name;
+            solutionData["programDescription"] = programDocument.description;
+            solutionData["name"] = formData.name;
+            solutionData["description"] = formData.description;
+            solutionData["externalId"] = formData.name;
+            solutionData["parentSolutionId"] = solutionDocument[0]._id;
+
+            let entitiesIdsToObjectId = 
+            gen.utils.arrayIdsTobjectIds(formData.entities);
+
+            if ( type === messageConstants.common.INSTITUTIONAL ) {
+              solutionData["entities"] = entitiesIdsToObjectId;
+            }
+
+            let solution = await this.create(_.omit(solutionData,["_id"]));
+
+            let result = {};
+            result["solution"] = _.pick(solution,["name","description","_id"]);
+
+            if( type === messageConstants.common.OBSERVATION ) {
+              
+              let observationData = {
+                name : formData.name,
+                description : formData.description,
+                status : "published",
+                startDate : new Date(),
+                endDate : new Date(),
+                entities : entitiesIdsToObjectId
+              };
+
+              let observation = 
+              await observationsHelper.create(
+                solution._id,
+                observationData,
+                userId,
+                token,
+                "v2"
+              );
+
+              result["observation"] = observation;
+            }
+
+            await database.models.programs.findOneAndUpdate(
+              {
+                _id : programDocument
+              },{ 
+                $addToSet: { components: solution._id } 
+              }
+            );
+
+            return resolve({
+              message: messageConstants.apiResponses.CREATED_SOLUTION,
+              result : result
+            });
+
+          } catch (error) {
+              return reject(error);
+          }
+      });
+    }
+
+
+  /**
+     * Get template solution details
+     * @method
+     * @name templateDetails
+     * @param {String} - solutionId 
+     * @returns {Object} - Details of template solution
+     */
+
+    static templateDetails(solutionId) {
+      return new Promise(async (resolve, reject) => {
+        try {
+  
+          let solutionDetails =
+            await this.solutionDocuments(
+              {
+                _id: solutionId
+              }, [
+                "creator",
+                "description",
+                "themes",
+                "type",
+                "evidenceMethods",
+                "linkTitle",
+                "linkUrl"
+              ]
+            )
+  
+          let result = {
+            creator: solutionDetails[0].creator ? solutionDetails[0].creator : "",
+            about: solutionDetails[0].description ? solutionDetails[0].description : "",
+          }
+  
+          let criteriaIds = await gen.utils.getCriteriaIds(solutionDetails[0].themes);
+  
+          let criteriaDocuments = await criteriaHelper.criteriaDocument({
+            _id: { $in: criteriaIds }
+          }, [
+              "evidences"
+            ])
+  
+          if (solutionDetails[0].type == "observation") {
+  
+            let questionArray = await gen.utils.getAllQuestionId(criteriaDocuments);
+  
+            let questionDocuments = await questionsHelper.questionDocument(
+              {
+                _id: { $in: questionArray }
+              },
+              [
+                "question"
+              ]
+            )
+  
+            let questions = [];
+  
+            questionDocuments.forEach(questionName => {
+              questions.push(questionName.question[0]);
+            })
+  
+            result.questions = questions;
+  
+          } else if (solutionDetails[0].type == "assessment") {
+  
+            let sections = [];
+            let questionArray = [];
+  
+            criteriaDocuments[0].evidences.forEach(eachEvidence => {
+              let sectionObj = {};
+  
+              sectionObj.name = solutionDetails[0].evidenceMethods[eachEvidence.code].name;
+              
+              eachEvidence.sections.forEach(eachSection => {
+                questionArray.push(eachSection.questions[0]);
+                sectionObj.question = eachSection.questions[0];
+              })
+  
+              sections.push(sectionObj);
+            })
+  
+            let questionDocuments = await questionsHelper.questionDocument(
+              {
+                _id: { $in: questionArray }
+              },
+              [
+                "question"
+              ]
+            )
+  
+            let questionData = questionDocuments.reduce(
+              (ac, question) => ({
+                ...ac,
+                [question._id.toString()]: question
+              }), {});
+  
+  
+            sections.forEach(section => {
+  
+              section.question = questionData[section.question.toString()].question[0];
+            })
+            
+            result.linkTitle = solutionDetails[0].linkTitle ? solutionDetails[0].linkTitle : "";
+            result.linkUrl = solutionDetails[0].linkUrl ? solutionDetails[0].linkUrl : "";
+            result.sections = sections;
+          }
+  
+          return resolve({
+            message: messageConstants.apiResponses.TEMPLATE_SOLUTION_DETAILS_FETCHED,
+            result: result
+          });
+        } catch (error) {
+          return reject(error);
+        }
+      });
+    }
+  
+
 };
