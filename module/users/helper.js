@@ -305,7 +305,7 @@ module.exports = class UserHelper {
                         {
                             let observationIndex = 
                             result[programIndex].solutions[solutionIndex].observations.findIndex(
-                                observation => observation.externalId === users[user].externalId
+                                observation => observation._id.toString() === users[user]._id.toString()
                             );
 
                             if( observationIndex < 0 ) {
@@ -326,7 +326,7 @@ module.exports = class UserHelper {
                             }
 
                             result[programIndex].solutions[solutionIndex].observations[observationIndex].entities = 
-                            _entitiesData(
+                            _entities(
                                 users[user].entities,
                                 userDetails.entitiesData,
                                 users[user]._id,
@@ -337,7 +337,7 @@ module.exports = class UserHelper {
                         } else {
                             
                             result[programIndex].solutions[solutionIndex].entities = 
-                            _entitiesData(
+                            _entities(
                                 users[user].entities,
                                 userDetails.entitiesData,
                                 solution._id,
@@ -401,14 +401,15 @@ module.exports = class UserHelper {
                     userDetails.observations
                 );
 
-
                 for ( let user = 0 ; user < users.length ; user++) {
 
                     let userData = users[user];
                     let program = 
+                    users[user].programId &&
                     userDetails.programsData[users[user].programId.toString()];
                     
                     let solution = 
+                    users[user].solutionId &&
                     userDetails.solutionsData[users[user].solutionId.toString()];
 
                     if ( solution && program && userData.entities.length > 0 ) {
@@ -431,7 +432,7 @@ module.exports = class UserHelper {
                                 let entityIndex =  
                                 result.entities[entitiesData[entity.toString()].entityType].findIndex(
                                     entity => entity.externalId === entityExternalId
-                                )
+                                );
                         
                                 if ( entityIndex < 0 ) {
 
@@ -451,33 +452,62 @@ module.exports = class UserHelper {
                         
                                 if( solutionIndex < 0 ) {
 
-                                    let submission = {};
-
-                                    if( users[user].isObservation ) {
-                                        submission = _observationSubmissionInformation(
-                                            observationSubmissions,
-                                            solution._id,
-                                            entity
-                                        );
-
-                                    } else {
-
-                                        submission = submissions[solution._id.toString()][entity.toString()];
-                                    }
-
-                                    let solutionInformation = { 
-                                        ..._solutionInformation(
-                                            program,
-                                            solution
-                                        ),
-                                        ...submission
-                                    }
-                        
-                                    result.entities[entitiesData[entity.toString()].entityType][entityIndex].solutions.push(
-                                        solutionInformation
+                                    let solutionData =  _solutionInformation(
+                                        program,
+                                        solution
                                     );
+                                    
+                                    if( users[user].isObservation ) {
+                                        solutionData["observations"] = [];
+                                    } else {
+                                        solutionData = {
+                                            ...solutionData,
+                                            ...submissions[solution._id.toString()][entity.toString()]
+                                        }
+                                    }
+
+                                    result.entities[entitiesData[entity.toString()].entityType][entityIndex].solutions.push(
+                                        solutionData
+                                    );
+                                
+                                    solutionIndex = 
+                                    result.entities[entitiesData[entity.toString()].entityType][entityIndex].solutions.length - 1;
                         
                                 }
+
+                                if(
+                                    result.entities[entitiesData[entity.toString()].entityType][entityIndex].solutions[solutionIndex].observations
+                                ) {
+                                    let observationIndex = 
+                                    result.entities[entitiesData[entity.toString()].entityType][entityIndex].solutions[solutionIndex].observations.findIndex(
+                                        observation => observation._id.toString() === users[user]._id.toString()
+                                    )
+
+                                    if( observationIndex < 0 ) {
+
+                                        let observationData = _observationInformation(
+                                            program,
+                                            users[user]
+                                        );
+
+                                        let submission = 
+                                        _observationSubmissionInformation(
+                                            observationSubmissions,
+                                            users[user]._id,
+                                            entity.toString()
+                                        );
+
+                                        result.entities[entitiesData[entity.toString()].entityType][entityIndex].solutions[solutionIndex].observations.push(
+                                            {
+                                                ...observationData,
+                                                ...submission
+                                            }
+                                        );
+                                    }
+
+                                }
+
+
                             }
                         });
                     }
@@ -676,6 +706,21 @@ function _solutionInformation(program,solution) {
     }
 }
 
+/**
+   * observation information
+   * @method
+   * @name _observationInformation - observation information
+   * @param {Object} program - program data.
+   * @param {String} program._id - program internal id.
+   * @param {String} program.name - program name.
+   * @param {Object} observation - observation data.
+   * @param {String} observation.externalId - observation external id.
+   * @param {String} observation._id - observation internal id.
+   * @param {String} observation.name - observation name.
+   * @param {String} observation.description - observation description.
+   * @returns {Object} - observation information
+   */
+
 function _observationInformation(program,observation) {
     return {
         programName : program.name,
@@ -687,7 +732,19 @@ function _observationInformation(program,observation) {
     }
 }
 
-function _entitiesData(
+/**
+   * Entities data
+   * @method
+   * @name _entities - Entities data
+   * @param {Array} entities - entities
+   * @param {Object} entitiesData - entity internalId to data.
+   * @param {String} solutionOrObservationId - solution or observation id.
+   * @param {Object} submissions - submissions data.
+   * @param {Object} [observation = false] - either observation submissions or submissions.
+   * @returns {Array} - Entities data
+   */
+
+function _entities(
     entities,
     entitiesData,
     solutionOrObservationId,
