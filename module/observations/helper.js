@@ -12,6 +12,7 @@ const shikshalokamHelper = require(MODULES_BASE_PATH + "/shikshalokam/helper");
 const slackClient = require(ROOT_PATH + "/generics/helpers/slackCommunications");
 const kafkaClient = require(ROOT_PATH + "/generics/helpers/kafkaCommunications");
 const chunkOfObservationSubmissionsLength = 500;
+const solutionHelper = require(MODULES_BASE_PATH + "/solutions/helper");
 
 /**
     * ObservationsHelper
@@ -61,12 +62,18 @@ module.exports = class ObservationsHelper {
      * @name create
      * @param {String} solutionId -solution id.
      * @param {Object} data - Observation creation data.
-     * @param {Object} userDetails - Logged in user details.
+     * @param {Object} userId - Logged in user id.
      * @param {String} requestingUserAuthToken - Requesting user auth token. 
      * @returns {Object} observation creation data.
      */
 
-    static create(solutionId, data, userDetails, requestingUserAuthToken = "") {
+    static create(
+        solutionId,
+        data, 
+        userId, 
+        requestingUserAuthToken = "",
+        version = "v1"
+    ) {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -74,7 +81,7 @@ module.exports = class ObservationsHelper {
                     throw new Error(messageConstants.apiResponses.REQUIRED_USER_AUTH_TOKEN);
                 }
 
-                let userOrganisations = await shikshalokamHelper.getUserOrganisation(requestingUserAuthToken, userDetails.id);
+                let userOrganisations = await shikshalokamHelper.getUserOrganisation(requestingUserAuthToken, userId);
                 let createdFor = new Array;
                 let rootOrganisations = new Array;
 
@@ -85,10 +92,17 @@ module.exports = class ObservationsHelper {
                     throw new Error(messageConstants.apiResponses.USER_ORGANISATION_DETAILS_NOT_FOUND);
                 }
 
-                let solutionDocument = await database.models.solutions.findOne({
+                let findQuery = {
                     _id: ObjectId(solutionId),
                     isReusable: true
-                }, {
+                }
+
+                if ( version === "v2" ) {
+                    findQuery.isReusable = false;
+                }
+
+                let solutionDocument = await database.models.solutions.findOne(
+                    findQuery, {
                         _id: 1,
                         frameworkId: 1,
                         frameworkExternalId: 1,
@@ -114,9 +128,9 @@ module.exports = class ObservationsHelper {
                         "frameworkExternalId": solutionDocument.frameworkExternalId,
                         "entityTypeId": solutionDocument.entityTypeId,
                         "entityType": solutionDocument.entityType,
-                        "author": userDetails.id,
-                        "updatedBy": userDetails.id,
-                        "createdBy": userDetails.id,
+                        "author": userId,
+                        "updatedBy": userId,
+                        "createdBy": userId,
                         "createdFor": createdFor,
                         "rootOrganisations": rootOrganisations
                     })

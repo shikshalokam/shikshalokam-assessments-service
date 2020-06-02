@@ -1279,4 +1279,273 @@ module.exports = class Solutions extends Abstract {
     });
   }
 
+    /**
+     * @api {get} /assessment/api/v1/solutions/template/:id?type={observation/individual/institutional} List template solutions
+     * @apiVersion 1.0.0
+     * @apiName List template solutions
+     * @apiGroup Solutions
+     * @apiParamExample {json} Request-Body:
+     * @apiSampleRequest /assessment/api/v1/solutions/template/e97b5582-471c-4649-8401-3cc4249359bb?type=observation
+     * @apiUse successBody
+     * @apiUse errorBody
+     * @apiParamExample {json} Response:
+     * {
+       "message": "Template solutions fetched successfully",
+       "status": 200,
+       "result": [
+         {
+            "_id": "5b98fa069f664f7e1ae7498c",
+            "externalId": "EF-DCPCR-2018-001",
+            "name": "DCPCR Assessment Framework 2018",
+            "description": "DCPCR Assessment Framework 2018",
+            "programId": "5b98d7b6d4f87f317ff615ee",
+            "programExternalId": "PROGID01",
+            "programName": "DCPCR School Development Index 2018-19",
+            "programDescription": "DCPCR School Development Index 2018-19",
+            "startDate": "2018-05-20T05:39:26.970Z",
+            "endDate": "2020-05-20T05:39:26.970Z",
+            "status": "active"
+         }
+       ]
+      }
+     */
+     
+    /**
+    * List template solutions
+    * @method
+    * @name template
+    * @param {Object} req -request Data.
+    * @returns {JSON} - List of solutions
+    */
+
+   templates(req) {
+    return new Promise(async (resolve, reject) => {
+
+        try {
+
+            let userId = 
+            req.params._id && req.params._id != ""? req.params._id : req.userDetails.userId;
+
+            let templateList = 
+            await solutionsHelper.templates( userId, req.query.type );
+
+            return resolve(templateList);
+
+        } catch (error) {
+
+            return reject({
+                status: error.status || httpStatusCode.internal_server_error.status,
+                message: error.message || httpStatusCode.internal_server_error.message,
+                errorObject: error
+            });
+        }
+    })
+  }
+
+  /**
+     * @api {get} /assessment/api/v1/solutions/metaForm?type={observation/individual/institutional} Solutions metaform information
+     * @apiVersion 1.0.0
+     * @apiName Solutions metaform information
+     * @apiGroup Solutions
+     * @apiParamExample {json} Request-Body:
+     * @apiSampleRequest /assessment/api/v1/solutions/metaForm?type=observation
+     * @apiUse successBody
+     * @apiUse errorBody
+     * @apiParamExample {json} Response:
+     * {
+     "message": "Solution meta form fetched successfully",
+     "status": 200,
+     "result": [
+        {
+            "field": "nameOfTheForm",
+            "label": "Name of the form",
+            "value": "",
+            "visible": true,
+            "editable": true,
+            "input": "text",
+            "validation": {
+                "required": true
+            },
+            "min": "",
+            "max": ""
+        },
+        {
+            "field": "description",
+            "label": "Description",
+            "value": "",
+            "visible": true,
+            "editable": true,
+            "input": "text",
+            "validation": {
+                "required": true
+            },
+            "min": "",
+            "max": ""
+        },
+        {
+            "field": "programName",
+            "label": "Program Name",
+            "value": "",
+            "visible": true,
+            "editable": true,
+            "input": "text",
+            "validation": {
+                "required": true
+            },
+            "min": "",
+            "max": ""
+        },
+        {
+            "field": "selectEntity",
+            "label": "Select Entity",
+            "value": "",
+            "visible": true,
+            "editable": true,
+            "input": "text",
+            "validation": {
+                "required": true
+            },
+            "min": "",
+            "max": ""
+        }
+     ]
+    }
+     */
+     
+    /**
+    * Solutions metaform information
+    * @method
+    * @name template
+    * @param {Object} req -request Data.
+    * @returns {JSON} - List of solution metaform field
+    */
+
+   metaForm(req) {
+    return new Promise(async (resolve, reject) => {
+
+        try {
+
+            let metaFormInformation = 
+            await solutionsHelper.metaForm(
+              req.query.type,
+              req.userDetails.userId
+            );
+
+            return resolve(metaFormInformation);
+
+        } catch (error) {
+
+            return reject({
+                status: error.status || httpStatusCode.internal_server_error.status,
+                message: error.message || httpStatusCode.internal_server_error.message,
+                errorObject: error
+            });
+        }
+    })
+   }
+
+    /**
+     * @api {post} /assessment/api/v1/solutions/make/:templateSolutionId?type={observation/individual/institutional} Make solution from template
+     * @apiVersion 1.0.0
+     * @apiName Make solution from template
+     * @apiGroup Solutions
+     * @apiParamExample {json} Request-Body:
+     * @apiSampleRequest /assessment/api/v1/solutions/make?type=observation
+     * @apiUse successBody
+     * @apiUse errorBody
+     * @apiParamExample {json} Response:
+     */
+     
+    /**
+    * Make solution from template
+    * @method
+    * @name template
+    * @param {Object} req -request Data.
+    * @returns {JSON} - Make solutions from template.
+    */
+
+   make(req) {
+    return new Promise(async (resolve, reject) => {
+
+        try {
+
+            let solutionData = 
+            await solutionsHelper.make(
+              req.params._id,
+              req.query.type,
+              req.userDetails.userId,
+              req.body.formData,
+              req.rspObj.userToken 
+            );
+
+            return resolve(solutionData);
+
+        } catch (error) {
+
+            return reject({
+                status: error.status || httpStatusCode.internal_server_error.status,
+                message: error.message || httpStatusCode.internal_server_error.message,
+                errorObject: error
+            });
+        }
+    })
+   }
+
+   /**
+     * @api {get} /assessment/api/v1/solutions/templateDetails?solutionId Template solution details
+     * @apiVersion 1.0.0
+     * @apiName Template solution details
+     * @apiGroup Solutions
+     * @apiParamExample {json} Request-Body:
+     * @apiSampleRequest /assessment/api/v1/solutions/templateDetails?solutionId=5d0a0cf11e724f059a0d8f11
+     * @apiUse successBody
+     * @apiUse errorBody
+     * @apiParamExample {json} Response:
+     * {
+    "message": "Template solution details fetched successfully",
+    "status": 200,
+    "result": {
+        "creator": "",
+        "about": "CRO-2019_EXCEL-FRAMEWORK",
+        "questions": [
+            "Please add a classroom observation",
+            "Teacher Name",
+            "Class:",
+            "Date:",
+            "Subject:",
+            "Topic",
+        ]
+    }
+}
+     */
+     
+    /**
+    * Template solution details
+    * @method
+    * @name templateDetails
+    * @param {Object} req -request Data.
+    * @returns {JSON} - Deatils of the solution
+    */
+
+   templateDetails(req) {
+    return new Promise(async (resolve, reject) => {
+
+        try {
+
+            let templateDetails = 
+            await solutionsHelper.templateDetails( req.query.solutionId);
+
+            return resolve(templateDetails);
+
+        } catch (error) {
+
+            return reject({
+                status: error.status || httpStatusCode.internal_server_error.status,
+                message: error.message || httpStatusCode.internal_server_error.message,
+                errorObject: error
+            });
+        }
+    })
+  }
+  
 };

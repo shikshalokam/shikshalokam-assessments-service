@@ -179,6 +179,9 @@ module.exports = {
 "ENTITIES_NOT_MAPPED_TO_USER" : "No solution mapped to user",
 "USER_ENTITIES_FETCHED_SUCCESSFULLY" : "Successfully fetched user entities",
 "USER_PROGRAMS_LIST_FETCHED" : "Sucessfully fectched user programs",
-"OBSERVATION_SUBMISSIONS_LIST_FETCHED" : "Successfully fetched observation submissions"
-
+"OBSERVATION_SUBMISSIONS_LIST_FETCHED" : "Successfully fetched observation submissions",
+"TEMPLATE_SOLUTIONS_FETCHED" : "Template solutions fetched successfully",
+"SOLUTION_META_FORM_FETCHED" : "Solution meta form fetched successfully",
+"CREATED_SOLUTION" : "Successfully created solution",
+"TEMPLATE_SOLUTION_DETAILS_FETCHED" : "Template solution details fetched successfully"
 }
