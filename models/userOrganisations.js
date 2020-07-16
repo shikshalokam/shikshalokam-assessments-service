@@ -2,28 +2,51 @@ module.exports = {
     schema : {
         fields : {
             id : "text",
-            addedby : "text",
-            addedbyname : "text",
-            approvaldate : "text",
+            addressid : "text",
             approvedby : "text",
             hashtagid : "text",
             isapproved : "boolean",
-            isdeleted : "boolean",
-            isrejected : "boolean",
-            organisationid : "text",
-            orgjoindate : "text",
-            orgleftdate : "text",
-            position : "text",
-            roles : {
-                type: "list",
-                typeDef: "<varchar>"
-            },
             updatedby : "text",
             updateddate : "text",
-            userid : "text"
+            approveddate : "text",
+            channel : "text",
+            communityid : "text",
+            contactdetail : "text",
+            createdby : "text",
+            createddate : "text",
+            datetime : "timestamp",
+            description : "text",
+            email : "text",
+            externalid : "text",
+            homeurl : "text",
+            imgurl : "text",
+            isdefault : "boolean",
+            isrootorg : "boolean", 
+            isssoenabled : "boolean",
+            locationid : "text",
+            locationids : {
+                type : "list"
+            },
+            noofmembers : "text",
+            orgcode : "text",
+            orgname : "text",
+            orgtype : "text",
+            orgtypeid : "text",
+            parentorgid : "text",
+            preferredlanguage : "text",
+            provider : "text",
+            rootorgid : "text",
+            slug : "text",
+            status : "int",
+            theme : "text",
+            thumbnail : "text",
+            keys :  {
+                type: 'frozen'
+            }
+            
     },
       key : ["id"],
-     indexes : ["userid","organisationid"]
+     indexes : ["orgtype","orgname","channel","provider","orgcode","status","externalid"]
     },
    name : "user_org",
    db_type : "cassandra"
