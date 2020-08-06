@@ -213,5 +213,16 @@ module.exports = {
 "CRITERIA_OBJECT_MISSING" : "Criteria Object should contain atleast one criteriaId",
 "CRITERIA_LENGTH_MISMATCH" : "Criteria length is mismatching",
 "CRITERIA_QUESTIONS_COULD_NOT_BE_FOUND" : "Criteria questions could not be found",
-"SUBMISSION_CRITERIA_NOT_FOUND" : "Criteria not found for the submissionId"
+"SUBMISSION_CRITERIA_NOT_FOUND" : "Criteria not found for the submissionId",
+"POLL_CREATION_FORM_FETCHED" : "Poll creation form fetched successfully",
+"POLL_CREATED" : "Poll created successfully",
+"POLLS_LIST_FETCHED" : "Polls list fetched successfully",
+"POLL_DELETED" : "Poll deleted successfully",
+"POLL_SUBMITTED" : "Poll submitted successfully",
+"POLL_NAMES_FETCHED" : "Poll names fetched successfully",
+"POLL_REPORT_CREATED" : "Poll report created successfully",
+"EMOJI_CREATED" : "Emoji created successfully",
+"GESTURE_CREATED" : "Gesture created successfully",
+"EMOJI_FETCHED" : "Emoji fetched successfully",
+"GESTURE_FETCHED" : "Gesture fetched successfully"
 }
