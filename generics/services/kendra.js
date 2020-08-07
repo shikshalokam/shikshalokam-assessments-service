@@ -72,12 +72,12 @@ const getDownloadableUrl = function (bodyData) {
 
 const upload = function (file,filePath) {
 
-    let fileUploadUrl = "https://devhome.shikshalokam.org/kendra-service/";
+    let fileUploadUrl = process.env.KENDRA_APPLICATION_ENDPOINT;
     let bucketName = "";
-    process.env.CLOUD_STORAGE = "GC"
+   
     if ( process.env.CLOUD_STORAGE === "GC" ) {
         fileUploadUrl = fileUploadUrl + "api/v1/cloud-services/gcp/uploadFile";
-        bucketName = "sl-dev-storage";
+        bucketName = process.env.GCP_BUCKET_NAME;
     } else if( process.env.CLOUD_STORAGE === "AWS" ) {
         fileUploadUrl = fileUploadUrl + "api/v1/cloud-services/aws/uploadFile";
         bucketName = process.env.AWS_BUCKET_NAME;
