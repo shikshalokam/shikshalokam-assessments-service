@@ -8,9 +8,10 @@ module.exports = {
     let gestures = [
       {
         name : "thumbsUp",
-        path : "/static/mediaFiles/gesture/",
-        type : gesture,
         code : Math.floor(100000 + Math.random() * 900000),
+        path : "",
+        type : "gesture",
+        icon : "thumbsUp.png",
         createdAt : new Date(),
         updatedAt : new Date(),
         updatedBy : "SYSTEM",

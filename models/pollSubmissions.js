@@ -4,15 +4,20 @@ module.exports = {
       pollName: String,
       responses: Array,
       submittedAt: Date,
-      pollId: "ObjectId",
+      pollId: {
+        type: "ObjectId",
+        index: true,
+      },
       userId: {
         type: String,
-        required: true
+        required: true,
+        index: true
       },
       isDeleted: {
         type: Boolean,
         default: false
-      }
-    },
-    status: String
+      },
+      status: String
+    }
+    
 };

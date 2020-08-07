@@ -1,15 +1,17 @@
 module.exports = {
-    name: "polls",
+    name: "mediaFiles",
     schema: {
         name: String,
         path: String,
         type: String,
-        code: Number,
+        code: {
+            type: Number,
+            index: true,
+            unique: true
+          },
         status: String,
-        createdAt: Date,
-        updatedAt: Date,
-        createdBy: Date,
-        updatedBy: Date,
+        createdBy: String,
+        updatedBy: String,
         isDeleted: {
             type: Boolean,
             default: false

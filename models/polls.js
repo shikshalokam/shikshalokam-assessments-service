@@ -1,7 +1,6 @@
 module.exports = {
   name: "polls",
   schema: {
-    link: UUID(),
     pollName: String,
     creator: {
         type: String,
@@ -9,8 +8,7 @@ module.exports = {
       },
     questions: Array,
     organizationName: String,
-    createdAt: Date,
-    updatedAt: Date,
+    link: String,
     numberOfResponses: Number,
     isDeleted: {
       type: Boolean,

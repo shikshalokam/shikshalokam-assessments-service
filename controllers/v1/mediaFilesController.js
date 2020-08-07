@@ -28,7 +28,14 @@ module.exports = class MediaFiles extends Abstract {
      * @apiVersion 1.0.0
      * @apiName Create Emoji
      * @apiGroup MediaFiles
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
+     * @apiSampleRequest /assessment/api/v1/mediaFiles/createEmoji
      * @apiParamExample {json} Request-Body:
+     * @apiParamExample {json} Response:
+     * {
+     *  "status": 200,
+     *  "message": "Emoji created successfully"
+     *}
      * @apiUse successBody
      * @apiUse errorBody
      */
@@ -68,7 +75,14 @@ module.exports = class MediaFiles extends Abstract {
      * @apiVersion 1.0.0
      * @apiName Create Gesture
      * @apiGroup MediaFiles
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
+     * @apiSampleRequest /assessment/api/v1/mediaFiles/createGesture
      * @apiParamExample {json} Request-Body:
+     * @apiParamExample {json} Response:
+     * {
+     *  "status": 200,
+     *  "message": "Gesture created successfully"
+     *}
      * @apiUse successBody
      * @apiUse errorBody
      */
@@ -78,7 +92,7 @@ module.exports = class MediaFiles extends Abstract {
     * @method
     * @name createGesture
     * @param {Object} req -request Data.
-    * @returns {JSON} - .
+    * @returns {String} - message .
     */
 
    createGesture(req) {
@@ -108,7 +122,19 @@ module.exports = class MediaFiles extends Abstract {
      * @apiVersion 1.0.0
      * @apiName Get Gesture
      * @apiGroup MediaFiles
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
+     * @apiSampleRequest /assessment/api/v1/mediaFiles/getGesture
      * @apiParamExample {json} Request-Body:
+     * @apiParamExample {json} Response:
+     * {
+     *  "status": 200,
+     *  "message": "Gesture fetched successfully",
+     *  "result" : [{
+     *      "name": "",
+            "type": "",
+            "url": "",
+         }]
+     * }
      * @apiUse successBody
      * @apiUse errorBody
      */
@@ -151,7 +177,19 @@ module.exports = class MediaFiles extends Abstract {
      * @apiVersion 1.0.0
      * @apiName Get Emoji
      * @apiGroup MediaFiles
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
+     * @apiSampleRequest /assessment/api/v1/mediaFiles/getEmoji
      * @apiParamExample {json} Request-Body:
+     * @apiParamExample {json} Response:
+      * {
+     *  "status": 200,
+     *  "message": "Emoji fetched successfully",
+     *  "result" : [{
+     *      "name": "",
+            "type": "",
+            "url": "",
+         }]
+     * }
      * @apiUse successBody
      * @apiUse errorBody
      */

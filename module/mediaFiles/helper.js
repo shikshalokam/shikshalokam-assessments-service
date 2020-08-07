@@ -86,7 +86,11 @@ module.exports = class MediaFilesHelper {
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.EMOJI_FETCHED,
-                    data: true
+                    data: [{
+                             name: "",
+                             type: "",
+                             url: "",
+                        }]
                 });
 
             } catch (error) {
@@ -114,7 +118,11 @@ module.exports = class MediaFilesHelper {
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.GESTURE_FETCHED,
-                    data: true
+                    data: [{
+                        name: "",
+                        type: "",
+                        url: "",
+                   }]
                 });
 
             } catch (error) {

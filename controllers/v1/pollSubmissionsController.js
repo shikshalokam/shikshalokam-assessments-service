@@ -28,6 +28,7 @@ module.exports = class PollSubmissions extends Abstract {
      * @apiVersion 1.0.0
      * @apiName Poll Submission
      * @apiGroup pollSubmissions
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/pollSubmissions/make/5b98fa069f664f7e1ae7498c
      * @apiParamExample {json} Request-Body:
      * [{
@@ -86,6 +87,7 @@ module.exports = class PollSubmissions extends Abstract {
      * @apiVersion 1.0.0
      * @apiName List Poll Names
      * @apiGroup pollSubmissions
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/pollSubmissions/listPollNames
      * @apiParamExample {json} Response:
      * {
@@ -139,6 +141,7 @@ module.exports = class PollSubmissions extends Abstract {
      * @apiVersion 1.0.0
      * @apiName Poll Report
      * @apiGroup pollSubmissions
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/pollSubmissions/report/5f2bcc04456a2a770c4a5f3b
      * @apiParamExample {json} Request-Body:
      * @apiUse successBody

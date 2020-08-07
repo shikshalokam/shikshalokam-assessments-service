@@ -9,8 +9,9 @@ module.exports = {
       {
         name : "smiley",
         path : "",
-        type : emoji,
+        type : "emoji",
         code : Math.floor(100000 + Math.random() * 900000),
+        icon : "smiley.jpeg",
         createdAt : new Date(),
         updatedAt : new Date(),
         updatedBy : "SYSTEM",

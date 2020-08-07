@@ -245,6 +245,7 @@ module.exports = class Polls extends Abstract {
      * @apiVersion 1.0.0
      * @apiName Create Poll
      * @apiGroup Polls
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/polls/create
      * @apiParamExample {json} Request-Body:
      * {
@@ -303,6 +304,7 @@ module.exports = class Polls extends Abstract {
      * @apiVersion 1.0.0
      * @apiName List active polls
      * @apiGroup Polls
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/polls/list
      * @apiParamExample {json} Response:
      * {
@@ -366,6 +368,7 @@ module.exports = class Polls extends Abstract {
      * @apiVersion 1.0.0
      * @apiName Delete an poll
      * @apiGroup Polls
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/polls/delete/5b98fa069f664f7e1ae7498c
      * @apiParamExample {json} Response:
      * {
@@ -413,6 +416,7 @@ module.exports = class Polls extends Abstract {
      * @apiVersion 1.0.0
      * @apiName Get the poll questions
      * @apiGroup Polls
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/polls/getpollQuestions/5f2bcc04456a2a770c4a5f3b
      * @apiParamExample {json} Response:
      * {
