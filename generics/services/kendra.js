@@ -72,7 +72,7 @@ const getDownloadableUrl = function (bodyData) {
 
 const upload = function (file,filePath) {
 
-    let fileUploadUrl = process.env.KENDRA_APPLICATION_ENDPOINT;
+    let fileUploadUrl = process.env.KENDRA_APPLICATION_ENDPOINT; 
     let bucketName = "";
    
     if ( process.env.CLOUD_STORAGE === "GC" ) {
