@@ -4,6 +4,7 @@ module.exports = {
         name: String,
         path: String,
         type: String,
+        icon: String,
         code: {
             type: Number,
             index: true,

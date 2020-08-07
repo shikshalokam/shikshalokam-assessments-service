@@ -8,7 +8,6 @@ module.exports = {
     let emojis = [
       {
         name : "smiley",
-        path : "",
         type : "emoji",
         code : Math.floor(100000 + Math.random() * 900000),
         icon : "smiley.jpeg",
