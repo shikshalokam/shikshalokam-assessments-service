@@ -74,7 +74,7 @@ const upload = function (file,filePath) {
 
     let fileUploadUrl = process.env.KENDRA_APPLICATION_ENDPOINT; 
     let bucketName = "";
-   
+
     if ( process.env.CLOUD_STORAGE === "GC" ) {
         fileUploadUrl = fileUploadUrl + "api/v1/cloud-services/gcp/uploadFile";
         bucketName = process.env.GCP_BUCKET_NAME;
