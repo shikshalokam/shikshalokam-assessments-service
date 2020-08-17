@@ -17,16 +17,23 @@ module.exports = class EntityTypesHelper {
       * @name list
       * @param {Object} [queryParameter = "all"] - Filtered query data.
       * @param {Object} [projection = {}] - Projected data.   
+      * @param {Array} [skipFields = "none"] - Field to skip
       * @returns {Object} returns a entity types list from the filtered data.
      */
 
-    static list(queryParameter = "all", projection = {}) {
+    static list(queryParameter = "all", projection = {},skipFields = "none") {
         return new Promise(async (resolve, reject) => {
             try {
 
                 if( queryParameter === "all" ) {
                     queryParameter = {};
                 };
+
+                if (skipFields != "none") {
+                    skipFields.forEach(element => {
+                        projection[element] = 0;
+                    });
+                }
 
                 let entityTypeData = 
                 await database.models.entityTypes.find(queryParameter, projection).lean();

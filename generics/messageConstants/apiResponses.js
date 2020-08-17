@@ -214,5 +214,6 @@ module.exports = {
 "CRITERIA_OBJECT_MISSING" : "Criteria Object should contain atleast one criteriaId",
 "CRITERIA_LENGTH_MISMATCH" : "Criteria length is mismatching",
 "CRITERIA_QUESTIONS_COULD_NOT_BE_FOUND" : "Criteria questions could not be found",
-"SUBMISSION_CRITERIA_NOT_FOUND" : "Criteria not found for the submissionId"
+"SUBMISSION_CRITERIA_NOT_FOUND" : "Criteria not found for the submissionId",
+"FORMS_FETCHED" : "Forms fetched successfully"
 }

@@ -1125,5 +1125,46 @@ module.exports = class SolutionsHelper {
         }
       })
     }
+
+      /**
+     * Solution external ids to internal ids.
+     * @method
+     * @name externalIdsToInternalIds
+     * @param {Array} solutionIds - solution external ids.
+     * @returns {Object} List of solution external ids to internal ids.
+     */
+
+    static externalIdsToInternalIds( solutionIds ) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          
+          let solutions = 
+          await this.solutionDocuments({
+            externalId : { $in : solutionIds } 
+          },["_id","externalId"]);
+
+          if ( !solutions.length > 0 ) {
+            throw {
+              message : messageConstants.apiResponses.SOLUTION_NOT_FOUND,
+              result : {}
+            };
+          }
+
+          let solutionData = {};
+
+          solutions.forEach(solution=>{
+            solutionData[solution.externalId] = solution._id;
+          });
+
+          return resolve({
+            message : messageConstants.apiResponses.SOLUTION_FETCHED,
+            result : solutionData
+          });
+
+        } catch(error) {
+          return reject(error);
+        }
+      })
+    }
   
 };

@@ -20,15 +20,27 @@ module.exports = class UserRolesHelper {
    * @method
    * @name list
    * @param {Object} filterQueryObject -filtered data.
-   * @param {Object} projectionQueryObject -projected field. 
+   * @param {Object} projectionQueryObject -projected field.
+   * @param {Array}  [skipFields = "none"] - field to skip.
    * @returns {Object} list of user roles. 
    */
 
-    static list(filterQueryObject, projectionQueryObject) {
+    static list(filterQueryObject, projectionQueryObject = {}, skipFields = "none" ) {
         return new Promise(async (resolve, reject) => {
             try {
 
-                let userRolesData = await database.models.userRoles.find(filterQueryObject,projectionQueryObject).lean();
+                if( skipFields !== "none" ) {
+                    
+                    skipFields.forEach(element => {
+                        projection[element] = 0;
+                    });
+                }
+
+                let userRolesData = 
+                await database.models.userRoles.find(
+                    filterQueryObject,
+                    projectionQueryObject
+                ).lean();
 
                 return resolve(userRolesData);
 

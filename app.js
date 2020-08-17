@@ -20,9 +20,9 @@ let app = express();
 const fileUpload = require("express-fileupload");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-var fs = require("fs");
-var path = require("path");
-var expressValidator = require('express-validator');
+const fs = require("fs");
+const path = require("path");
+const expressValidator = require('express-validator');
 
 //To enable cors
 app.use(cors());
@@ -75,7 +75,7 @@ app.get(serviceBaseUrl + "web2/*", function (req, res) {
   res.sendFile(path.join(__dirname, "/public" + serviceBaseUrl + "web2/index.html"));
 });
 
-var bunyan = require("bunyan");
+const bunyan = require("bunyan");
 
 global.loggerObj = bunyan.createLogger({
   name: "foo",
