@@ -27,8 +27,8 @@ module.exports = {
         input: "text"
       },
       {
-        field: "organisations",
-        label: "Name of the Organization",
+        field: "endDate",
+        label: "End Date",
         value: "",
         visible: true,
         editable: true,
@@ -38,39 +38,34 @@ module.exports = {
         input: "radio",
         options: [
           {
-            value: "12345",
-            label: "Shikshalokam"
+            value : 1,
+            label : "one day"
           },
           {
-            value: "24367",
-            label: "Mantra"
+            value : 2,
+            label : "two days"
+          },
+          {
+            value : 3,
+            label : "three days"
+          },
+          {
+            value : 4,
+            label : "four days"
+          },
+          {
+            value : 5,
+            label : "five days"
+          },
+          {
+            value : 6,
+            label : "six days"
+          },
+          {
+            value : 7,
+            label : "seven days"
           }
         ]
-
-      },
-      {
-        field: "startDate",
-        label: "startDate",
-        value: "",
-        visible: true,
-        editable: true,
-        validation: {
-          required: true
-        },
-        input: "date",
-        dateformat: "DD-MM-YYYY"
-      },
-      {
-        field: "endDate",
-        label: "endDate",
-        value: "",
-        visible: true,
-        editable: true,
-        validation: {
-          required: true
-        },
-        input: "date",
-        dateformat: "DD-MM-YYYY"
       },
     ]
 

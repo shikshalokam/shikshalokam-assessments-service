@@ -10,7 +10,7 @@ const mediaFilesHelper = require(MODULES_BASE_PATH + "/mediaFiles/helper");
 
 
 /**
-    * Polls
+    * MediaFiles
     * @class
 */
 module.exports = class MediaFiles extends Abstract {
@@ -31,6 +31,11 @@ module.exports = class MediaFiles extends Abstract {
      * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/mediaFiles/createEmoji
      * @apiParamExample {json} Request-Body:
+     * {
+     *  "name": "smiley",
+     *  "type": "emoji"
+     * }
+     * @apiParam {File} image file.
      * @apiParamExample {json} Response:
      * {
      *  "status": 200,
@@ -45,6 +50,7 @@ module.exports = class MediaFiles extends Abstract {
     * @method
     * @name createEmoji
     * @param {Object} req -request Data.
+    * @param {File} req.files - requested files
     * @returns {String} - message .
     */
 
@@ -78,6 +84,11 @@ module.exports = class MediaFiles extends Abstract {
      * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/mediaFiles/createGesture
      * @apiParamExample {json} Request-Body:
+     * {
+     *  "name": "thumbsUp",
+     *  "type": "gesture"
+     * }
+     * @apiParam {File} image file.
      * @apiParamExample {json} Response:
      * {
      *  "status": 200,
@@ -118,21 +129,24 @@ module.exports = class MediaFiles extends Abstract {
 
 
     /**
-     * @api {get} /assessment/api/v1/mediaFiles/getGesture Get Gesture
+     * @api {post} /assessment/api/v1/mediaFiles/getGesture Get Gesture
      * @apiVersion 1.0.0
      * @apiName Get Gesture
      * @apiGroup MediaFiles
      * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/mediaFiles/getGesture
      * @apiParamExample {json} Request-Body:
+     * {
+     *  "name": "thumbsUp"
+     * }
      * @apiParamExample {json} Response:
      * {
      *  "status": 200,
      *  "message": "Gesture fetched successfully",
      *  "result" : [{
-     *      "name": "",
-            "type": "",
-            "url": "",
+     *      "name": "thumbsUp",
+            "type": "gesture",
+            "url": "https://storage.googleapis.com/download/storage/v1/b/sl-dev-storage/o/static%2Flibrary%2Fcategories%2Fdrafts.png?generation=1593680944065555&alt=media",
          }]
      * }
      * @apiUse successBody
@@ -173,21 +187,24 @@ module.exports = class MediaFiles extends Abstract {
 
 
     /**
-     * @api {get} /assessment/api/v1/mediaFiles/getEmoji Get Emoji
+     * @api {post} /assessment/api/v1/mediaFiles/getEmoji Get Emoji
      * @apiVersion 1.0.0
      * @apiName Get Emoji
      * @apiGroup MediaFiles
      * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/mediaFiles/getEmoji
      * @apiParamExample {json} Request-Body:
+     * {
+     *  "name": "smiley"
+     * }
      * @apiParamExample {json} Response:
       * {
      *  "status": 200,
      *  "message": "Emoji fetched successfully",
      *  "result" : [{
-     *      "name": "",
-            "type": "",
-            "url": "",
+           "name": "smiley",
+            "type": "emoji",
+            "url": "https://storage.googleapis.com/download/storage/v1/b/sl-dev-storage/o/static%2Flibrary%2Fcategories%2Fdrafts.png?generation=1593680944065555&alt=media",
          }]
      * }
      * @apiUse successBody

@@ -6,12 +6,61 @@
  */
 
 // Dependencies
+const formsHelper = require(MODULES_BASE_PATH + "/forms/helper");
 
 /**
     * PollsHelper
     * @class
 */
 module.exports = class PollsHelper {
+
+   /**
+   * find polls
+   * @method
+   * @name pollDocuments
+   * @param {Array} [pollFilter = "all"] - poll ids.
+   * @param {Array} [fieldsArray = "all"] - projected fields.
+   * @param {Array} [skipFields = "none"] - field not to include
+   * @returns {Array} List of polls. 
+   */
+  
+  static pollDocuments(
+    pollFilter = "all", 
+    fieldsArray = "all",
+    skipFields = "none"
+  ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+    
+            let queryObject = (pollFilter != "all") ? pollFilter : {};
+    
+            let projection = {}
+    
+            if (fieldsArray != "all") {
+                fieldsArray.forEach(field => {
+                    projection[field] = 1;
+                });
+            }
+
+            if( skipFields !== "none" ) {
+              skipFields.forEach(field=>{
+                projection[field] = 0;
+              })
+            }
+    
+            let pollDocuments = 
+            await database.models.polls.find(
+              queryObject, 
+              projection
+            ).lean();
+            
+            return resolve(pollDocuments);
+            
+        } catch (error) {
+            return reject(error);
+        }
+    });
+ }
 
     /**
      * Poll Creation meta form
@@ -24,180 +73,53 @@ module.exports = class PollsHelper {
         return new Promise(async (resolve, reject) => {
             try {
 
+                let pollCreationForm = await formsHelper.formDocuments
+                (
+                    {
+                      name : {
+                               $in : [
+                                  messageConstants.common.POLL_METAFORM,
+                                  messageConstants.common.POLL_QUESTION_METAFORM
+                                ]
+                            }
+                    },
+                    [
+                      "value"
+                    ]
+                )
+
+                pollCreationForm = [...pollCreationForm[0].value,
+                                    ...pollCreationForm[1].value]
+                
+                let unicodes = await database.models.unicodes.find
+                ( 
+                    {
+                        status: "active"
+                    }
+                ).lean();
+
+                let emojis = [];
+                let gestures = [];
+
+                if (unicodes.length > 0) {
+                    unicodes.forEach ( unicode => {
+                         if (unicode.type == "emoji") {
+                             emojis.push(unicode);
+                         }
+                         else if (unicode.type == "gesture"){
+                             gestures.push(unicode);
+                         }
+                    });
+                }
+
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.POLL_CREATION_FORM_FETCHED,
-                    data: [
-                        {
-                            field: "name",
-                            label: "Name of the Poll",
-                            value: "",
-                            visible: true,
-                            editable: true,
-                            validation: {
-                                required: true
-                            },
-                            input: "text"
-                        },
-                        {
-                            field: "creator",
-                            label: "Name of the Creator",
-                            value: "",
-                            visible: true,
-                            editable: true,
-                            validation: {
-                                required: true
-                            },
-                            input: "text"
-                        },
-                        {
-                            field: "organisations",
-                            label: "Name of the Organization",
-                            value: "",
-                            visible: true,
-                            editable: true,
-                            validation: {
-                                required: true
-                            },
-                            input: "radio",
-                            options: [
-                                {
-                                    value: "12345",
-                                    label: "Shikshalokam"
-                                },
-                                {
-                                    value: "24367",
-                                    label: "Mantra"
-                                }
-                            ]
-
-                        },
-                        {
-                            field: "startDate",
-                            label: "startDate",
-                            value: "",
-                            visible: true,
-                            editable: true,
-                            validation: {
-                                required: true
-                            },
-                            input: "date",
-                            dateformat: "DD-MM-YYYY"
-                        },
-                        {
-                            field: "endDate",
-                            label: "endDate",
-                            value: "",
-                            visible: true,
-                            editable: true,
-                            validation: {
-                                required: true
-                            },
-                            input: "date",
-                            dateformat: "DD-MM-YYYY"
-                        },
-                        {
-                            field: "responseType",
-                            label: "Choose response type",
-                            value: "",
-                            visible: true,
-                            editable: true,
-                            validation: {
-                                required: true
-                            },
-                            input: "radio",
-                            options: [
-                                {
-                                    value: "radio",
-                                    label: "Single select"
-                                },
-                                {
-                                    value: "mutlselect",
-                                    label: "Multiselect"
-                                },
-                                {
-                                    value: "emoji",
-                                    label: "Emoji"
-                                },
-                                {
-                                    value: "gestures",
-                                    label: "Gestures"
-                                }
-                            ]
-
-                        },
-                        {
-                            field: "question",
-                            label: "Question",
-                            value: "",
-                            visible: true,
-                            editable: true,
-                            validation: {
-                                required: true
-                            },
-                            input: "text"
-                        },
-                        {
-                            field: "options",
-                            label: "Options",
-                            value: "",
-                            visible: false,
-                            editable: true,
-                            validation: {
-                                required: true
-                            },
-                            input: "multiselect"
-                        },
-                        {
-                            field: "text-option",
-                            label: "Text option",
-                            value: "",
-                            visible: false,
-                            editable: true,
-                            validation: {
-                                required: true,
-                                visibleIf: {
-                                    value: "radio||multiselect",
-                                    operator: "===",
-                                    _id: "responseType"
-                                }
-
-                            },
-                            input: "multiselect"
-                        },
-                        {
-                            field: "emoji-option",
-                            label: "Emoji option",
-                            value: "",
-                            visible: false,
-                            editable: true,
-                            validation: {
-                                required: true,
-                                visibleIf: {
-                                    value: "emoji",
-                                    operator: "===",
-                                    _id: "responseType"
-                                }
-                            },
-                            input: "emojis"
-                        },
-                        {
-                            field: "gesture-option",
-                            label: "Gesture option",
-                            value: "",
-                            visible: false,
-                            editable: true,
-                            validation: {
-                                required: true,
-                                visibleIf: {
-                                    value: "gestures",
-                                    operator: "===",
-                                    _id: "responseType"
-                                }
-                            },
-                            input: "gestures"
-                        }
-                    ]
+                    data: {
+                          form: pollCreationForm,
+                          emojis: emojis,
+                          gestures: gestures
+                    }
                 });
 
             } catch (error) {
@@ -251,27 +173,28 @@ module.exports = class PollsHelper {
         return new Promise(async (resolve, reject) => {
             try {
 
+                if(userId == ""){
+                    throw new Error(messageConstants.apiResponses.USER_ID_REQUIRED_CHECK);
+                }
+
+                let pollsList = await this.pollDocuments
+                (
+                    {
+                        creator: userId
+                    },
+                    [
+                        "name"
+                    ]
+                )
+
+                if (!pollsList.length) {
+                    throw new Error(messageConstants.apiResponses.POLL_NOT_FOUND)
+                }
+
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.POLLS_LIST_FETCHED,
-                    data: [{
-                        pollName: "meeting fedback",
-                        creator: "",
-                        questions: [{
-                            qid: "5ee745fa7e29794d385eb8b5",
-                            question: "did you like the meeting?",
-                            responseType: "radio",
-                            options: ["yes", "no"]
-                        }],
-                        organisationName: "Shikshalokam",
-                        createdAt: "2020-03-26T15:43:54+05:30",
-                        updatedAt: "2020-03-26T15:43:54+05:30",
-                        numberOfResponses: "2",
-                        isDeleted: false,
-                        startDate: "2020-03-26T15:43:54+05:30",
-                        endDate: "2020-04-26T15:43:54+05:30",
-                        status: "active"
-                    }]
+                    data: pollsList
                 });
 
             } catch (error) {
@@ -296,6 +219,19 @@ module.exports = class PollsHelper {
     static delete(pollId= "") {
         return new Promise(async (resolve, reject) => {
             try {
+
+                if(pollId == ""){
+                    throw new Error(messageConstants.apiResponses.POLL_ID_IS_REQUIRED);
+                }
+
+                await database.models.polls.updateOne
+                (
+                    { _id: pollId },
+                    { $set : {
+                        isDeleted: true
+                      }
+                    }
+                );
 
                 return resolve({
                     success: true,
@@ -326,15 +262,28 @@ module.exports = class PollsHelper {
         return new Promise(async (resolve, reject) => {
             try {
 
+                if (pollId = "") {
+                    throw new Error(messageConstants.apiResponses.POLL_ID_IS_REQUIRED)
+                }
+
+                let pollQuestions = await this.pollDocuments
+                (
+                    {
+                      _id : pollId
+                    },
+                    [
+                        "questions"
+                    ]
+                )
+
+                if (!pollQuestions.length) {
+                    throw new Error(messageConstants.apiResponses.POLL_NOT_FOUND)
+                }
+
                 return resolve({
                     success: true,
-                    message: messageConstants.apiResponses.POLL_DELETED,
-                    data: [{
-                        qid: "",
-                        question: "",
-                        responseType: "",
-                        options: [] 
-                       }]
+                    message: messageConstants.apiResponses.POLL_QUESTIONS_FETCHED,
+                    data: pollQuestions[0].questions
                 });
 
             } catch (error) {

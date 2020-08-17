@@ -32,8 +32,9 @@ module.exports = class PollSubmissions extends Abstract {
      * @apiSampleRequest /assessment/api/v1/pollSubmissions/make/5b98fa069f664f7e1ae7498c
      * @apiParamExample {json} Request-Body:
      * [{
-         "qid": "",
-         "value": [""] 
+         "qid": "5d77fa069f664f7e1ae7489b",
+         "question": "Which app do you use the most?",
+         "value": ["samiksha"] 
         }]
      * }
      * @apiParamExample {json} Response:
@@ -80,61 +81,6 @@ module.exports = class PollSubmissions extends Abstract {
         }
     })
 }
-
-   
-    /**
-     * @api {get} /assessment/api/v1/pollSubmissions/listPollNames List Poll Names
-     * @apiVersion 1.0.0
-     * @apiName List Poll Names
-     * @apiGroup pollSubmissions
-     * @apiHeader {String} X-authenticated-user-token Authenticity token
-     * @apiSampleRequest /assessment/api/v1/pollSubmissions/listPollNames
-     * @apiParamExample {json} Response:
-     * {
-     *   "status": 200,
-     *   "message": "Poll names fetched successfully",
-     *   "result": [{
-     *        "pollId": "",
-     *        "pollName": "",
-     *        "organisationName": ""
-     *    }]
-     * }
-     * @apiUse successBody
-     * @apiUse errorBody
-     */
-     
-    /**
-    * List Poll Names
-    * @method
-    * @name listPollNames
-    * @param {Object} req -request Data. 
-    * @returns {JSON} - list of poll names 
-    */
-
-   listPollNames(req) {
-    return new Promise(async (resolve, reject) => {
-
-        try {
-
-            let result = await pollSubmissionsHelper.listPollNames(
-                req.userDetails.userId
-            );
-
-            return resolve({
-                message: messageConstants.apiResponses.POLL_NAMES_FETCHED,
-                result: result
-            });
-
-        } catch (error) {
-
-            return reject({
-                status: error.status || httpStatusCode.internal_server_error.status,
-                message: error.message || httpStatusCode.internal_server_error.message,
-                errorObject: error
-            });
-        }
-    })
-}
     
     /**
      * @api {get} /assessment/api/v1/pollSubmissions/report/:pollId Poll Report
@@ -143,7 +89,6 @@ module.exports = class PollSubmissions extends Abstract {
      * @apiGroup pollSubmissions
      * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/pollSubmissions/report/5f2bcc04456a2a770c4a5f3b
-     * @apiParamExample {json} Request-Body:
      * @apiUse successBody
      * @apiUse errorBody
      */

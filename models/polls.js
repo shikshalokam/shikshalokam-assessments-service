@@ -1,13 +1,13 @@
 module.exports = {
   name: "polls",
   schema: {
-    pollName: String,
+    name: String,
     creator: {
-        type: String,
-        required: true
-      },
+      type: String,
+      required: true,
+      index: true
+    },
     questions: Array,
-    organizationName: String,
     link: String,
     numberOfResponses: Number,
     isDeleted: {
@@ -17,6 +17,5 @@ module.exports = {
     startDate: Date,
     endDate: Date,
     status: String
-  
   }
 };

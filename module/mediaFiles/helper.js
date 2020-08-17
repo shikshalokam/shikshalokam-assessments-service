@@ -14,6 +14,54 @@
 module.exports = class MediaFilesHelper {
 
     /**
+   * find mediaFiles
+   * @method
+   * @name mediaFileDocuments
+   * @param {Array} [mediaFileFilter = "all"] - media file ids.
+   * @param {Array} [fieldsArray = "all"] - projected fields.
+   * @param {Array} [skipFields = "none"] - field not to include
+   * @returns {Array} List of mediaFiles. 
+   */
+  
+  static mediaFileDocuments(
+    mediaFileFilter = "all", 
+    fieldsArray = "all",
+    skipFields = "none"
+  ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+    
+            let queryObject = (mediaFileFilter != "all") ? mediaFileFilter : {};
+    
+            let projection = {}
+    
+            if (fieldsArray != "all") {
+                fieldsArray.forEach(field => {
+                    projection[field] = 1;
+                });
+            }
+
+            if( skipFields !== "none" ) {
+              skipFields.forEach(field=>{
+                projection[field] = 0;
+              })
+            }
+    
+            let mediaFileDocuments = 
+            await database.models.mediaFiles.find(
+              queryObject, 
+              projection
+            ).lean();
+            
+            return resolve(mediaFileDocuments);
+            
+        } catch (error) {
+            return reject(error);
+        }
+    });
+ }
+
+    /**
      * Create emoji.
      * @method 
      * @name createEmoji

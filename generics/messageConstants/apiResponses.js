@@ -221,8 +221,11 @@ module.exports = {
 "POLL_SUBMITTED" : "Poll submitted successfully",
 "POLL_NAMES_FETCHED" : "Poll names fetched successfully",
 "POLL_REPORT_CREATED" : "Poll report created successfully",
+"POLL_QUESTIONS_FETCHED" : "Poll questions fetched successfully",
 "EMOJI_CREATED" : "Emoji created successfully",
 "GESTURE_CREATED" : "Gesture created successfully",
 "EMOJI_FETCHED" : "Emoji fetched successfully",
-"GESTURE_FETCHED" : "Gesture fetched successfully"
+"GESTURE_FETCHED" : "Gesture fetched successfully",
+"POLL_ID_IS_REQUIRED"  : "PollId is required",
+"POLL_NOT_FOUND" : "Poll not found"
 }

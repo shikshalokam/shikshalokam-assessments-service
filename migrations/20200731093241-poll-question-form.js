@@ -14,13 +14,13 @@ module.exports = {
           required : true
         },
         input : "radio",
-              options : [
+        options : [
           {
             value : "radio",
             label : "Single select"
           },
           {
-            value : "mutlselect",
+            value : "multiselect",
             label : "Multiselect"
           },
           {
@@ -28,8 +28,8 @@ module.exports = {
             label : "Emoji"
           },
           {
-            value : "gestures",
-            label : "Gestures"
+            value : "gesture",
+            label : "Gesture"
           }
         ]
   
@@ -44,66 +44,6 @@ module.exports = {
           required : true
         },
         input : "text"
-      },
-      {
-        field : "options",
-        label : "Options",
-        value : "",
-        visible : false,
-        editable : true,
-        validation : {
-          required : true
-        },
-        input : "multiselect"
-      },
-      {
-        field : "text-option",
-        label : "Text option",
-        value : "",
-        visible : false,
-        editable : true,
-        validation : {
-        required : true,
-          visibleIf : {
-            value : "radio||multiselect",
-            operator : "===",
-            _id : "responseType"
-          }
-            
-        },
-        input : "multiselect"
-      },
-          {
-         field : "emoji-option",
-         label : "Emoji option",
-         value : "",
-         visible : false,
-         editable : true,
-         validation : {
-         required : true,
-            visibleIf : {
-                value : "emoji",
-                operator : "===",
-                _id : "responseType"
-            }
-        },
-        input : "emojis"
-      },
-          {
-         field : "gesture-option",
-         label : "Gesture option",
-         value : "",
-         visible : false,
-         editable : true,
-         validation : {
-         required : true,
-            visibleIf : {
-                value : "gestures",
-                operator : "===",
-                _id : "responseType"
-            }
-        },
-        input : "gestures"
       }
     ]
 

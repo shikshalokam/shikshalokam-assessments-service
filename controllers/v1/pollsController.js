@@ -60,50 +60,45 @@ module.exports = class Polls extends Abstract {
         input: "text"
       },
       {
-        field: "organisations",
-        label: "Name of the Organization",
+        field: "endDate",
+        label: "End Date",
         value: "",
         visible: true,
         editable: true,
         validation: {
           required: true
         },
-        input: "radio",
-        options: [
+         input: "radio",
+         options: [
           {
-            value: "12345",
-            label: "Shikshalokam"
+            value : 1,
+            label : "one day"
           },
           {
-            value: "24367",
-            label: "Mantra"
+            value : 2,
+            label : "two days"
+          },
+          {
+            value : 3,
+            label : "three days"
+          },
+          {
+            value : 4,
+            label : "four days"
+          },
+          {
+            value : 5,
+            label : "five days"
+          },
+          {
+            value : 6,
+            label : "six days"
+          },
+          {
+            value : 7,
+            label : "seven days"
           }
         ]
-
-      },
-      {
-        field: "startDate",
-        label: "startDate",
-        value: "",
-        visible: true,
-        editable: true,
-        validation: {
-          required: true
-        },
-        input: "date",
-        dateformat: "DD-MM-YYYY"
-      },
-      {
-        field: "endDate",
-        label: "endDate",
-        value: "",
-        visible: true,
-        editable: true,
-        validation: {
-          required: true
-        },
-        input: "date",
-        dateformat: "DD-MM-YYYY"
       },
        {
         field : "responseType",
@@ -121,7 +116,7 @@ module.exports = class Polls extends Abstract {
             label : "Single select"
           },
           {
-            value : "mutlselect",
+            value : "multiselect",
             label : "Multiselect"
           },
           {
@@ -129,8 +124,8 @@ module.exports = class Polls extends Abstract {
             label : "Emoji"
           },
           {
-            value : "gestures",
-            label : "Gestures"
+            value : "gesture",
+            label : "Gesture"
           }
         ]
   
@@ -145,66 +140,6 @@ module.exports = class Polls extends Abstract {
           required : true
         },
         input : "text"
-      },
-      {
-        field : "options",
-        label : "Options",
-        value : "",
-        visible : false,
-        editable : true,
-        validation : {
-          required : true
-        },
-        input : "multiselect"
-      },
-      {
-        field : "text-option",
-        label : "Text option",
-        value : "",
-        visible : false,
-        editable : true,
-        validation : {
-        required : true,
-          visibleIf : {
-            value : "radio||multiselect",
-            operator : "===",
-            _id : "responseType"
-          }
-            
-        },
-        input : "multiselect"
-      },
-          {
-         field : "emoji-option",
-         label : "Emoji option",
-         value : "",
-         visible : false,
-         editable : true,
-         validation : {
-         required : true,
-            visibleIf : {
-                value : "emoji",
-                operator : "===",
-                _id : "responseType"
-            }
-        },
-        input : "emojis"
-      },
-          {
-         field : "gesture-option",
-         label : "Gesture option",
-         value : "",
-         visible : false,
-         editable : true,
-         validation : {
-         required : true,
-            visibleIf : {
-                value : "gestures",
-                operator : "===",
-                _id : "responseType"
-            }
-        },
-        input : "gestures"
       }
     ]
     }
@@ -223,11 +158,14 @@ module.exports = class Polls extends Abstract {
     return new Promise(async (resolve, reject) => {
 
         try {
-
+           
             let pollCreationForm = 
             await pollsHelper.metaForm();
 
-            return resolve(pollCreationForm);
+            return resolve({
+                          message: pollCreationForm.message,
+                          result: pollCreationForm.data
+                        });
 
         } catch (error) {
             return reject({
@@ -249,14 +187,13 @@ module.exports = class Polls extends Abstract {
      * @apiSampleRequest /assessment/api/v1/polls/create
      * @apiParamExample {json} Request-Body:
      * {
-     *   "pollName": "",
+     *   "name": "Meeting feedback",
          "questions": [{
-             "qid": ""
-             "question": "",
-             "responseType": "",
-             "options": [] 
-         }],
-         "organisationName": ""
+             "qid": "5d98fa069f664f7e1ae7498c"
+             "question": "did you like the discussion?",
+             "responseType": "radio",
+             "options": ["yes","no"] 
+         }]
      * }
      * @apiParamExample {json} Response:
      * { 
@@ -300,9 +237,9 @@ module.exports = class Polls extends Abstract {
 }
 
     /**
-     * @api {get} /assessment/api/v1/polls/list List active polls
+     * @api {get} /assessment/api/v1/polls/list List polls
      * @apiVersion 1.0.0
-     * @apiName List active polls
+     * @apiName List polls
      * @apiGroup Polls
      * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/polls/list
@@ -311,22 +248,8 @@ module.exports = class Polls extends Abstract {
      *  "status": 200,
      *  "message": "Polls list fetched successfully",
      *  "result": [{
-     *      "pollName": "",
-            "creator": "",
-            "questions": [{
-               "qid": "",
-               "question": "",
-               "responseType": "",
-               "options": [] 
-            }],
-            "organisationName": "",
-            "createdAt": "",
-            "updatedAt": "",
-            "numberOfResponses": "",
-            "isDeleted": false,
-            "startDate": "",
-            "endDate": "",
-            "status": "active"
+     *      "_id": "5f3a72359e156a44ee7565b8",
+     *      "name": "Feedback"
      *     }]
      * }
      * @apiUse successBody
@@ -347,9 +270,13 @@ module.exports = class Polls extends Abstract {
         try {
 
             let pollsList = await pollsHelper.list(
+               req.userDetails.userId
             );
 
-            return resolve(pollsList);
+            return resolve({
+                message: pollsList.message,
+                result: pollsList.data
+            });
 
         } catch (error) {
 
@@ -397,7 +324,9 @@ module.exports = class Polls extends Abstract {
                 req.params._id
             );
 
-            return resolve(result);
+            return resolve({
+               message: result.message
+            });
 
         } catch (error) {
 
@@ -423,11 +352,11 @@ module.exports = class Polls extends Abstract {
      *  "status": 200,
      *  "message": "Poll questions fetched successfully",
      *  "result": [{
-     *      "qid": "",
-     *      "question": "",
-     *      "responseType": "",
-     *      "options": [] 
-     * }]
+            "qid": "5e98fa069f664f7e1ae7498c",
+            "question": "Which app do you use the most?",
+            "responseType": "radio",
+            "options": ["Samiksha","unnati","Bodh"] 
+     *     }]
      * }
      * @apiUse successBody
      * @apiUse errorBody
@@ -451,7 +380,10 @@ module.exports = class Polls extends Abstract {
                 req.params._id
             );
 
-            return resolve(pollQuestions);
+            return resolve({
+                  message: pollQuestions.message,
+                  result: pollQuestions.data
+            });
 
         } catch (error) {
 
