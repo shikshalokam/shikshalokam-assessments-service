@@ -65,13 +65,38 @@ module.exports = class MediaFilesHelper {
      * Create emoji.
      * @method 
      * @name createEmoji
-     * @param {Object} 
+     * @param {String} name - emoji name
+     * @param {string} unicode -  unicode of emoji
+     * @param {String} userId - userId 
      * @returns {String} - message.
      */
 
-    static createEmoji() {
+    static createEmoji(name= "",unicode= "",userId= "") {
         return new Promise(async (resolve, reject) => {
             try {
+
+                if (name == "") {
+                    throw new Error(messageConstants.apiResponses.NAME_REQUIRED_CHECK)
+                }
+
+                if (unicode == "") {
+                    throw new Error(messageConstants.apiResponses.UNICODE_REQUIRED_CHECK)
+                }
+
+                if (userId == "") {
+                    throw new Error(messageConstants.apiResponses.USER_ID_REQUIRED_CHECK)
+                }
+
+                await database.models.mediaFiles.create
+                ({
+                    name: name,
+                    type: "emoji",
+                    unicode: unicode,
+                    status: "active",
+                    createdBy: userId,
+                    updatedBy: userId,
+                    isDeleted: false
+                })
                
                 return resolve({
                     success: true,
@@ -94,13 +119,38 @@ module.exports = class MediaFilesHelper {
      * Create gesture.
      * @method
      * @name createGesture
-     * @param {Object} 
+     * @param {String} name - gesture name
+     * @param {string} unicode -  unicode of gesture
+     * @param {String} userId - userId 
      * @returns {String} - message.
      */
 
-    static createGesture() {
+    static createGesture(name= "",unicode= "",userId= "") {
         return new Promise(async (resolve, reject) => {
             try {
+
+                if (name == "") {
+                    throw new Error(messageConstants.apiResponses.NAME_REQUIRED_CHECK)
+                }
+
+                if (unicode == "") {
+                    throw new Error(messageConstants.apiResponses.UNICODE_REQUIRED_CHECK)
+                }
+
+                if (userId == "") {
+                    throw new Error(messageConstants.apiResponses.USER_ID_REQUIRED_CHECK)
+                }
+
+                await database.models.mediaFiles.create
+                ({
+                    name: name,
+                    type: "gesture",
+                    unicode: unicode,
+                    status: "active",
+                    createdBy: userId,
+                    updatedBy: userId,
+                    isDeleted: false
+                })
                
                 return resolve({
                     success: true,
@@ -123,22 +173,39 @@ module.exports = class MediaFilesHelper {
      * Get emoji.
      * @method
      * @name getEmoji
-     * @param {Object} 
-     * @returns {JSON} - downloadable url.
+     * @param {String} name - emoji name 
+     * @returns {JSON} - emoji unicode.
      */
 
-    static getEmoji() {
+    static getEmoji(name= "") {
         return new Promise(async (resolve, reject) => {
             try {
+
+                if (name == "") {
+                    throw new Error(messageConstants.apiResponses.NAME_REQUIRED_CHECK)
+                }
+
+                let emojiDocument = await this.mediaFileDocuments
+                (
+                    {
+                        name : name
+                    },
+                    [
+                        "name",
+                        "unicode",
+                        "type",
+                        "status"
+                    ]
+                )
+
+                if (!emojiDocument.length) {
+                    throw new Error(messageConstants.apiResponses.EMOJI_NOT_FOUND)
+                }
                
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.EMOJI_FETCHED,
-                    data: [{
-                             name: "",
-                             type: "",
-                             url: "",
-                        }]
+                    data: emojiDocument
                 });
 
             } catch (error) {
@@ -155,22 +222,39 @@ module.exports = class MediaFilesHelper {
      * Get gesture.
      * @method
      * @name getGesture
-     * @param {Object} 
-     * @returns {JSON} - downloadable url. .
+     * @param {String} name - gesture name
+     * @returns {JSON} - gesture unicode.
      */
 
-    static getGesture() {
+    static getGesture(name= "") {
         return new Promise(async (resolve, reject) => {
             try {
+
+                if (name == "") {
+                    throw new Error(messageConstants.apiResponses.NAME_REQUIRED_CHECK)
+                }
+
+                let gestureDocument = await this.mediaFileDocuments
+                (
+                    {
+                        name : name
+                    },
+                    [
+                        "name",
+                        "unicode",
+                        "type",
+                        "status"
+                    ]
+                )
+
+                if (!gestureDocument.length) {
+                    throw new Error(messageConstants.apiResponses.GESTURE_NOT_FOUND)
+                }
                
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.GESTURE_FETCHED,
-                    data: [{
-                        name: "",
-                        type: "",
-                        url: "",
-                   }]
+                    data: gestureDocument
                 });
 
             } catch (error) {

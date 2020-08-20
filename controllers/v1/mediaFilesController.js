@@ -33,9 +33,8 @@ module.exports = class MediaFiles extends Abstract {
      * @apiParamExample {json} Request-Body:
      * {
      *  "name": "smiley",
-     *  "type": "emoji"
+     *  "unicode": "\u{1F600}"
      * }
-     * @apiParam {File} image file.
      * @apiParamExample {json} Response:
      * {
      *  "status": 200,
@@ -50,7 +49,6 @@ module.exports = class MediaFiles extends Abstract {
     * @method
     * @name createEmoji
     * @param {Object} req -request Data.
-    * @param {File} req.files - requested files
     * @returns {String} - message .
     */
 
@@ -59,10 +57,16 @@ module.exports = class MediaFiles extends Abstract {
 
         try {
 
-            let result = await mediaFilesHelper.createEmoji(
+            let result = await mediaFilesHelper.createEmoji
+            (
+              req.body.name,
+              req.body.unicode,
+              req.userDetails.userId
             );
 
-            return resolve(result);
+            return resolve({
+                message: result.message
+            });
 
         } catch (error) {
 
@@ -86,9 +90,8 @@ module.exports = class MediaFiles extends Abstract {
      * @apiParamExample {json} Request-Body:
      * {
      *  "name": "thumbsUp",
-     *  "type": "gesture"
+     *  "unicode": "\u{1F600}"
      * }
-     * @apiParam {File} image file.
      * @apiParamExample {json} Response:
      * {
      *  "status": 200,
@@ -111,10 +114,16 @@ module.exports = class MediaFiles extends Abstract {
 
         try {
 
-            let result = await mediaFilesHelper.createGesture(
+            let result = await mediaFilesHelper.createGesture
+            (
+                req.body.name,
+                req.body.unicode,
+                req.userDetails.userId
             );
 
-            return resolve(result);
+            return resolve({
+                message: result.message
+            });
 
         } catch (error) {
 
@@ -137,16 +146,17 @@ module.exports = class MediaFiles extends Abstract {
      * @apiSampleRequest /assessment/api/v1/mediaFiles/getGesture
      * @apiParamExample {json} Request-Body:
      * {
-     *  "name": "thumbsUp"
+     *  "name": "writing hand"
      * }
      * @apiParamExample {json} Response:
      * {
      *  "status": 200,
      *  "message": "Gesture fetched successfully",
      *  "result" : [{
-     *      "name": "thumbsUp",
+     *      "name": "writing hand",
             "type": "gesture",
-            "url": "https://storage.googleapis.com/download/storage/v1/b/sl-dev-storage/o/static%2Flibrary%2Fcategories%2Fdrafts.png?generation=1593680944065555&alt=media",
+            "unicode": "✍",
+            "status": "active"
          }]
      * }
      * @apiUse successBody
@@ -158,7 +168,7 @@ module.exports = class MediaFiles extends Abstract {
     * @method
     * @name getGesture
     * @param {Object} req -request Data.
-    * @returns {JSON} - .
+    * @returns {JSON} - gesture unicode.
     */
 
     getGesture(req) {
@@ -166,12 +176,14 @@ module.exports = class MediaFiles extends Abstract {
 
         try {
 
-            let result = await mediaFilesHelper.getGesture(
+            let gestureDocument = await mediaFilesHelper.getGesture
+            (
+                req.body.name
             );
 
             return resolve({
-                message: messageConstants.apiResponses,
-                result: result
+                message: gestureDocument.message,
+                result: gestureDocument.data
             });
 
         } catch (error) {
@@ -195,17 +207,18 @@ module.exports = class MediaFiles extends Abstract {
      * @apiSampleRequest /assessment/api/v1/mediaFiles/getEmoji
      * @apiParamExample {json} Request-Body:
      * {
-     *  "name": "smiley"
+     *  "name": "astonished face"
      * }
      * @apiParamExample {json} Response:
       * {
      *  "status": 200,
      *  "message": "Emoji fetched successfully",
      *  "result" : [{
-           "name": "smiley",
-            "type": "emoji",
-            "url": "https://storage.googleapis.com/download/storage/v1/b/sl-dev-storage/o/static%2Flibrary%2Fcategories%2Fdrafts.png?generation=1593680944065555&alt=media",
-         }]
+     *     "name": "astonished face",
+     *     "type": "emoji",
+     *     "unicode": "😲",
+     *     "status": "active"
+     *   }] 
      * }
      * @apiUse successBody
      * @apiUse errorBody
@@ -216,7 +229,7 @@ module.exports = class MediaFiles extends Abstract {
     * @method
     * @name getEmoji
     * @param {Object} req -request Data.
-    * @returns {JSON} - .
+    * @returns {JSON} - emoji unicode.
     */
 
    getEmoji(req) {
@@ -224,12 +237,14 @@ module.exports = class MediaFiles extends Abstract {
 
         try {
 
-            let result = await mediaFilesHelper.getEmoji(
+            let emojiDocument = await mediaFilesHelper.getEmoji
+            (
+                req.body.name
             );
 
             return resolve({
-                message: messageConstants.apiResponses,
-                result: result
+                message: emojiDocument.message,
+                result: emojiDocument.data
             });
 
         } catch (error) {

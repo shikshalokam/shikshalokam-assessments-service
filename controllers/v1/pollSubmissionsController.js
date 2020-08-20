@@ -31,11 +31,14 @@ module.exports = class PollSubmissions extends Abstract {
      * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/pollSubmissions/make/5b98fa069f664f7e1ae7498c
      * @apiParamExample {json} Request-Body:
-     * [{
+     * {
+     * "5d77fa069f664f7e1ae7489b" : {
          "qid": "5d77fa069f664f7e1ae7489b",
          "question": "Which app do you use the most?",
-         "value": ["samiksha"] 
-        }]
+         "responseType": "radio",
+         "value": "R1",
+         "label": "Samiksha"
+        }
      * }
      * @apiParamExample {json} Response:
      * {
@@ -61,14 +64,14 @@ module.exports = class PollSubmissions extends Abstract {
 
         try {
 
-            let result = await pollSubmissionsHelper.make(
+            let pollSubmissionResult = await pollSubmissionsHelper.make(
                 req.params._id,
-                req.body
+                req.body,
+                req.userDetails.userId
             );
 
             return resolve({
-                message: messageConstants.apiResponses,
-                result: result
+                message: pollSubmissionResult.message
             });
 
         } catch (error) {
@@ -99,7 +102,7 @@ module.exports = class PollSubmissions extends Abstract {
     * @name report
     * @param {Object} req - request Data. 
     * @param {String} req.params._id - pollId
-    * @returns {JSON} - chart data
+    * @returns {JSON} - poll report data
     */
 
     report(req) {
@@ -107,13 +110,13 @@ module.exports = class PollSubmissions extends Abstract {
 
         try {
 
-            let result = await pollSubmissionsHelper.report(
+            let pollReport = await pollSubmissionsHelper.report(
                 req.params._id
             );
 
             return resolve({
-                message: messageConstants.apiResponses,
-                result: result
+                message: pollReport.message,
+                result: pollReport.data
             });
 
         } catch (error) {

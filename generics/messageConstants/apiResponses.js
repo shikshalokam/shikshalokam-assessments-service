@@ -226,6 +226,14 @@ module.exports = {
 "GESTURE_CREATED" : "Gesture created successfully",
 "EMOJI_FETCHED" : "Emoji fetched successfully",
 "GESTURE_FETCHED" : "Gesture fetched successfully",
-"POLL_ID_IS_REQUIRED"  : "PollId is required",
-"POLL_NOT_FOUND" : "Poll not found"
+"POLL_ID_REQUIRED_CHECK"  : "PollId is required",
+"POLL_NOT_FOUND" : "Poll not found",
+"POLL_DATA_REQUIRED" : "PollData is required",
+"RESPONSE_OBJECT_REQUIRED_CHECK" : "ResponseObject is required",
+"MULTIPLE_SUBMISSIONS_NOT_ALLOWED" : "Multiple submissions not allowed",
+"POLL_SUBMISSION_DOCUMENTS_NOT_FOUND" : "Poll submission documents not found",
+"NAME_REQUIRED_CHECK" : "Name is required",
+"UNICODE_REQUIRED_CHECK" : "Unicode is required",
+"EMOJI_NOT_FOUND" : "Emoji not found",
+"GESTURE_NOT_FOUND" : "Gesture not found"
 }

@@ -187,18 +187,23 @@ module.exports = class Polls extends Abstract {
      * @apiSampleRequest /assessment/api/v1/polls/create
      * @apiParamExample {json} Request-Body:
      * {
-     *   "name": "Meeting feedback",
+     *   "name": "Feedback",
          "questions": [{
-             "qid": "5d98fa069f664f7e1ae7498c"
-             "question": "did you like the discussion?",
+             "question": "Which app do you use the most ?",
              "responseType": "radio",
-             "options": ["yes","no"] 
-         }]
+             "options": [{ "value": "","label":"samiksha"},
+                         { "value": "","label":"unnati"},
+                         { "value": "","label":"bodh"}] 
+         }],
+          "endDate" : 2
      * }
      * @apiParamExample {json} Response:
      * { 
      *  "status": 200,
-     *  "message": "Poll created successfully"
+     *  "message": "Poll created successfully",
+     *  "result": {
+     *      "link": "samiksha://shikshalokam.org/take-poll/4f0f10c0-e2ca-11ea-825b-d958912b038c/5f3e46f03b1fd32ceab97099"
+     *   }
      * }
      * @apiUse successBody
      * @apiUse errorBody
@@ -210,7 +215,7 @@ module.exports = class Polls extends Abstract {
     * @name create
     * @param {Object} req - request Data. 
     * @param req.body - poll creation  object
-    * @returns {String} - message.
+    * @returns {String} - Sharable link.
     */
 
    create(req) {
@@ -218,12 +223,15 @@ module.exports = class Polls extends Abstract {
 
         try {
 
-            let result = await pollsHelper.create(
+            let createDocument = await pollsHelper.create(
                req.body,
                req.userDetails.userId
             );
 
-            return resolve(result);
+            return resolve({
+                  message : createDocument.message,
+                  result: createDocument.data
+            });
 
         } catch (error) {
 
@@ -355,7 +363,9 @@ module.exports = class Polls extends Abstract {
             "qid": "5e98fa069f664f7e1ae7498c",
             "question": "Which app do you use the most?",
             "responseType": "radio",
-            "options": ["Samiksha","unnati","Bodh"] 
+            "options": [{ "value": "","label":"samiksha"},
+                         { "value": "","label":"unnati"},
+                         { "value": "","label":"bodh"}] 
      *     }]
      * }
      * @apiUse successBody

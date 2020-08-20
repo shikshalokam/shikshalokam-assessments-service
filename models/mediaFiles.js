@@ -2,10 +2,8 @@ module.exports = {
     name: "mediaFiles",
     schema: {
         name: String,
-        path: String,
         type: String,
-        icon: String,
-        code: {
+        unicode: {
             type: Number,
             index: true,
             unique: true

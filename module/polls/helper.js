@@ -7,6 +7,9 @@
 
 // Dependencies
 const formsHelper = require(MODULES_BASE_PATH + "/forms/helper");
+const uuid = require('uuid/v1');
+const ObjectID = require('mongodb').ObjectID;
+const pollLinkBaseUrl = process.env.POLL_LINK_BASE_URL ? process.env.POLL_LINK_BASE_URL : "samiksha://shikshalokam.org/take-poll/";
 
 /**
     * PollsHelper
@@ -102,11 +105,11 @@ module.exports = class PollsHelper {
                 let gestures = [];
 
                 if (unicodes.length > 0) {
-                    unicodes.forEach ( unicode => {
-                         if (unicode.type == "emoji") {
+                    unicodes.forEach( unicode => {
+                         if (unicode.type == messageConstants.common.EMOJI) {
                              emojis.push(unicode);
                          }
-                         else if (unicode.type == "gesture"){
+                         else if (unicode.type == messageConstants.common.GESTURE){
                              gestures.push(unicode);
                          }
                     });
@@ -138,17 +141,66 @@ module.exports = class PollsHelper {
      * @name create
      * @param {Object} pollData - poll creation data
      * @param {String} userId - userId
-     * @returns {String} - message.
+     * @returns {String} - Sharable link .
      */
 
     static create(pollData= {}, userId= "") {
         return new Promise(async (resolve, reject) => {
             try {
 
+                if (Object.keys(pollData).length == 0) {
+                    throw new Error (messageConstants.apiResponses.POLL_DATA_REQUIRED);
+                }
+
+                if (userId == "") {
+                    throw new Error (messageConstants.apiResponses.USER_ID_REQUIRED_CHECK);
+                }
+
+                let pollDocument = {
+                    name: pollData.name,
+                    creator: userId,
+                    startDate: new Date(),
+                    endDate: new Date(new Date().setDate(new Date().getDate() + pollData.endDate)),
+                    link: uuid(),
+                    isDeleted: false,
+                    status: "active"
+                }
+                
+                let questionArray = [];
+                pollData.questions.forEach ( question => {
+                    
+                    let options = [];
+                    question.qid = new ObjectID();
+                    
+                    if (question.options.length > 0) {
+                        let i = 1;
+                        question.options.forEach( option => {
+                            options.push(
+                               {
+                                 value: "R" + i,
+                                 label: option.label,
+                                 unicode: option.value
+                               }
+                           )
+
+                           ++i
+                        })
+                    }
+
+                    question.options = options;
+                    questionArray.push(question);
+                });
+                
+                pollDocument.questions = questionArray;
+                
+                let createPollResult = await database.models.polls.create(pollDocument)
+
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.POLL_CREATED,
-                    data: true
+                    data: {
+                        link : pollLinkBaseUrl + pollDocument.link + "/" + createPollResult._id
+                    }
                 });
                 
             } catch (error) {
@@ -221,7 +273,7 @@ module.exports = class PollsHelper {
             try {
 
                 if(pollId == ""){
-                    throw new Error(messageConstants.apiResponses.POLL_ID_IS_REQUIRED);
+                    throw new Error(messageConstants.apiResponses.POLL_ID_REQUIRED_CHECK);
                 }
 
                 await database.models.polls.updateOne
@@ -262,19 +314,21 @@ module.exports = class PollsHelper {
         return new Promise(async (resolve, reject) => {
             try {
 
-                if (pollId = "") {
-                    throw new Error(messageConstants.apiResponses.POLL_ID_IS_REQUIRED)
+                if (pollId == "") {
+                    throw new Error(messageConstants.apiResponses.POLL_ID_REQUIRED_CHECK)
                 }
 
                 let pollQuestions = await this.pollDocuments
                 (
                     {
-                      _id : pollId
+                      _id: pollId
                     },
                     [
                         "questions"
                     ]
                 )
+
+                console.log(pollQuestions);
 
                 if (!pollQuestions.length) {
                     throw new Error(messageConstants.apiResponses.POLL_NOT_FOUND)
