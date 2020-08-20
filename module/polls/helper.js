@@ -333,6 +333,10 @@ module.exports = class PollsHelper {
                     throw new Error(messageConstants.apiResponses.POLL_NOT_FOUND)
                 }
 
+                if (new Date() > new Date(pollQuestions[0].endDate)) {
+                    throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
+                }
+
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.POLL_QUESTIONS_FETCHED,

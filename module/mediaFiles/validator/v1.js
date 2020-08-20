@@ -2,7 +2,19 @@ module.exports = (req) => {
 
     let mediaFilesValidator = {
 
-        list: function () {
+        createEmoji: function () {
+            req.checkBody('name').exists().withMessage("name is required");
+            req.checkBody('unicode').exists().withMessage("unicode is required");
+        },
+        createGesture: function () {
+            req.checkBody('name').exists().withMessage("name is required");
+            req.checkBody('unicode').exists().withMessage("unicode is required");
+        },
+        getGesture: function () {
+            req.checkBody('name').exists().withMessage("name is required");
+        },
+        getEmoji: function () {
+            req.checkBody('name').exists().withMessage("name is required");
         }
     }
 
