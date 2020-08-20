@@ -323,12 +323,11 @@ module.exports = class PollsHelper {
                     {
                       _id: pollId
                     },
-                    [
+                    [    
+                        "endDate",
                         "questions"
                     ]
                 )
-
-                console.log(pollQuestions);
 
                 if (!pollQuestions.length) {
                     throw new Error(messageConstants.apiResponses.POLL_NOT_FOUND)
