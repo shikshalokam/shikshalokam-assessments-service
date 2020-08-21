@@ -3,7 +3,7 @@ module.exports = (req) => {
     let pollsValidator = {
 
         create: function () {
-            req.checkBody(Object.keys(req.body)).isEmpty().withMessage("request body is missing");
+            req.checkBody(Object.keys(req.body)).isEmpty().withMessage("request body is required");
         },
         
         delete: function () {

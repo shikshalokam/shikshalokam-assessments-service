@@ -5,7 +5,7 @@ module.exports = (req) => {
         make: function () {
             req.checkParams('_id').exists().withMessage("required poll id")
             .isMongoId().withMessage("Invalid poll id");
-            req.checkBody(req.body).isEmpty().withMessage("request body is missing");
+            req.checkBody(Object.values(req.body)).isEmpty().withMessage("request body is required");
         },
         report: function () {
             req.checkParams('_id').exists().withMessage("required poll id")

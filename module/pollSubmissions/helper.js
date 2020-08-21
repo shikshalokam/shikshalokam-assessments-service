@@ -101,7 +101,7 @@ module.exports = class PollSubmissionsHelper {
                     throw new Error(messageConstants.apiResponses.MULTIPLE_SUBMISSIONS_NOT_ALLOWED)
                 }
 
-                let pollDocument = await pollsHelper.pollDocument
+                let pollDocument = await pollsHelper.pollDocuments
                 (
                     {
                         _id: pollId
@@ -121,7 +121,7 @@ module.exports = class PollSubmissionsHelper {
                     status: "active"
                 }
 
-                await database.models.pollSubmissions.insertOne(pollSubmissionDocument);
+                await database.models.pollSubmissions.create(pollSubmissionDocument);
 
                 return resolve({
                     success: true,

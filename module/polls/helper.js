@@ -325,22 +325,40 @@ module.exports = class PollsHelper {
                     },
                     [    
                         "endDate",
-                        "questions"
+                        "questions",
+                        "status"
                     ]
                 )
 
                 if (!pollQuestions.length) {
                     throw new Error(messageConstants.apiResponses.POLL_NOT_FOUND)
                 }
-
+                
+                let result = {
+                    questions : pollQuestions[0].questions
+                };
+                
                 if (new Date() > new Date(pollQuestions[0].endDate)) {
-                    throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
+
+                    result.active = false;
+
+                    if (pollQuestions[0].status == "active") {
+                        await database.models.polls.updateOne
+                        (
+                            { _id: pollId },
+                            {
+                                $set: {
+                                    status: "inactive"
+                                }
+                            }
+                        )
+                    }
                 }
 
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.POLL_QUESTIONS_FETCHED,
-                    data: pollQuestions[0].questions
+                    data: result
                 });
 
             } catch (error) {
