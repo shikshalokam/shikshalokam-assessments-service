@@ -180,16 +180,25 @@ module.exports = class MediaFilesHelper {
     static getEmoji(name= "") {
         return new Promise(async (resolve, reject) => {
             try {
+                
+                let queryObject = {
+                    status: "active"
+                };
 
-                if (name == "") {
-                    throw new Error(messageConstants.apiResponses.NAME_REQUIRED_CHECK)
+                if (name) {
+                    if (Array.isArray(name)) {
+                        queryObject.name = {
+                            $in : name
+                        }
+                    }
+                    else {
+                       queryObject.name = name
+                    }
                 }
 
                 let emojiDocument = await this.mediaFileDocuments
                 (
-                    {
-                        name : name
-                    },
+                   queryObject,
                     [
                         "name",
                         "unicode",
@@ -230,15 +239,25 @@ module.exports = class MediaFilesHelper {
         return new Promise(async (resolve, reject) => {
             try {
 
-                if (name == "") {
-                    throw new Error(messageConstants.apiResponses.NAME_REQUIRED_CHECK)
+                let queryObject = {
+                    status: "active"
+                };
+
+                if (name) {
+                    if (Array.isArray(name)) {
+                        queryObject.name = {
+                            $in : name
+                        }
+                    }
+                    else {
+                       queryObject.name = name
+                    }
                 }
+
 
                 let gestureDocument = await this.mediaFileDocuments
                 (
-                    {
-                        name : name
-                    },
+                    queryObject,
                     [
                         "name",
                         "unicode",

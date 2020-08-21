@@ -94,7 +94,7 @@ module.exports = class PollsHelper {
                 pollCreationForm = [...pollCreationForm[0].value,
                                     ...pollCreationForm[1].value]
                 
-                let unicodes = await database.models.unicodes.find
+                let unicodes = await database.models.mediaFiles.find
                 ( 
                     {
                         status: "active"

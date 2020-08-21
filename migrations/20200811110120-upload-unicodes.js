@@ -5,7 +5,7 @@ module.exports = {
 
     let unicodeArray = [
       {
-        description : "grinning face",
+        name : "grinning face",
         type : "emoji",
         unicode : "\u{1F600}",
         createdAt : new Date(),
@@ -16,7 +16,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "grinning face with big eyes",
+        name : "grinning face with big eyes",
         type : "emoji",
         unicode : "\u{1F603}",
         createdAt : new Date(),
@@ -27,7 +27,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "grinning face with smiling eyes",
+        name : "grinning face with smiling eyes",
         type : "emoji",
         unicode : "\u{1F604}",
         createdAt : new Date(),
@@ -38,7 +38,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "beaming face with smiling eyes",
+        name : "beaming face with smiling eyes",
         type : "emoji",
         unicode : "\u{1F601}",
         createdAt : new Date(),
@@ -49,7 +49,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "grinning squinting face",
+        name : "grinning squinting face",
         type : "emoji",
         unicode : "\u{1F606}",
         createdAt : new Date(),
@@ -60,7 +60,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "grinning face with sweat",
+        name : "grinning face with sweat",
         type : "emoji",
         unicode : "\u{1F605}",
         createdAt : new Date(),
@@ -71,7 +71,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "rolling on the floor laughing",
+        name : "rolling on the floor laughing",
         type : "emoji",
         unicode : "\u{1F923}",
         createdAt : new Date(),
@@ -82,7 +82,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with tears of joy",
+        name : "face with tears of joy",
         type : "emoji",
         unicode : "\u{1F602}",
         createdAt : new Date(),
@@ -93,7 +93,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "slightly smiling face",
+        name : "slightly smiling face",
         type : "emoji",
         unicode : "\u{1F642}",
         createdAt : new Date(),
@@ -104,7 +104,7 @@ module.exports = {
         status : "active"
       },
       {
-        description : "upside-down face",
+        name : "upside-down face",
         type : "emoji",
         unicode : "\u{1F643}",
         createdAt : new Date(),
@@ -115,7 +115,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "winking face",
+        name : "winking face",
         type : "emoji",
         unicode : "\u{1F609}",
         createdAt : new Date(),
@@ -126,7 +126,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "smiling face with smiling eyes",
+        name : "smiling face with smiling eyes",
         type : "emoji",
         unicode : "\u{1F60A}",
         createdAt : new Date(),
@@ -137,7 +137,7 @@ module.exports = {
         status : "active"
       },
       {
-        description : "smiling face with halo",
+        name : "smiling face with halo",
         type : "emoji",
         unicode : "\u{1F607}",
         createdAt : new Date(),
@@ -148,7 +148,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "smiling face with hearts",
+        name : "smiling face with hearts",
         type : "emoji",
         unicode : "\u{1F970}",
         createdAt : new Date(),
@@ -159,7 +159,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "smiling face with heart-eyes",
+        name : "smiling face with heart-eyes",
         type : "emoji",
         unicode : "\u{1F60D}",
         createdAt : new Date(),
@@ -170,7 +170,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "star-struck",
+        name : "star-struck",
         type : "emoji",
         unicode : "\u{1F929}",
         createdAt : new Date(),
@@ -181,7 +181,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "smiling face",
+        name : "smiling face",
         type : "emoji",
         unicode : "\u{263A}",
         createdAt : new Date(),
@@ -192,7 +192,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "smiling face with tear",
+        name : "smiling face with tear",
         type : "emoji",
         unicode : "\u{1F972}",
         createdAt : new Date(),
@@ -203,7 +203,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face savoring food",
+        name : "face savoring food",
         type : "emoji",
         unicode : "\u{1F60B}",
         createdAt : new Date(),
@@ -214,7 +214,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with tongue",
+        name : "face with tongue",
         type : "emoji",
         unicode : "\u{1F61B}",
         createdAt : new Date(),
@@ -225,7 +225,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "winking face with tongue",
+        name : "winking face with tongue",
         type : "emoji",
         unicode : "\u{1F61C}",
         createdAt : new Date(),
@@ -236,7 +236,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "zany face",
+        name : "zany face",
         type : "emoji",
         unicode : "\u{1F92A}",
         createdAt : new Date(),
@@ -247,7 +247,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "squinting face with tongue",
+        name : "squinting face with tongue",
         type : "emoji",
         unicode : "\u{1F61D}",
         createdAt : new Date(),
@@ -258,7 +258,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "money-mouth face",
+        name : "money-mouth face",
         type : "emoji",
         unicode : "\u{1F911}",
         createdAt : new Date(),
@@ -269,7 +269,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "hugging face",
+        name : "hugging face",
         type : "emoji",
         unicode : "\u{1F917}",
         createdAt : new Date(),
@@ -280,7 +280,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with hand over mouth",
+        name : "face with hand over mouth",
         type : "emoji",
         unicode : "\u{1F92D}",
         createdAt : new Date(),
@@ -291,7 +291,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "shushing face",
+        name : "shushing face",
         type : "emoji",
         unicode : "\u{1F92B}",
         createdAt : new Date(),
@@ -302,7 +302,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "thinking face",
+        name : "thinking face",
         type : "emoji",
         unicode : "\u{1F914}",
         createdAt : new Date(),
@@ -313,7 +313,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "zipper-mouth face",
+        name : "zipper-mouth face",
         type : "emoji",
         unicode : "\u{1F910}",
         createdAt : new Date(),
@@ -324,7 +324,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with raised eyebrow",
+        name : "face with raised eyebrow",
         type : "emoji",
         unicode : "\u{1F928}",
         createdAt : new Date(),
@@ -335,7 +335,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "neutral face",
+        name : "neutral face",
         type : "emoji",
         unicode : "\u{1F610}",
         createdAt : new Date(),
@@ -346,7 +346,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "expressionless face",
+        name : "expressionless face",
         type : "emoji",
         unicode : "\u{1F611}",
         createdAt : new Date(),
@@ -357,7 +357,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face without mouth",
+        name : "face without mouth",
         type : "emoji",
         unicode : "\u{1F636}",
         createdAt : new Date(),
@@ -368,7 +368,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "smirking face",
+        name : "smirking face",
         type : "emoji",
         unicode : "\u{1F60F}",
         createdAt : new Date(),
@@ -379,7 +379,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "unamused face",
+        name : "unamused face",
         type : "emoji",
         unicode : "\u{1F612}",
         createdAt : new Date(),
@@ -390,7 +390,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with rolling eyes",
+        name : "face with rolling eyes",
         type : "emoji",
         unicode : "\u{1F644}",
         createdAt : new Date(),
@@ -401,7 +401,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "grimacing face",
+        name : "grimacing face",
         type : "emoji",
         unicode : "\u{1F62C}",
         createdAt : new Date(),
@@ -412,7 +412,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "lying face",
+        name : "lying face",
         type : "emoji",
         unicode : "\u{1F925}",
         createdAt : new Date(),
@@ -423,7 +423,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "relieved face",
+        name : "relieved face",
         type : "emoji",
         unicode : "\u{1F60C}",
         createdAt : new Date(),
@@ -434,7 +434,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "pensive face",
+        name : "pensive face",
         type : "emoji",
         unicode : "\u{1F614}",
         createdAt : new Date(),
@@ -445,7 +445,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "sleepy face",
+        name : "sleepy face",
         type : "emoji",
         unicode : "\u{1F62A}",
         createdAt : new Date(),
@@ -456,7 +456,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "drooling face",
+        name : "drooling face",
         type : "emoji",
         unicode : "\u{1F924}",
         createdAt : new Date(),
@@ -467,7 +467,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "sleeping face",
+        name : "sleeping face",
         type : "emoji",
         unicode : "\u{1F634}",
         createdAt : new Date(),
@@ -478,7 +478,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with medical mask",
+        name : "face with medical mask",
         type : "emoji",
         unicode : "\u{1F637}",
         createdAt : new Date(),
@@ -489,7 +489,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with thermometer",
+        name : "face with thermometer",
         type : "emoji",
         unicode : "\u{1F912}",
         createdAt : new Date(),
@@ -500,7 +500,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with head-bandage",
+        name : "face with head-bandage",
         type : "emoji",
         unicode : "\u{1F915}",
         createdAt : new Date(),
@@ -511,7 +511,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "nauseated face",
+        name : "nauseated face",
         type : "emoji",
         unicode : "\u{1F922}",
         createdAt : new Date(),
@@ -522,7 +522,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face vomiting",
+        name : "face vomiting",
         type : "emoji",
         unicode : "\u{1F92E}",
         createdAt : new Date(),
@@ -533,7 +533,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "sneezing face",
+        name : "sneezing face",
         type : "emoji",
         unicode : "\u{1F927}",
         createdAt : new Date(),
@@ -544,7 +544,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "hot face",
+        name : "hot face",
         type : "emoji",
         unicode : "\u{1F975}",
         createdAt : new Date(),
@@ -555,7 +555,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "cold face",
+        name : "cold face",
         type : "emoji",
         unicode : "\u{1F976}",
         createdAt : new Date(),
@@ -566,7 +566,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "woozy face",
+        name : "woozy face",
         type : "emoji",
         unicode : "\u{1F974}",
         createdAt : new Date(),
@@ -577,7 +577,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "knocked-out face",
+        name : "knocked-out face",
         type : "emoji",
         unicode : "\u{1F635}",
         createdAt : new Date(),
@@ -588,7 +588,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "exploding head",
+        name : "exploding head",
         type : "emoji",
         unicode : "\u{1F92F}",
         createdAt : new Date(),
@@ -599,7 +599,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "cowboy hat face",
+        name : "cowboy hat face",
         type : "emoji",
         unicode : "\u{1F920}",
         createdAt : new Date(),
@@ -610,7 +610,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "partying face",
+        name : "partying face",
         type : "emoji",
         unicode : "\u{1F973}",
         createdAt : new Date(),
@@ -621,7 +621,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "disguised face",
+        name : "disguised face",
         type : "emoji",
         unicode : "\u{1F978}",
         createdAt : new Date(),
@@ -632,7 +632,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "smiling face with sunglasses",
+        name : "smiling face with sunglasses",
         type : "emoji",
         unicode : "\u{1F60E}",
         createdAt : new Date(),
@@ -643,7 +643,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "nerd face",
+        name : "nerd face",
         type : "emoji",
         unicode : "\u{1F913}",
         createdAt : new Date(),
@@ -654,7 +654,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with monocle",
+        name : "face with monocle",
         type : "emoji",
         unicode : "\u{1F9D0}",
         createdAt : new Date(),
@@ -665,7 +665,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "confused face",
+        name : "confused face",
         type : "emoji",
         unicode : "\u{1F615}",
         createdAt : new Date(),
@@ -676,7 +676,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "worried face",
+        name : "worried face",
         type : "emoji",
         unicode : "\u{1F61F}",
         createdAt : new Date(),
@@ -687,7 +687,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "slightly frowning face",
+        name : "slightly frowning face",
         type : "emoji",
         unicode : "\u{1F641}",
         createdAt : new Date(),
@@ -698,7 +698,7 @@ module.exports = {
         status : "active"
       },
       {
-        description : "frowning face",
+        name : "frowning face",
         type : "emoji",
         unicode : "\u{2639}",
         createdAt : new Date(),
@@ -709,7 +709,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with open mouth",
+        name : "face with open mouth",
         type : "emoji",
         unicode : "\u{1F62E}",
         createdAt : new Date(),
@@ -720,7 +720,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "hushed face",
+        name : "hushed face",
         type : "emoji",
         unicode : "\u{1F62F}",
         createdAt : new Date(),
@@ -731,7 +731,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "astonished face",
+        name : "astonished face",
         type : "emoji",
         unicode : "\u{1F632}",
         createdAt : new Date(),
@@ -742,7 +742,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "flushed face",
+        name : "flushed face",
         type : "emoji",
         unicode : "\u{1F633}",
         createdAt : new Date(),
@@ -753,7 +753,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "pleading face",
+        name : "pleading face",
         type : "emoji",
         unicode : "\u{1F97A}",
         createdAt : new Date(),
@@ -764,7 +764,7 @@ module.exports = {
         status : "inactive"
       },  
       {
-        description : "frowning face with open mouth",
+        name : "frowning face with open mouth",
         type : "emoji",
         unicode : "\u{1F626}",
         createdAt : new Date(),
@@ -775,7 +775,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "anguished face",
+        name : "anguished face",
         type : "emoji",
         unicode : "\u{1F627}",
         createdAt : new Date(),
@@ -786,7 +786,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "fearful face",
+        name : "fearful face",
         type : "emoji",
         unicode : "\u{1F628}",
         createdAt : new Date(),
@@ -797,7 +797,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "anxious face with sweat",
+        name : "anxious face with sweat",
         type : "emoji",
         unicode : "\u{1F630}",
         createdAt : new Date(),
@@ -808,7 +808,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "sad but relieved face",
+        name : "sad but relieved face",
         type : "emoji",
         unicode : "\u{1F625}",
         createdAt : new Date(),
@@ -819,7 +819,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "crying face",
+        name : "crying face",
         type : "emoji",
         unicode : "\u{1F622}",
         createdAt : new Date(),
@@ -830,7 +830,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "loudly crying face",
+        name : "loudly crying face",
         type : "emoji",
         unicode : "\u{1F62D}",
         createdAt : new Date(),
@@ -841,7 +841,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face screaming in fear",
+        name : "face screaming in fear",
         type : "emoji",
         unicode : "\u{1F631}",
         createdAt : new Date(),
@@ -852,7 +852,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "confounded face",
+        name : "confounded face",
         type : "emoji",
         unicode : "\u{1F616}",
         createdAt : new Date(),
@@ -863,7 +863,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "persevering face",
+        name : "persevering face",
         type : "emoji",
         unicode : "\u{1F623}",
         createdAt : new Date(),
@@ -874,7 +874,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "disappointed face",
+        name : "disappointed face",
         type : "emoji",
         unicode : "\u{1F61E}",
         createdAt : new Date(),
@@ -885,7 +885,7 @@ module.exports = {
         status : "active"
       },
       {
-        description : "downcast face with sweat",
+        name : "downcast face with sweat",
         type : "emoji",
         unicode : "\u{1F613}",
         createdAt : new Date(),
@@ -896,7 +896,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "weary face",
+        name : "weary face",
         type : "emoji",
         unicode : "\u{1F629}",
         createdAt : new Date(),
@@ -907,7 +907,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "tired face",
+        name : "tired face",
         type : "emoji",
         unicode : "\u{1F62B}",
         createdAt : new Date(),
@@ -918,7 +918,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "yawning face",
+        name : "yawning face",
         type : "emoji",
         unicode : "\u{1F971}",
         createdAt : new Date(),
@@ -929,7 +929,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "face with steam from nose",
+        name : "face with steam from nose",
         type : "emoji",
         unicode : "\u{1F624}",
         createdAt : new Date(),
@@ -940,7 +940,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "pouting face",
+        name : "pouting face",
         type : "emoji",
         unicode : "\u{1F621}",
         createdAt : new Date(),
@@ -951,7 +951,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "waving hand",
+        name : "waving hand",
         type : "gesture",
         unicode : "\u{1F44B}",
         createdAt : new Date(),
@@ -962,7 +962,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "raised back of hand",
+        name : "raised back of hand",
         type : "gesture",
         unicode : "\u{1F91A}",
         createdAt : new Date(),
@@ -973,7 +973,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "hand with fingers splayed",
+        name : "hand with fingers splayed",
         type : "gesture",
         unicode : "\u{1F590}",
         createdAt : new Date(),
@@ -984,7 +984,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "raised hand",
+        name : "raised hand",
         type : "gesture",
         unicode : "\u{270B}",
         createdAt : new Date(),
@@ -995,7 +995,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "vulcan salute",
+        name : "vulcan salute",
         type : "gesture",
         unicode : "\u{1F596}",
         createdAt : new Date(),
@@ -1006,7 +1006,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "OK hand",
+        name : "OK hand",
         type : "gesture",
         unicode : "\u{1F44C}",
         createdAt : new Date(),
@@ -1017,7 +1017,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "pinched fingers",
+        name : "pinched fingers",
         type : "gesture",
         unicode : "\u{1F90C}",
         createdAt : new Date(),
@@ -1028,7 +1028,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "pinching hand",
+        name : "pinching hand",
         type : "gesture",
         unicode : "\u{1F90F}",
         createdAt : new Date(),
@@ -1039,7 +1039,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "victory hand",
+        name : "victory hand",
         type : "gesture",
         unicode : "\u{270C}",
         createdAt : new Date(),
@@ -1050,7 +1050,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "crossed fingers",
+        name : "crossed fingers",
         type : "gesture",
         unicode : "\u{1F91E}",
         createdAt : new Date(),
@@ -1061,7 +1061,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "love-you gesture",
+        name : "love-you gesture",
         type : "gesture",
         unicode : "\u{1F91F}",
         createdAt : new Date(),
@@ -1072,7 +1072,7 @@ module.exports = {
         status : "inactive"
       },	
       {
-        description : "sign of the horns",
+        name : "sign of the horns",
         type : "gesture",
         unicode : "\u{1F918}",
         createdAt : new Date(),
@@ -1083,7 +1083,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "call me hand",
+        name : "call me hand",
         type : "gesture",
         unicode : "\u{1F919}",
         createdAt : new Date(),
@@ -1094,7 +1094,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "backhand index pointing left",
+        name : "backhand index pointing left",
         type : "gesture",
         unicode : "\u{1F448}",
         createdAt : new Date(),
@@ -1105,7 +1105,7 @@ module.exports = {
         status : "inactive"
       },	
       {
-        description : "backhand index pointing right",
+        name : "backhand index pointing right",
         type : "gesture",
         unicode : "\u{1F449}",
         createdAt : new Date(),
@@ -1116,7 +1116,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "backhand index pointing up",
+        name : "backhand index pointing up",
         type : "gesture",
         unicode : "\u{1F446}",
         createdAt : new Date(),
@@ -1127,7 +1127,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "backhand index pointing down",
+        name : "backhand index pointing down",
         type : "gesture",
         unicode : "\u{1F447}",
         createdAt : new Date(),
@@ -1138,7 +1138,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "index pointing up",
+        name : "index pointing up",
         type : "gesture",
         unicode : "\u{261D}",
         createdAt : new Date(),
@@ -1149,7 +1149,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "thumbs up",
+        name : "thumbs up",
         type : "gesture",
         unicode : "\u{1F44D}",
         createdAt : new Date(),
@@ -1160,7 +1160,7 @@ module.exports = {
         status : "active"
       },		
       {
-        description : "thumbs down",
+        name : "thumbs down",
         type : "gesture",
         unicode : "\u{1F44E}",
         createdAt : new Date(),
@@ -1171,7 +1171,7 @@ module.exports = {
         status : "active"
       },
       {
-        description : "raised fist",
+        name : "raised fist",
         type : "gesture",
         unicode : "\u{270A}",
         createdAt : new Date(),
@@ -1182,7 +1182,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "oncoming fist",
+        name : "oncoming fist",
         type : "gesture",
         unicode : "\u{1F44A}",
         createdAt : new Date(),
@@ -1193,7 +1193,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "left-facing fist",
+        name : "left-facing fist",
         type : "gesture",
         unicode : "\u{1F91B}",
         createdAt : new Date(),
@@ -1204,7 +1204,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "right-facing fist",
+        name : "right-facing fist",
         type : "gesture",
         unicode : "\u{1F91C}",
         createdAt : new Date(),
@@ -1215,7 +1215,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "clapping hands",
+        name : "clapping hands",
         type : "gesture",
         unicode : "\u{1F44F}",
         createdAt : new Date(),
@@ -1226,7 +1226,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "raising hands",
+        name : "raising hands",
         type : "gesture",
         unicode : "\u{1F64C}",
         createdAt : new Date(),
@@ -1237,7 +1237,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "open hands",
+        name : "open hands",
         type : "gesture",
         unicode : "\u{1F450}",
         createdAt : new Date(),
@@ -1248,7 +1248,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "palms up together",
+        name : "palms up together",
         type : "gesture",
         unicode : "\u{1F61F}",
         createdAt : new Date(),
@@ -1259,7 +1259,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "handshake",
+        name : "handshake",
         type : "gesture",
         unicode : "\u{1F91D}",
         createdAt : new Date(),
@@ -1270,7 +1270,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "folded hands",
+        name : "folded hands",
         type : "gesture",
         unicode : "\u{1F64F}",
         createdAt : new Date(),
@@ -1281,7 +1281,7 @@ module.exports = {
         status : "inactive"
       },
       {
-        description : "writing hand",
+        name : "writing hand",
         type : "gesture",
         unicode : "\u{270D}",
         createdAt : new Date(),
@@ -1294,8 +1294,8 @@ module.exports = {
     ];
 
     
-    await db.collection('unicodes').insertMany(unicodeArray);
-    await db.collection('unicodes').createIndex({ unicode : 1 });    
+    await db.collection('mediaFiles').insertMany(unicodeArray);
+    await db.collection('unicode').createIndex({ unicode : 1 });    
   },
 
   async down(db) {

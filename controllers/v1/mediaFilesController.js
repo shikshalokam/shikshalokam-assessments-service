@@ -264,5 +264,114 @@ module.exports = class MediaFiles extends Abstract {
     })
 }
 
+   
+   /**
+     * @api {post} /assessment/api/v1/mediaFiles/getAllGestures Get All Gestures
+     * @apiVersion 1.0.0
+     * @apiName Get All Gestures
+     * @apiGroup MediaFiles
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
+     * @apiSampleRequest /assessment/api/v1/mediaFiles/getAllGestures
+     * @apiParamExample {json} Request-Body:
+     * @apiParamExample {json} Response:
+     * {
+     *  "status": 200,
+     *  "message": "Gesture fetched successfully",
+     *  "result" : [{
+     *      "name": "writing hand",
+            "type": "gesture",
+            "unicode": "✍",
+            "status": "active"
+         }]
+     * }
+     * @apiUse successBody
+     * @apiUse errorBody
+     */
+     
+    /**
+    * Get All Gestures.
+    * @method
+    * @name getAllGestures
+    * @param {Object} req -request Data.
+    * @returns {JSON} - gesture unicode.
+    */
+
+   getAllGestures(req) {
+    return new Promise(async (resolve, reject) => {
+
+        try {
+
+            let gestureDocuments = await mediaFilesHelper.getGesture();
+
+            return resolve({
+                message: gestureDocuments.message,
+                result: gestureDocuments.data
+            });
+
+        } catch (error) {
+
+            return reject({
+                status: error.status || httpStatusCode.internal_server_error.status,
+                message: error.message || httpStatusCode.internal_server_error.message,
+                errorObject: error
+            });
+        }
+    })
+}
+
+       /**
+     * @api {post} /assessment/api/v1/mediaFiles/getAllEmojis Get All Emojis
+     * @apiVersion 1.0.0
+     * @apiName Get All Emojis
+     * @apiGroup MediaFiles
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
+     * @apiSampleRequest /assessment/api/v1/mediaFiles/getAllEmojis
+     * @apiParamExample {json} Request-Body:
+     * @apiParamExample {json} Response:
+     * {
+     *  "status": 200,
+     *  "message": "Emoji fetched successfully",
+      *  "result" : [{
+     *     "name": "astonished face",
+     *     "type": "emoji",
+     *     "unicode": "😲",
+     *     "status": "active"
+     *   }] 
+     * }
+     * @apiUse successBody
+     * @apiUse errorBody
+     */
+     
+    /**
+    * Get All Emojis.
+    * @method
+    * @name getAllEmojis
+    * @param {Object} req -request Data.
+    * @returns {JSON} - emoji unicode.
+    */
+
+   getAllEmojis(req) {
+    return new Promise(async (resolve, reject) => {
+
+        try {
+
+            let emojiDocuments = await mediaFilesHelper.getGesture();
+
+            return resolve({
+                message: emojiDocuments.message,
+                result: emojiDocuments.data
+            });
+
+        } catch (error) {
+
+            return reject({
+                status: error.status || httpStatusCode.internal_server_error.status,
+                message: error.message || httpStatusCode.internal_server_error.message,
+                errorObject: error
+            });
+        }
+    })
+}
+
 
 }
