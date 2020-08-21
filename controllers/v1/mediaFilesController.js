@@ -49,6 +49,8 @@ module.exports = class MediaFiles extends Abstract {
     * @method
     * @name createEmoji
     * @param {Object} req -request Data.
+    * @param {String} req.body.name - emoji name
+    * @param {String} req.body.unicode - unicode of emoji
     * @returns {String} - message .
     */
 
@@ -106,6 +108,8 @@ module.exports = class MediaFiles extends Abstract {
     * @method
     * @name createGesture
     * @param {Object} req -request Data.
+    * @param {String} req.body.name - gesture name
+    * @param {String} req.body.unicode - unicode of gesture
     * @returns {String} - message .
     */
 
@@ -168,6 +172,7 @@ module.exports = class MediaFiles extends Abstract {
     * @method
     * @name getGesture
     * @param {Object} req -request Data.
+    * @param {String} req.body.name - gesture name
     * @returns {JSON} - gesture unicode.
     */
 
@@ -229,6 +234,7 @@ module.exports = class MediaFiles extends Abstract {
     * @method
     * @name getEmoji
     * @param {Object} req -request Data.
+    * @param {String} req.body.name - emoji name
     * @returns {JSON} - emoji unicode.
     */
 

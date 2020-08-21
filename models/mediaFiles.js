@@ -4,7 +4,7 @@ module.exports = {
         name: String,
         type: String,
         unicode: {
-            type: Number,
+            type: String,
             index: true,
             unique: true
           },
