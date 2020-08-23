@@ -236,5 +236,6 @@ module.exports = {
 "UNICODE_REQUIRED_CHECK" : "Unicode is required",
 "EMOJI_NOT_FOUND" : "Emoji not found",
 "GESTURE_NOT_FOUND" : "Gesture not found",
-"LINK_IS_EXPIRED" : "Link is expired"
+"LINK_IS_EXPIRED" : "Link is expired",
+"LINK_REQUIRED_CHECK" : "Link is required"
 }

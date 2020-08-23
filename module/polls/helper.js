@@ -7,9 +7,8 @@
 
 // Dependencies
 const formsHelper = require(MODULES_BASE_PATH + "/forms/helper");
-const uuid = require('uuid/v1');
-const ObjectID = require('mongodb').ObjectID;
 const pollLinkBaseUrl = process.env.POLL_LINK_BASE_URL ? process.env.POLL_LINK_BASE_URL : "samiksha://shikshalokam.org/take-poll/";
+const md5 = require("md5");
 
 /**
     * PollsHelper
@@ -158,10 +157,10 @@ module.exports = class PollsHelper {
 
                 let pollDocument = {
                     name: pollData.name,
-                    creator: userId,
+                    creator: pollData.creator,
+                    createdBy: userId,
                     startDate: new Date(),
                     endDate: new Date(new Date().setDate(new Date().getDate() + pollData.endDate)),
-                    link: uuid(),
                     isDeleted: false,
                     status: "active"
                 }
@@ -170,7 +169,7 @@ module.exports = class PollsHelper {
                 pollData.questions.forEach ( question => {
                     
                     let options = [];
-                    question.qid = new ObjectID();
+                    question.qid = gen.utils.uuidGenerate();
                     
                     if (question.options.length > 0) {
                         let i = 1;
@@ -195,11 +194,22 @@ module.exports = class PollsHelper {
                 
                 let createPollResult = await database.models.polls.create(pollDocument)
 
+                let uuid = gen.utils.uuidGenerate();
+                let link = md5(uuid + "###" + createPollResult._id);
+
+                await database.models.polls.updateOne
+                (
+                    { _id : createPollResult._id },
+                    {
+                        $set : { link : link}
+                    }
+                )
+
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.POLL_CREATED,
                     data: {
-                        link : pollLinkBaseUrl + pollDocument.link + "/" + createPollResult._id
+                        link : pollLinkBaseUrl + link
                     }
                 });
                 
@@ -232,7 +242,7 @@ module.exports = class PollsHelper {
                 let pollsList = await this.pollDocuments
                 (
                     {
-                        creator: userId
+                        createdBy: userId
                     },
                     [
                         "name"
@@ -305,12 +315,12 @@ module.exports = class PollsHelper {
     /**
      * Get the poll questions.
      * @method
-     * @name getpollQuestions
+     * @name getPollQuestions
      * @param {String} pollId - pollId 
      * @returns {JSON} - poll questions and options.
      */
 
-    static getpollQuestions(pollId= "") {
+    static getPollQuestions(pollId= "") {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -324,41 +334,18 @@ module.exports = class PollsHelper {
                       _id: pollId
                     },
                     [    
-                        "endDate",
-                        "questions",
-                        "status"
+                        "questions"
                     ]
                 )
 
                 if (!pollQuestions.length) {
                     throw new Error(messageConstants.apiResponses.POLL_NOT_FOUND)
                 }
-                
-                let result = {
-                    questions : pollQuestions[0].questions
-                };
-                
-                if (new Date() > new Date(pollQuestions[0].endDate)) {
-
-                    result.active = false;
-
-                    if (pollQuestions[0].status == "active") {
-                        await database.models.polls.updateOne
-                        (
-                            { _id: pollId },
-                            {
-                                $set: {
-                                    status: "inactive"
-                                }
-                            }
-                        )
-                    }
-                }
-
+               
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.POLL_QUESTIONS_FETCHED,
-                    data: result
+                    data: pollQuestions[0].questions
                 });
 
             } catch (error) {
@@ -370,4 +357,154 @@ module.exports = class PollsHelper {
             }
         });
     }
+
+
+     /**
+     * Get the poll questions by link.
+     * @method
+     * @name getPollQuestionsByLink
+     * @param {String} link - link 
+     * @returns {JSON} - poll questions and options.
+     */
+
+    static getPollQuestionsByLink(link= "") {
+        return new Promise(async (resolve, reject) => {
+            try {
+
+                if (link == "") {
+                    throw new Error(messageConstants.apiResponses.LINK_REQUIRED_CHECK)
+                }
+
+                let pollQuestions = await this.pollDocuments
+                (
+                    {
+                      link: link
+                    },
+                    [    
+                        "questions"
+                    ]
+                )
+
+                if (!pollQuestions.length) {
+                    throw new Error(messageConstants.apiResponses.POLL_NOT_FOUND)
+                }
+
+                return resolve({
+                    success: true,
+                    message: messageConstants.apiResponses.POLL_QUESTIONS_FETCHED,
+                    data: pollQuestions[0].questions
+                });
+
+            } catch (error) {
+                return resolve({
+                    success: false,
+                    message: error.message,
+                    data: false
+                });
+            }
+        });
+    }
+
+
+     /**
+    * Poll report.
+    * @method
+    * @name report
+    * @param {String} pollId - pollId 
+    * @returns {Object} - Poll report data
+    */
+
+   static report(pollId = "") {
+    return new Promise(async (resolve, reject) => {
+        try {
+
+            if (pollId == "") {
+                throw new Error (messageConstants.apiResponses.POLL_ID_REQUIRED_CHECK)
+            }
+
+            let pollDocument = await this.pollDocuments
+            (
+                { _id : pollId },
+                [
+                    "result",
+                    "numberOfResponses"
+                ]
+            )
+
+            if (!pollDocument.length) {
+                throw new Error(messageConstants.apiResponses.POLL_NOT_FOUND)
+            }
+            
+            let reports = [];
+
+            let report = {
+                chart: {
+                    type: 'bar'
+                },
+                title: {
+                    text: ''
+                },
+                accessibility: {
+                    announceNewData: {
+                        enabled: false
+                    }
+                },
+                xAxis: {
+                    type: 'category'
+                },
+                legend: {
+                    enabled: false
+                },
+                credits: {
+                    enabled: false
+                },
+                plotOptions: {
+                    series: {
+                        borderWidth: 0,
+                        dataLabels: {
+                            enabled: true,
+                            format: '{point.y:.1f}%'
+                        }
+                    }
+                },
+                series: [
+                    {
+                        colorByPoint: true,
+                        data: []
+                    }
+                ]
+            }
+            
+            let result = pollDocument[0].result;
+
+            Object.keys(result).forEach( singleQuestion => {
+
+                report.title.text = singleQuestion.question;
+
+                for (let answer in result[singleQuestion].responses) {
+                    console.log(answer);
+                    report.series[0].data.push ({
+                        name: answer,
+                        y: (result[singleQuestion].responses[answer]/pollDocument[0].numberOfResponses) * 100
+                    })   
+                }
+
+                reports.push(report);
+            })
+
+            return resolve({
+                success: true,
+                message: messageConstants.apiResponses.POLL_REPORT_CREATED,
+                data : reports
+            });
+
+        } catch (error) {
+            return resolve({
+                success: false,
+                message: error.message,
+                data: false
+            });
+        }
+    });
+}
 }

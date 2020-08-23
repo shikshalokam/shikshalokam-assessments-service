@@ -1,13 +1,13 @@
 module.exports = {
     name: "mediaFiles",
     schema: {
-        name: String,
+        name: {
+          type: String,
+          required: true,
+          index: true
+        },
         type: String,
-        unicode: {
-            type: String,
-            index: true,
-            unique: true
-          },
+        unicode: String,
         status: String,
         createdBy: String,
         updatedBy: String,

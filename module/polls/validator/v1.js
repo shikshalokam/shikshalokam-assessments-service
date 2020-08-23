@@ -11,7 +11,15 @@ module.exports = (req) => {
             .isMongoId().withMessage("Invalid poll id");
         },
 
-        getpollQuestions: function () {
+        getPollQuestions: function () {
+            req.checkParams('_id').exists().withMessage("required poll id")
+            .isMongoId().withMessage("Invalid poll id");
+        },
+        getPollQuestionsByLink: function () {
+            req.checkParams('_id').exists().withMessage("required link")
+        },
+        
+        report: function () {
             req.checkParams('_id').exists().withMessage("required poll id")
             .isMongoId().withMessage("Invalid poll id");
         }

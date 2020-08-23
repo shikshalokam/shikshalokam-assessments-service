@@ -150,7 +150,7 @@ module.exports = class MediaFiles extends Abstract {
      * @apiSampleRequest /assessment/api/v1/mediaFiles/getGesture
      * @apiParamExample {json} Request-Body:
      * {
-     *  "name": "writing hand"
+     *  "name": ["writing hand"]
      * }
      * @apiParamExample {json} Response:
      * {
@@ -212,7 +212,7 @@ module.exports = class MediaFiles extends Abstract {
      * @apiSampleRequest /assessment/api/v1/mediaFiles/getEmoji
      * @apiParamExample {json} Request-Body:
      * {
-     *  "name": "astonished face"
+     *  "name": ["astonished face"]
      * }
      * @apiParamExample {json} Response:
       * {

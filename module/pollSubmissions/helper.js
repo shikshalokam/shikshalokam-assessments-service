@@ -107,10 +107,12 @@ module.exports = class PollSubmissionsHelper {
                         _id: pollId
                     },
                     [
-                        "name"
+                        "name",
+                        "numberOfResponses",
+                        "result"
                     ]
                 )
-
+                 
                  pollSubmissionDocument = {
                     pollName: pollDocument[0].name,
                     pollId: pollId,
@@ -122,6 +124,44 @@ module.exports = class PollSubmissionsHelper {
                 }
 
                 await database.models.pollSubmissions.create(pollSubmissionDocument);
+
+                let result = pollDocument[0]["result"] ? pollDocument[0]["result"] : {}
+                
+                Object.values(responseObject).forEach(singleResponse => {
+                    if (!result[singleResponse.qid]) {
+                        result[singleResponse.qid] = {
+                            question: singleResponse.question,
+                            responses: {}
+                        }
+                    }
+                
+                    if (Array.isArray(singleResponse.label)) {
+                        singleResponse.label.forEach(label => {
+                            if (!result[singleResponse.qid].responses[label]) {
+                                result[singleResponse.qid].responses[label] = 1;
+                            }
+                            else {
+                                result[singleResponse.qid].responses[label] = result[singleResponse.qid].responses[label] + 1;
+                            }
+                        })
+                    }
+                    else {
+                        if (!result[singleResponse.qid].responses[singleResponse.label]) {
+                            result[singleResponse.qid].responses[singleResponse.label] = 1;
+                        }
+                        else {
+                            result[singleResponse.qid].responses[singleResponse.label] = result[singleResponse.qid].responses[singleResponse.label] + 1;
+                        }
+                    }
+                })
+
+                await database.models.polls.updateOne
+                 (
+                     { _id: pollId },
+                     { $set : { result: result },
+                       $inc: { numberOfResponses : 1 }
+                     }
+                 )
 
                 return resolve({
                     success: true,
@@ -138,128 +178,4 @@ module.exports = class PollSubmissionsHelper {
             }
         });
     }
-
- 
-   /**
-    * Poll report.
-    * @method
-    * @name report
-    * @param {String} pollId - pollId 
-    * @returns {Object} - Poll report data
-    */
-
-   static report(pollId = "") {
-    return new Promise(async (resolve, reject) => {
-        try {
-
-            if (pollId == "") {
-                throw new Error (messageConstants.apiResponses.POLL_ID_REQUIRED_CHECK)
-            }
-
-            let pollSubmissionDocuments = await this.pollSubmissionDocuments
-            (
-                { pollId : pollId },
-                [
-                    "responses"
-                ]
-            )
-
-            if (!pollSubmissionDocuments.length) {
-                throw new Error(messageConstants.apiResponses.POLL_SUBMISSION_DOCUMENTS_NOT_FOUND)
-            }
-            
-            let questionArray = [];
-            
-            pollSubmissionDocuments.forEach ( singleDocument => {
-                questionArray = questionArray.concat(Object.values(singleDocument.responses));
-            })
-            
-            let groupByQuestionId = _.groupBy(questionArray, 'qid');
-            let questionIds = Object.keys(groupByQuestionId);
-            let reports = [];
-
-            let report = {
-                chart: {
-                    type: 'bar'
-                },
-                title: {
-                    text: ''
-                },
-                accessibility: {
-                    announceNewData: {
-                        enabled: false
-                    }
-                },
-                xAxis: {
-                    type: 'category'
-                },
-                legend: {
-                    enabled: false
-                },
-                credits: {
-                    enabled: false
-                },
-                plotOptions: {
-                    series: {
-                        borderWidth: 0,
-                        dataLabels: {
-                            enabled: true,
-                            format: '{point.y:.1f}%'
-                        }
-                    }
-                },
-                series: [
-                    {
-                        colorByPoint: true,
-                        data: []
-                    }
-                ]
-            }
-
-            questionIds.forEach ( questionId => {
-                let answerArray = [];
-                let labelArray = [];
-                let dataArray = [];
-                let totalSubmissions = groupByQuestionId[questionId].length;
-
-                groupByQuestionId[questionId].forEach ( singleQuestion => {
-                    report.title.text = singleQuestion.question;
-                    if (Array.isArray(singleQuestion.label)) {
-                        answerArray = answerArray.concat(singleQuestion.label);
-                    }
-                    else {
-                        answerArray.push(singleQuestion.label);
-                    }
-                })
-
-                answerArray = answerArray.reduce((prev, curr) => (prev[curr] = ++prev[curr] || 1, prev), {})
-
-                for (let answer in answerArray) {
-                    labelArray.push(answer)
-                    dataArray.push({
-                        name: answer,
-                        y: (answerArray[answer]/totalSubmissions) * 100
-                    })
-                }
-                
-                report.series[0].data = dataArray;
-                reports.push(report);
-            })
-
-            return resolve({
-                success: true,
-                message: messageConstants.apiResponses.POLL_REPORT_CREATED,
-                data : reports
-            });
-
-        } catch (error) {
-            return resolve({
-                success: false,
-                message: error.message,
-                data: false
-            });
-        }
-    });
-}
-   
 }

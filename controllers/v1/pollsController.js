@@ -188,6 +188,7 @@ module.exports = class Polls extends Abstract {
      * @apiParamExample {json} Request-Body:
      * {
      *   "name": "Feedback",
+     *   "creator": "deepa",
          "questions": [{
              "question": "Which app do you use the most ?",
              "responseType": "radio",
@@ -349,7 +350,7 @@ module.exports = class Polls extends Abstract {
 
    
    /**
-     * @api {get} /assessment/api/v1/polls/getpollQuestions/:pollId Get the poll questions
+     * @api {get} /assessment/api/v1/polls/getPollQuestions/:pollId Get the poll questions
      * @apiVersion 1.0.0
      * @apiName Get the poll questions
      * @apiGroup Polls
@@ -375,24 +376,129 @@ module.exports = class Polls extends Abstract {
     /**
     * Get the poll questions
     * @method
-    * @name getpollQuestions
+    * @name getPollQuestions
     * @param {Object} req -request Data.
     * @param {String} req.params._id - pollId.  
     * @returns {JSON} - poll questions and options
     */
 
-   getpollQuestions(req) {
+   getPollQuestions(req) {
     return new Promise(async (resolve, reject) => {
 
         try {
 
-            let pollQuestions = await pollsHelper.getpollQuestions(
+            let pollQuestions = await pollsHelper.getPollQuestions(
                 req.params._id
             );
 
             return resolve({
                   message: pollQuestions.message,
                   result: pollQuestions.data
+            });
+
+        } catch (error) {
+
+            return reject({
+                status: error.status || httpStatusCode.internal_server_error.status,
+                message: error.message || httpStatusCode.internal_server_error.message,
+                errorObject: error
+            });
+        }
+    })
+}
+
+
+    /**
+     * @api {get} /assessment/api/v1/polls/getPollQuestionsByLink/:link Get the poll questions by link
+     * @apiVersion 1.0.0
+     * @apiName Get the poll questions by link
+     * @apiGroup Polls
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
+     * @apiSampleRequest /assessment/api/v1/polls/getpollQuestionsByLink/392f95246771664a81335f1be7d109f3
+     * @apiParamExample {json} Response:
+     * {
+     *  "status": 200,
+     *  "message": "Poll questions fetched successfully",
+     *  "result": [{
+            "qid": "5e98fa069f664f7e1ae7498c",
+            "question": "Which app do you use the most?",
+            "responseType": "radio",
+            "options": [{ "value": "","label":"samiksha"},
+                         { "value": "","label":"unnati"},
+                         { "value": "","label":"bodh"}] 
+     *     }]
+     * }
+     * @apiUse successBody
+     * @apiUse errorBody
+     */
+     
+    /**
+    * Get the poll questions by link
+    * @method
+    * @name getPollQuestionsByLink
+    * @param {Object} req -request Data.
+    * @param {String} req.params._id - link.  
+    * @returns {JSON} - poll questions and options
+    */
+
+   getPollQuestionsByLink(req) {
+    return new Promise(async (resolve, reject) => {
+
+        try {
+
+            let pollQuestions = await pollsHelper.getPollQuestionsByLink(
+                req.params._id
+            );
+
+            return resolve({
+                  message: pollQuestions.message,
+                  result: pollQuestions.data
+            });
+
+        } catch (error) {
+
+            return reject({
+                status: error.status || httpStatusCode.internal_server_error.status,
+                message: error.message || httpStatusCode.internal_server_error.message,
+                errorObject: error
+            });
+        }
+    })
+}
+
+   
+    /**
+     * @api {get} /assessment/api/v1/polls/report/:pollId Poll Report
+     * @apiVersion 1.0.0
+     * @apiName Poll Report
+     * @apiGroup polls
+     * @apiHeader {String} X-authenticated-user-token Authenticity token
+     * @apiSampleRequest /assessment/api/v1/polls/report/5f2bcc04456a2a770c4a5f3b
+     * @apiUse successBody
+     * @apiUse errorBody
+     */
+     
+    /**
+    * Poll Report
+    * @method
+    * @name report
+    * @param {Object} req - request Data. 
+    * @param {String} req.params._id - pollId
+    * @returns {JSON} - poll report data
+    */
+
+   report(req) {
+    return new Promise(async (resolve, reject) => {
+
+        try {
+
+            let pollReport = await pollsHelper.report(
+                req.params._id
+            );
+
+            return resolve({
+                message: pollReport.message,
+                result: pollReport.data
             });
 
         } catch (error) {

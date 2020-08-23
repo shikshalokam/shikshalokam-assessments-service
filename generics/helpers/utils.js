@@ -1,3 +1,5 @@
+const uuid = require('uuid/v1');
+
 function camelCaseToTitleCase(in_camelCaseString) {
   var result = in_camelCaseString // "ToGetYourGEDInTimeASongAboutThe26ABCsIsOfTheEssenceButAPersonalIDCardForUser456InRoom26AContainingABC26TimesIsNotAsEasyAs123ForC3POOrR2D2Or2R2D"
     .replace(/([a-z])([A-Z][a-z])/g, "$1 $2") // "To Get YourGEDIn TimeASong About The26ABCs IsOf The Essence ButAPersonalIDCard For User456In Room26AContainingABC26Times IsNot AsEasy As123ForC3POOrR2D2Or2R2D"
@@ -210,6 +212,17 @@ function isValidMongoId(id) {
   return ObjectId.isValid(id) && new ObjectId(id).toString() === id;
 }
 
+/**
+  * generate uuid
+  * @function
+  * @name uuidGenerate
+  * @returns {String} returns uuid.  
+*/
+
+function  uuidGenerate() {
+  return  uuid();
+}
+
 module.exports = {
   camelCaseToTitleCase : camelCaseToTitleCase,
   lowerCase : lowerCase,
@@ -227,5 +240,6 @@ module.exports = {
   checkIfEnvDataExistsOrNot : checkIfEnvDataExistsOrNot,
   fetchAssessorsLeadAssessorRole : fetchAssessorsLeadAssessorRole,
   epochTime : epochTime,
-  isValidMongoId : isValidMongoId
+  isValidMongoId : isValidMongoId,
+  uuidGenerate : uuidGenerate
 };
