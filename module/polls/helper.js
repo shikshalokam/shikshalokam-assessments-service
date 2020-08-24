@@ -8,7 +8,7 @@
 // Dependencies
 const formsHelper = require(MODULES_BASE_PATH + "/forms/helper");
 const pollLinkBaseUrl = process.env.POLL_LINK_BASE_URL ? process.env.POLL_LINK_BASE_URL : "samiksha://shikshalokam.org/take-poll/";
-const md5 = require("md5");
+const mediaFilesHelper = require(MODULES_BASE_PATH + "/mediaFiles/helper");
 
 /**
     * PollsHelper
@@ -93,12 +93,12 @@ module.exports = class PollsHelper {
                 pollCreationForm = [...pollCreationForm[0].value,
                                     ...pollCreationForm[1].value]
                 
-                let unicodes = await database.models.mediaFiles.find
+                let unicodes = await mediaFilesHelper.mediaFileDocuments
                 ( 
                     {
                         status: "active"
                     }
-                ).lean();
+                )
 
                 let emojis = [];
                 let gestures = [];
@@ -161,6 +161,7 @@ module.exports = class PollsHelper {
                     createdBy: userId,
                     startDate: new Date(),
                     endDate: new Date(new Date().setDate(new Date().getDate() + pollData.endDate)),
+                    metaInformation: pollData.metaInformation,
                     isDeleted: false,
                     status: "active"
                 }
@@ -169,7 +170,7 @@ module.exports = class PollsHelper {
                 pollData.questions.forEach ( question => {
                     
                     let options = [];
-                    question.qid = gen.utils.uuidGenerate();
+                    question.qid = gen.utils.generateUUId();
                     
                     if (question.options.length > 0) {
                         let i = 1;
@@ -194,8 +195,7 @@ module.exports = class PollsHelper {
                 
                 let createPollResult = await database.models.polls.create(pollDocument)
 
-                let uuid = gen.utils.uuidGenerate();
-                let link = md5(uuid + "###" + createPollResult._id);
+                let link = await gen.utils.md5Hash(userId + "###" + createPollResult._id);
 
                 await database.models.polls.updateOne
                 (
@@ -523,4 +523,48 @@ module.exports = class PollsHelper {
         }
     });
 }
+
+    /**
+    * Update poll document.
+    * @method
+    * @name updatePollDocument
+    * @param {String} pollId - pollId
+    * @param {Array} updateObject - fields to update
+    * @returns {String} - message.
+    */
+
+   static updatePollDocument(pollId= "", updateObject= {}) {
+    return new Promise(async (resolve, reject) => {
+        try {
+
+            if (pollId == "") {
+                throw new Error(messageConstants.apiResponses.POLL_ID_REQUIRED_CHECK)
+            }
+
+            if (Object.keys(updateObject).length == 0) {
+                throw new Error (messageConstants.apiResponses.UPDATE_OBJECT_REQUIRED)
+            }
+
+            await database.models.polls.updateOne
+            (
+                { _id : pollId},
+                updateObject
+            )
+
+            return resolve({
+                success: true,
+                message: messageConstants.apiResponses.POLL_UPDATED,
+                data: true
+            });
+
+        } catch (error) {
+            return resolve({
+                success: false,
+                message: error.message,
+                data: false
+            });
+        }
+    });
+}
+
 }

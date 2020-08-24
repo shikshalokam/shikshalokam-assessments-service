@@ -237,5 +237,7 @@ module.exports = {
 "EMOJI_NOT_FOUND" : "Emoji not found",
 "GESTURE_NOT_FOUND" : "Gesture not found",
 "LINK_IS_EXPIRED" : "Link is expired",
-"LINK_REQUIRED_CHECK" : "Link is required"
+"LINK_REQUIRED_CHECK" : "Link is required",
+"POLL_UPDATED" : "Poll document updated successfully",
+"UPDATE_OBJECT_REQUIRED" : "UpdateObject required"
 }

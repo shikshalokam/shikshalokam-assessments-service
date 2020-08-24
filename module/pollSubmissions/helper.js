@@ -91,16 +91,15 @@ module.exports = class PollSubmissionsHelper {
 
                 let pollSubmissionDocument = await this.pollSubmissionDocuments
                 (
-                   {
-                       userId: userId,
-                       pollId: pollId
-                   }
+                    { userId: { $exists: true } ,
+                      pollId : { $exists: true } }
+                   
                 )
-
+                
                 if (pollSubmissionDocument.length > 0) {
                     throw new Error(messageConstants.apiResponses.MULTIPLE_SUBMISSIONS_NOT_ALLOWED)
                 }
-
+                
                 let pollDocument = await pollsHelper.pollDocuments
                 (
                     {
@@ -154,15 +153,14 @@ module.exports = class PollSubmissionsHelper {
                         }
                     }
                 })
+                  
+                let updateQuery = { 
+                                  $set: { result: result },
+                                  $inc: { numberOfResponses : 1 }
+                                }
 
-                await database.models.polls.updateOne
-                 (
-                     { _id: pollId },
-                     { $set : { result: result },
-                       $inc: { numberOfResponses : 1 }
-                     }
-                 )
-
+                await pollsHelper.updatePollDocument(pollId, updateQuery)
+               
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.POLL_SUBMITTED,

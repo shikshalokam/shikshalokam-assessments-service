@@ -8,21 +8,31 @@ module.exports = {
         },
         type: {
           type: String,
-          required: true
+          required: true,
+          index: true
         },
         unicode: {
           type: String,
-          required: true
+          required: true,
+          index: true
         },
         status: {
            type: String,
-           required: true
+           required: true,
+           index: true
         },
-        createdBy: String,
-        updatedBy: String,
+        createdBy: {
+          type: String,
+          required: true
+        },
+        updatedBy: {
+          type: String,
+          required: true
+        },
         isDeleted: {
             type: Boolean,
-            default: false
+            default: false,
+            required: true
         }
     }
 }

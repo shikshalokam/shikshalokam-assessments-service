@@ -196,7 +196,8 @@ module.exports = class Polls extends Abstract {
                          { "value": "","label":"unnati"},
                          { "value": "","label":"bodh"}] 
          }],
-          "endDate" : 2
+          "endDate": 2,
+          "metaInformation": {}
      * }
      * @apiParamExample {json} Response:
      * { 

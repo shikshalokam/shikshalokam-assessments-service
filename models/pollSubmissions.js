@@ -1,12 +1,22 @@
 module.exports = {
     name: "pollSubmissions",
     schema: {
-      pollName: String,
-      responses: Array,
-      submittedAt: Date,
+      pollName: {
+        type: String,
+        required: true
+      },
+      responses: {
+        type: Array,
+        required: true
+      },
+      submittedAt: {
+        type: Date,
+        required: true
+      },
       pollId: {
         type: "ObjectId",
         index: true,
+        required: true
       },
       userId: {
         type: String,
@@ -15,9 +25,14 @@ module.exports = {
       },
       isDeleted: {
         type: Boolean,
-        default: false
+        default: false,
+        required: true
+
       },
-      status: String
+      status: {
+        type: String,
+        required: true
+      }
     }
     
 };
