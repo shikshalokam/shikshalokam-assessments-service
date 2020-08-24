@@ -203,7 +203,7 @@ module.exports = class Polls extends Abstract {
      *  "status": 200,
      *  "message": "Poll created successfully",
      *  "result": {
-     *      "link": "samiksha://shikshalokam.org/take-poll/4f0f10c0-e2ca-11ea-825b-d958912b038c/5f3e46f03b1fd32ceab97099"
+     *      "link": "samiksha://shikshalokam.org/take-poll/52ddd7e3d6d92dfab1541ba3d3e40c53"
      *   }
      * }
      * @apiUse successBody
@@ -474,6 +474,53 @@ module.exports = class Polls extends Abstract {
      * @apiGroup polls
      * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiSampleRequest /assessment/api/v1/polls/report/5f2bcc04456a2a770c4a5f3b
+     * @apiParamExample {json} Response:
+     * {
+       "message": "Poll report created successfully",
+       "status": 200,
+       "result": [
+        {
+            "chart": {
+                "type": "bar"
+            },
+            "title": {},
+            "accessibility": {
+                "announceNewData": {
+                    "enabled": false
+                }
+            },
+            "xAxis": {
+                "type": "category"
+            },
+            "legend": {
+                "enabled": false
+            },
+            "credits": {
+                "enabled": false
+            },
+            "plotOptions": {
+                "series": {
+                    "borderWidth": 0,
+                    "dataLabels": {
+                        "enabled": true,
+                        "format": "{point.y:.1f}%"
+                    }
+                }
+            },
+            "series": [
+                {
+                    "colorByPoint": true,
+                    "data": [
+                        {
+                            "name": "Samiksha",
+                            "y": 100
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
      * @apiUse successBody
      * @apiUse errorBody
      */
