@@ -32,8 +32,8 @@ module.exports = class PollSubmissions extends Abstract {
      * @apiSampleRequest /assessment/api/v1/pollSubmissions/make/5b98fa069f664f7e1ae7498c
      * @apiParamExample {json} Request-Body:
      * {
-     * "5d77fa069f664f7e1ae7489b" : {
-         "qid": "5d77fa069f664f7e1ae7489b",
+     * "0c59eb10-e5cc-11ea-bd85-039b643a3785" : {
+         "qid": "0c59eb10-e5cc-11ea-bd85-039b643a3785",
          "question": "Which app do you use the most?",
          "responseType": "radio",
          "value": "R1",

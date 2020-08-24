@@ -361,7 +361,7 @@ module.exports = class Polls extends Abstract {
      *  "status": 200,
      *  "message": "Poll questions fetched successfully",
      *  "result": [{
-            "qid": "5e98fa069f664f7e1ae7498c",
+            "qid": "0c59eb10-e5cc-11ea-bd85-039b643a3785",
             "question": "Which app do you use the most?",
             "responseType": "radio",
             "options": [{ "value": "","label":"samiksha"},
@@ -420,7 +420,7 @@ module.exports = class Polls extends Abstract {
      *  "status": 200,
      *  "message": "Poll questions fetched successfully",
      *  "result": [{
-            "qid": "5e98fa069f664f7e1ae7498c",
+            "qid": "0c59eb10-e5cc-11ea-bd85-039b643a3785",
             "question": "Which app do you use the most?",
             "responseType": "radio",
             "options": [{ "value": "","label":"samiksha"},

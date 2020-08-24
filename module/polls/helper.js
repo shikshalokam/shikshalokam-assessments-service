@@ -381,13 +381,28 @@ module.exports = class PollsHelper {
                       link: link
                     },
                     [    
-                        "questions"
+                        "questions",
+                        "status",
+                        "endDate"
                     ]
                 )
-
+                
                 if (!pollQuestions.length) {
                     throw new Error(messageConstants.apiResponses.POLL_NOT_FOUND)
                 }
+
+                if (new Date() > new Date(pollQuestions[0].endDate)) {
+                    
+                    if (pollQuestions[0].status == messageConstants.common.ACTIVE_STATUS) {
+                        await database.models.polls.updateOne
+                        (
+                            { $set : { status: messageConstants.common.INACTIVE_STATUS } }
+                        )
+                    }
+                    
+                    throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
+                }
+                else {
 
                 return resolve({
                     success: true,
@@ -395,6 +410,7 @@ module.exports = class PollsHelper {
                     data: pollQuestions[0].questions
                 });
 
+                }
             } catch (error) {
                 return resolve({
                     success: false,
