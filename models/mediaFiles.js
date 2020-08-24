@@ -6,9 +6,18 @@ module.exports = {
           required: true,
           index: true
         },
-        type: String,
-        unicode: String,
-        status: String,
+        type: {
+          type: String,
+          required: true
+        },
+        unicode: {
+          type: String,
+          required: true
+        },
+        status: {
+           type: String,
+           required: true
+        },
         createdBy: String,
         updatedBy: String,
         isDeleted: {
