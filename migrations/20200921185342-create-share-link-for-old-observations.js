@@ -4,13 +4,13 @@ module.exports = {
 
     global.migrationMsg = "Created Shared Link For Old Observations"
     
-    let observationDocuments = await db.collection('observations').find({}).toArray();
+    let observationDocuments = await db.collection('solutions').find({isReusable:false},{type:"observation"}).toArray();
     if(observationDocuments.length> 0) {
       
       await Promise.all(observationDocuments.map(async observation => {
-        let hashedLink = md5(observation._id+"###"+observation.createdBy);
+        let hashedLink = md5(observation._id+"###"+observation.author);
         if (hashedLink) {
-          db.collection('observations').updateOne({ _id: observation._id }, { $set: { link: hashedLink } });
+          db.collection('solutions').updateOne({ _id: observation._id }, { $set: { link: hashedLink } });
           
         }
       }));
