@@ -99,6 +99,8 @@ module.exports = class ObservationsHelper {
                     userId,
                     _.omit(data,["entities"]),
                     true,
+                    [],
+                    [],
                     organisationAndRootOrganisation.createdFor,
                     organisationAndRootOrganisation.rootOrganisations
                 );
@@ -569,8 +571,8 @@ module.exports = class ObservationsHelper {
 
                     let observation = {}
 
-                    observation["createdFor"] = userOrganisations.createdFor;
-                    observation["rootOrganisations"] = userOrganisations.rootOrganisations;
+                    // observation["createdFor"] = userOrganisations.createdFor;
+                    // observation["rootOrganisations"] = userOrganisations.rootOrganisations;
                     observation["status"] = "published";
                     observation["deleted"] = "false";
                     observation["solutionId"] = solution._id;
@@ -1046,6 +1048,48 @@ module.exports = class ObservationsHelper {
                 return reject(error);
             }
         });
+    }
+
+
+         /**
+      * observation link.
+      * @method
+      * @name getObservationLink
+      * @param  {String} observationSolutionId observation solution external Id.
+      * @param  {String} appName name of app.
+      * @returns {getObservationLink} observation getObservationLink.
+     */
+
+    static getObservationLink(observationSolutionId, appName) {
+        return new Promise(async (resolve, reject) => {
+            try {
+
+                let observationData = await database.models.solutions.findOne({
+                    externalId: observationSolutionId,
+                    isReusable: false,
+                    type : messageConstants.common.OBSERVATION
+                }).lean();
+
+                let appData = await database.models.apps.findOne({
+                    externalId: req.query.appName,
+        
+                }).lean();
+
+                let link = null;
+                if(!appData || !observationData) {
+                    throw new Error(messageConstants.apiResponses.OBSERVATION_NOT_FOUND);
+                }
+                else{
+                    link = "https://apps.shikshalokam.org/samiksha/create-observation/"+observationData.link;
+                }
+
+                return resolve({link})
+
+            }
+            catch (error) {
+                return reject(error);
+            }
+        })
     }
 
 };

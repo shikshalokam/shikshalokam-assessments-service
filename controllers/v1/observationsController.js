@@ -1410,11 +1410,11 @@ module.exports = class Observations extends Abstract {
                             throw new Error(messageConstants.apiResponses.USER_NOT_FOUND);
                         }
 
-                        if(!usersKeycloakIdMap[userId]  || !Array.isArray(usersKeycloakIdMap[userId].rootOrganisations) || usersKeycloakIdMap[userId].rootOrganisations.length < 1) {
-                            throw new Error(messageConstants.apiResponses.USER_ORGANISATION_DETAILS_NOT_FOUND);
-                        } else {
-                            userOrganisations = usersKeycloakIdMap[userId];
-                        }
+                        // if(!usersKeycloakIdMap[userId]  || !Array.isArray(usersKeycloakIdMap[userId].rootOrganisations) || usersKeycloakIdMap[userId].rootOrganisations.length < 1) {
+                        //     throw new Error(messageConstants.apiResponses.USER_ORGANISATION_DETAILS_NOT_FOUND);
+                        // } else {
+                        //     userOrganisations = usersKeycloakIdMap[userId];
+                        // }
 
                         if (solutionObject[currentData.solutionExternalId] !== undefined) {
                             solution = solutionObject[currentData.solutionExternalId];
@@ -1795,5 +1795,57 @@ module.exports = class Observations extends Abstract {
             }
         });
     }
+
+    /**
+    * @api {get} /assessment/api/v1/observations/getObservationSolutionLink?observationsolutionId:observationsolutionId&appName:appName 
+    * @apiVersion 1.0.0
+    * @apiName Observation Share Link
+    * @apiGroup Observations
+    * @apiHeader {String} X-authenticated-user-token Authenticity token
+    * @apiParam {String} observationsolutionId Observation Solution External ID.
+    * @apiParam {String} appName Name of App.
+    * @apiSampleRequest /assessment/api/v1/observations/getObservationSolutionLink?observationsolutionId=Mid-day_Meal_SMC_Observation-Aug2019&appName=samiksha
+    * @apiUse successBody
+    * @apiUse errorBody
+
+     /**
+   * Get Observation Solution Sharing Link.
+   * @method
+   * @name getObservationSolutionLink
+   * @param {Object} req -request Data.
+   * @param {String} req.query.observationsolutionId - observation solution externalId.
+   * @param {String} req.query.appName - app Name.
+   * @returns {JSON} 
+   */
+
+  async getObservationSolutionLink(req) {
+
+    return new Promise(async (resolve, reject) => {
+
+        try {
+
+            if (!req.query.observationsolutionId || req.query.observationsolutionId == "" || !req.query.appName || req.query.appName == "") {
+                throw messageConstants.apiResponses.INVALID_PARAMETER;
+            }
+
+            let ObservationSolutionDetails = await observationsHelper.getObservationLink(req.query.observationsolutionId, req.query.appName);
+            return resolve({
+                message: messageConstants.apiResponses.OBSERVATION_LINK_FETCHED,
+                result: ObservationSolutionDetails
+            });
+
+
+        } catch (error) {
+        
+            return reject({
+                status: error.status || httpStatusCode.internal_server_error.status,
+                message: error.message || httpStatusCode.internal_server_error.message,
+                errorObject: error
+            });
+        }
+
+    });
+
+}
 
 }
