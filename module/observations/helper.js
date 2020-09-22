@@ -13,6 +13,7 @@ const slackClient = require(ROOT_PATH + "/generics/helpers/slackCommunications")
 const kafkaClient = require(ROOT_PATH + "/generics/helpers/kafkaCommunications");
 const chunkOfObservationSubmissionsLength = 500;
 const solutionHelper = require(MODULES_BASE_PATH + "/solutions/helper");
+const kendraService = require(ROOT_PATH + "/generics/services/kendra");
 
 
 /**
@@ -99,7 +100,6 @@ module.exports = class ObservationsHelper {
                     userId,
                     _.omit(data,["entities"]),
                     true,
-                    [],
                     [],
                     organisationAndRootOrganisation.createdFor,
                     organisationAndRootOrganisation.rootOrganisations
@@ -571,8 +571,8 @@ module.exports = class ObservationsHelper {
 
                     let observation = {}
 
-                    // observation["createdFor"] = userOrganisations.createdFor;
-                    // observation["rootOrganisations"] = userOrganisations.rootOrganisations;
+                    observation["createdFor"] = userOrganisations.createdFor;
+                    observation["rootOrganisations"] = userOrganisations.rootOrganisations;
                     observation["status"] = "published";
                     observation["deleted"] = "false";
                     observation["solutionId"] = solution._id;
@@ -1063,30 +1063,76 @@ module.exports = class ObservationsHelper {
     static getObservationLink(observationSolutionId, appName) {
         return new Promise(async (resolve, reject) => {
             try {
-
+                let link = null;
                 let observationData = await database.models.solutions.findOne({
                     externalId: observationSolutionId,
                     isReusable: false,
                     type : messageConstants.common.OBSERVATION
                 }).lean();
 
-                let appData = await database.models.apps.findOne({
-                    externalId: req.query.appName,
-        
-                }).lean();
-
-                let link = null;
-                if(!appData || !observationData) {
+                if(!observationData) {
                     throw new Error(messageConstants.apiResponses.OBSERVATION_NOT_FOUND);
                 }
-                else{
-                    link = "https://apps.shikshalokam.org/samiksha/create-observation/"+observationData.link;
-                }
 
+                let appDetails = await kendraService.getAppDetails(appName);
+                
+                if(appDetails.status != 200){
+                    throw new Error(messageConstants.apiResponses.APP_NOT_FOUND);
+                }
+                
+                link = "https://apps.shikshalokam.org/samiksha/create-observation/"+observationData.link;
+                
                 return resolve({link})
 
             }
             catch (error) {
+                return reject(error);
+            }
+        })
+    }
+
+    /**
+     * Verfy observation link.
+     * @method
+     * @name verify
+     * @param {Object} data - observation link.
+     * @param {String} requestingUserAuthToken - Requesting user auth token.
+     * @returns {Object} observation data.
+     */
+
+    static verify(
+        data, 
+        requestingUserAuthToken = "",
+    ) {
+        return new Promise(async (resolve, reject) => {
+            try {
+
+                if( requestingUserAuthToken == "" ) {
+                    throw new Error(messageConstants.apiResponses.REQUIRED_USER_AUTH_TOKEN);
+                }
+                var link = data.link;
+                var hashedLink  = link.split("/");
+
+                let observationData = await database.models.solutions.findOne({
+                    link: hashedLink[5],
+                    isReusable: false,
+                    type : messageConstants.common.OBSERVATION
+                }).lean();
+
+                if(observationData){
+                    return resolve(observationData);
+                }
+
+
+
+
+
+                
+      
+                
+                resolve(data)
+
+            } catch (error) {
                 return reject(error);
             }
         })

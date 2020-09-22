@@ -4,7 +4,7 @@ module.exports = {
 
     global.migrationMsg = "Created Shared Link For Old Observations"
     
-    let observationDocuments = await db.collection('solutions').find({isReusable:false},{type:"observation"}).toArray();
+    let observationDocuments = await db.collection('solutions').find({ isReusable:false, type:"observation" }, { author: 1 }).toArray();
     if(observationDocuments.length> 0) {
       
       await Promise.all(observationDocuments.map(async observation => {
@@ -15,7 +15,7 @@ module.exports = {
         }
       }));
     }
-    console.log("Link Added")
+ 
   },
 
   async down(db) {

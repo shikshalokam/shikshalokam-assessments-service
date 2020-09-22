@@ -1410,11 +1410,11 @@ module.exports = class Observations extends Abstract {
                             throw new Error(messageConstants.apiResponses.USER_NOT_FOUND);
                         }
 
-                        // if(!usersKeycloakIdMap[userId]  || !Array.isArray(usersKeycloakIdMap[userId].rootOrganisations) || usersKeycloakIdMap[userId].rootOrganisations.length < 1) {
-                        //     throw new Error(messageConstants.apiResponses.USER_ORGANISATION_DETAILS_NOT_FOUND);
-                        // } else {
-                        //     userOrganisations = usersKeycloakIdMap[userId];
-                        // }
+                        if(!usersKeycloakIdMap[userId]  || !Array.isArray(usersKeycloakIdMap[userId].rootOrganisations) || usersKeycloakIdMap[userId].rootOrganisations.length < 1) {
+                            throw new Error(messageConstants.apiResponses.USER_ORGANISATION_DETAILS_NOT_FOUND);
+                        } else {
+                            userOrganisations = usersKeycloakIdMap[userId];
+                        }
 
                         if (solutionObject[currentData.solutionExternalId] !== undefined) {
                             solution = solutionObject[currentData.solutionExternalId];
@@ -1818,34 +1818,88 @@ module.exports = class Observations extends Abstract {
    * @returns {JSON} 
    */
 
-  async getObservationSolutionLink(req) {
+    async getObservationSolutionLink(req) {
 
-    return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
 
-        try {
+            try {
 
-            if (!req.query.observationsolutionId || req.query.observationsolutionId == "" || !req.query.appName || req.query.appName == "") {
-                throw messageConstants.apiResponses.INVALID_PARAMETER;
+                if (!req.query.observationsolutionId || req.query.observationsolutionId == "" || !req.query.appName || req.query.appName == "") {
+                    throw messageConstants.apiResponses.INVALID_PARAMETER;
+                }
+
+                let ObservationSolutionDetails = await observationsHelper.getObservationLink(req.query.observationsolutionId, req.query.appName);
+                return resolve({
+                    message: messageConstants.apiResponses.OBSERVATION_LINK_FETCHED,
+                    result: ObservationSolutionDetails
+                });
+
+
+            }catch (error) {
+        
+                return reject({
+                    status: error.status || httpStatusCode.internal_server_error.status,
+                    message: error.message || httpStatusCode.internal_server_error.message,
+                    errorObject: error
+                });
             }
 
-            let ObservationSolutionDetails = await observationsHelper.getObservationLink(req.query.observationsolutionId, req.query.appName);
-            return resolve({
-                message: messageConstants.apiResponses.OBSERVATION_LINK_FETCHED,
-                result: ObservationSolutionDetails
-            });
+        });
+
+    }   
+
+      /**
+     * @api {post} /assessment/api/v1/observations/getDetailsFromLink Verify Observation Link And get details
+     * @apiVersion 1.0.0
+     * @apiName Verify Observation Link
+     * @apiGroup Observations
+     * @apiParamExample {json} Request-Body:
+     * {
+     *	    "data": {
+     *          "link":  "https://apps.shikshalokam.org/samiksha/create-observation/38cd93bdb87489c3890fe0ab00e7d406",
+     *      }
+     * }
+     * @apiUse successBody
+     * @apiUse errorBody
+     */
+     
+    /**
+    * Verify Observation Link.
+    * @method
+    * @name getDetailsFromLink
+    * @param {Object} req -request Data.
+    * @returns {JSON} - bservation data.
+    */
+
+    getDetailsFromLink(req) {
+        return new Promise(async (resolve, reject) => {
+
+            try {
+
+                let result = await observationsHelper.verify(
+                    req.body.data,
+                    req.rspObj.userToken
+                );
+
+            
+
+                return resolve({
+                    message: "Link Verified",
+                    result: result
+                });
+
+            } catch (error) {
+
+                return reject({
+                    status: error.status || httpStatusCode.internal_server_error.status,
+                    message: error.message || httpStatusCode.internal_server_error.message,
+                    errorObject: error
+                });
+
+            }
 
 
-        } catch (error) {
-        
-            return reject({
-                status: error.status || httpStatusCode.internal_server_error.status,
-                message: error.message || httpStatusCode.internal_server_error.message,
-                errorObject: error
-            });
-        }
-
-    });
-
-}
+        })
+    }
 
 }

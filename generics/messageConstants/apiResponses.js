@@ -250,5 +250,6 @@ module.exports = {
 "POLL_LINK_FETCHED" : "Poll link fetched successfully",
 "POLL_COULD_NOT_BE_DELETED" : "Poll could not be deleted",
 "POLL_UPDATE_QUERY_REQUIRED" : "Update query is required",
-"POLL_COULD_NOT_BE_UPDATED" : "Poll updation failed"
+"POLL_COULD_NOT_BE_UPDATED" : "Poll updation failed",
+"APP_NOT_FOUND" : "App not found",
 }
