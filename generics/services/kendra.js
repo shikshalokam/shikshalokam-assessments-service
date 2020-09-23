@@ -127,10 +127,10 @@ const upload = function (file,filePath) {
 */
 
 const getAppDetails = function (appName) {
-
+    
     let url = process.env.KENDRA_APPLICATION_ENDPOINT; 
     
-    getDetailUrl = url + messageConstants.endpoints.GET_APP_DETAILS+"/"+appName;
+    var getDetailUrl = url + messageConstants.endpoints.GET_APP_DETAILS+"/"+appName;
 
     return new Promise((resolve, reject) => {
         try {

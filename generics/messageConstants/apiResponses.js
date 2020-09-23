@@ -71,6 +71,7 @@ module.exports = {
 "OBSERVATION_SUBMISSION_DELETED" : "Observation submission deleted successfully",
 "OBSERVATION_SUBMISSION_UPDATED" : "Observation submission updated successfully",
 "OBSERVATION_LINK_FETCHED" : "Observation Link fetched successfully",
+"OBSERVATION_LINK_VERIFIED" : "Observation Link verified successfully",
 "SUBMISSION_NOT_FOUND" : "No submission found.",
 "SUBMISSION_FOUND" : "submission found.",
 "PARENT_INFORMATION_NOT_FOUND" : "No parent information found.",

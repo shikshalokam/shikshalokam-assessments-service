@@ -14,6 +14,7 @@ const kafkaClient = require(ROOT_PATH + "/generics/helpers/kafkaCommunications")
 const chunkOfObservationSubmissionsLength = 500;
 const solutionHelper = require(MODULES_BASE_PATH + "/solutions/helper");
 const kendraService = require(ROOT_PATH + "/generics/services/kendra");
+var dateFormat = require('dateformat');
 
 
 /**
@@ -51,6 +52,7 @@ module.exports = class ObservationsHelper {
                 let observationDocuments = await database.models.observations
                     .find(queryObject, projectionObject)
                     .lean();
+
                 return resolve(observationDocuments);
             } catch (error) {
                 return reject(error);
@@ -1063,27 +1065,31 @@ module.exports = class ObservationsHelper {
     static getObservationLink(observationSolutionId, appName) {
         return new Promise(async (resolve, reject) => {
             try {
+
                 let link = null;
-                let observationData = await database.models.solutions.findOne({
-                    externalId: observationSolutionId,
-                    isReusable: false,
-                    type : messageConstants.common.OBSERVATION
-                }).lean();
+                
+                let observationData = await solutionHelper.solutionDocuments({
+                        externalId : observationSolutionId,
+                        isReusable : false,
+                        type : messageConstants.common.OBSERVATION
+
+                        },[
+                            "link"
+                    ]);
 
                 if(!observationData) {
                     throw new Error(messageConstants.apiResponses.OBSERVATION_NOT_FOUND);
                 }
 
                 let appDetails = await kendraService.getAppDetails(appName);
-                
-                if(appDetails.status != 200){
+                var jsonAppDetails = JSON.parse(appDetails)
+                if(jsonAppDetails.result === false){
                     throw new Error(messageConstants.apiResponses.APP_NOT_FOUND);
                 }
                 
-                link = "https://apps.shikshalokam.org/samiksha/create-observation/"+observationData.link;
-                
+                link = process.env.OBSERVATION_SHARE_URL_ENDPOINT+observationData[0].link;
                 return resolve({link})
-
+                
             }
             catch (error) {
                 return reject(error);
@@ -1102,35 +1108,101 @@ module.exports = class ObservationsHelper {
 
     static verify(
         data, 
-        requestingUserAuthToken = "",
+        requestingUserAuthToken,
+        userId
+        
     ) {
         return new Promise(async (resolve, reject) => {
+
             try {
 
                 if( requestingUserAuthToken == "" ) {
                     throw new Error(messageConstants.apiResponses.REQUIRED_USER_AUTH_TOKEN);
                 }
+                
                 var link = data.link;
+                if(!link || link == "" ) {
+                    throw new Error(messageConstants.apiResponses.LINK_REQUIRED_CHECK);
+                }
                 var hashedLink  = link.split("/");
 
-                let observationData = await database.models.solutions.findOne({
+                let observationSolutionData = await solutionHelper.solutionDocuments({
                     link: hashedLink[5],
                     isReusable: false,
-                    type : messageConstants.common.OBSERVATION
-                }).lean();
+                    type : messageConstants.common.OBSERVATION,
+                    endDate : {$gte: new Date()},
+                    status:messageConstants.common.ACTIVE_STATUS
 
-                if(observationData){
-                    return resolve(observationData);
+                    });
+
+                if(!observationSolutionData[0]){
+                    throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
                 }
 
+                if(observationSolutionData[0]){
+
+                    let observationData = await this.observationDocuments({
+                        solutionExternalId : observationSolutionData[0].externalId
+                    });
+
+                    if(observationData){
+                        return resolve(observationData[0]);
+                    }
+                    else{
+                        let userEntities = await database.models.userExtension.findOne({
+                            userId : userId
+                        }, { roles: 1 }).lean();
+
+                        if(userEntities.roles[0].entities != ""){
+                            console.log(userEntities.roles[0].entities,"hhhhhhh")
+                            let entityData = await database.models.entities.findOne({
+                                _id :  { $in : userEntities.roles[0].entities},
+                                entityType : observationSolutionData[0].subType
+                            }).lean();
+
+                            if(entityData){
+                               var entities = [entityData._id];
+                            }else{
+                                entities = [];
+                            }
+
+                            var solutionId = observationSolutionData[0]._id;
+                            var programId = observationSolutionData[0].programId;
+                            var today = new Date();
+                            var year = today.getFullYear();
+                            var month = today.getMonth();
+                            var day = today.getDate();
+                            var endDate = new Date(year + 1, month, day);
+                            var startDate= dateFormat(new Date(), "yyyy-mm-dd");
+                            var endDateF = dateFormat(endDate, "yyyy-mm-dd");
+                            var dataObj = {
+                                "name": observationSolutionData[0].name ,
+                                "description": observationSolutionData[0].description,
+                                "startDate": startDate,
+                                "endDate": endDateF,
+                                "status": "active",
+                                "entities": entities
+                            }
+    
+                                
+                            let result = await ObservationsHelper.create(
+                                solutionId, 
+                                dataObj, 
+                                userId, 
+                                requestingUserAuthToken,
+                                programId
+                            );
+
+                            return resolve(result);
+    
+                            
+                        }else{
+                            throw new Error(messageConstants.apiResponses.ENTITY_NOT_FOUND)
+                        }
+                    }
 
 
-
-
-                
-      
-                
-                resolve(data)
+                }
 
             } catch (error) {
                 return reject(error);

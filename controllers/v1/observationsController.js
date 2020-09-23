@@ -1829,11 +1829,11 @@ module.exports = class Observations extends Abstract {
                 }
 
                 let ObservationSolutionDetails = await observationsHelper.getObservationLink(req.query.observationsolutionId, req.query.appName);
+                console.log(ObservationSolutionDetails,"sol")
                 return resolve({
                     message: messageConstants.apiResponses.OBSERVATION_LINK_FETCHED,
                     result: ObservationSolutionDetails
                 });
-
 
             }catch (error) {
         
@@ -1873,18 +1873,19 @@ module.exports = class Observations extends Abstract {
 
     getDetailsFromLink(req) {
         return new Promise(async (resolve, reject) => {
-
+ 
             try {
 
                 let result = await observationsHelper.verify(
                     req.body.data,
-                    req.rspObj.userToken
+                    req.rspObj.userToken,
+                    req.userDetails.userId
                 );
 
-            
+                
 
                 return resolve({
-                    message: "Link Verified",
+                    message: messageConstants.apiResponses.OBSERVATION_LINK_VERIFIED,
                     result: result
                 });
 
