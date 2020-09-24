@@ -1124,10 +1124,9 @@ module.exports = class ObservationsHelper {
                 if(!link || link == "" ) {
                     throw new Error(messageConstants.apiResponses.LINK_REQUIRED_CHECK);
                 }
-                var hashedLink  = link.split("/");
 
                 let observationSolutionData = await solutionHelper.solutionDocuments({
-                    link: hashedLink[5],
+                    link: link,
                     isReusable: false,
                     type : messageConstants.common.OBSERVATION,
                     endDate : {$gte: new Date()},
@@ -1183,8 +1182,7 @@ module.exports = class ObservationsHelper {
                                 "status": "active",
                                 "entities": entities
                             }
-    
-                                
+        
                             let result = await ObservationsHelper.create(
                                 solutionId, 
                                 dataObj, 
@@ -1200,7 +1198,6 @@ module.exports = class ObservationsHelper {
                             throw new Error(messageConstants.apiResponses.ENTITY_NOT_FOUND)
                         }
                     }
-
 
                 }
 

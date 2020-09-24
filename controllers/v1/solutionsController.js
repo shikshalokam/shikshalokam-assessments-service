@@ -11,6 +11,7 @@ const solutionsHelper = require(MODULES_BASE_PATH + "/solutions/helper");
 const criteriaHelper = require(MODULES_BASE_PATH + "/criteria/helper");
 const questionsHelper = require(MODULES_BASE_PATH + "/questions/helper");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
+var md5 = require('md5');
 
 /**
     * Solutions
@@ -207,6 +208,7 @@ module.exports = class Solutions extends Abstract {
    */
 
   async importFromFramework(req) {
+
     return new Promise(async (resolve, reject) => {
       try {
 
@@ -280,7 +282,6 @@ module.exports = class Solutions extends Abstract {
         }
 
         let newSolutionDocument = _.cloneDeep(frameworkDocument);
-
         updateThemes(newSolutionDocument.themes);
 
         newSolutionDocument.externalId = frameworkDocument.externalId + "-TEMPLATE";
@@ -305,6 +306,8 @@ module.exports = class Solutions extends Abstract {
 
           newSolutionDocument.parentSolutionId = newBaseSolutionId._id;
           newSolutionDocument.isReusable = false;
+          let hashedLink = md5(newSolutionDocument._id+"###"+req.userDetails.userId);
+          newSolutionDocument.link = hashedLink;
           newSolutionDocument.externalId = frameworkDocument.externalId;
 
           newSolutionId = await database.models.solutions.create(_.omit(newSolutionDocument, ["_id"]));

@@ -1061,6 +1061,7 @@ module.exports = class Observations extends Abstract {
     */
 
     async importFromFramework(req) {
+
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -1881,8 +1882,6 @@ module.exports = class Observations extends Abstract {
                     req.rspObj.userToken,
                     req.userDetails.userId
                 );
-
-                
 
                 return resolve({
                     message: messageConstants.apiResponses.OBSERVATION_LINK_VERIFIED,
