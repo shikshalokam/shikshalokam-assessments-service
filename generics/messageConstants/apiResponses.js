@@ -41,6 +41,8 @@ module.exports = {
 "SOLUTION_FETCHED" : "Solutions fetched successfully",
 "SOLUTION_ID_NOT_FOUND" : "Solution Id is not found",
 "SOLUTION_ID_REQUIRED" : "Solution id is required",
+"SOLUTION_DELETED" : "Solution deleted successfully.",
+"SOLUTION_CANT_DELETE" : "Cannot delete solution.",
 "CRITERIA_FILE_NOT_FOUND" : "Csv file for criterias should be selected",
 "CRITERIA_INSERTED" : "Criterias inserted successfully.",
 "CRITERIA_RATING" : "Crtieria rating completed successfully",

@@ -11,7 +11,6 @@ const solutionsHelper = require(MODULES_BASE_PATH + "/solutions/helper");
 const criteriaHelper = require(MODULES_BASE_PATH + "/criteria/helper");
 const questionsHelper = require(MODULES_BASE_PATH + "/questions/helper");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
-var md5 = require('md5');
 
 /**
     * Solutions
@@ -208,7 +207,6 @@ module.exports = class Solutions extends Abstract {
    */
 
   async importFromFramework(req) {
-
     return new Promise(async (resolve, reject) => {
       try {
 
@@ -282,6 +280,7 @@ module.exports = class Solutions extends Abstract {
         }
 
         let newSolutionDocument = _.cloneDeep(frameworkDocument);
+
         updateThemes(newSolutionDocument.themes);
 
         newSolutionDocument.externalId = frameworkDocument.externalId + "-TEMPLATE";
@@ -306,8 +305,6 @@ module.exports = class Solutions extends Abstract {
 
           newSolutionDocument.parentSolutionId = newBaseSolutionId._id;
           newSolutionDocument.isReusable = false;
-          let hashedLink = md5(newSolutionDocument._id+"###"+req.userDetails.userId);
-          newSolutionDocument.link = hashedLink;
           newSolutionDocument.externalId = frameworkDocument.externalId;
 
           newSolutionId = await database.models.solutions.create(_.omit(newSolutionDocument, ["_id"]));
@@ -1238,5 +1235,64 @@ module.exports = class Solutions extends Abstract {
       }
     });
   }
+
+  /**
+    * @api {get} /assessment/api/v1/solutions/getObservationSolutionLink?observationsolutionId:observationsolutionId&appName:appName 
+    * @apiVersion 1.0.0
+    * @apiName Observation Share Link
+    * @apiGroup Solutions
+    * @apiHeader {String} X-authenticated-user-token Authenticity token
+    * @apiParam {String} observationsolutionId Observation Solution External ID.
+    * @apiParam {String} appName Name of App.
+    * @apiSampleRequest /assessment/api/v1/observations/getObservationSolutionLink?observationsolutionId=Mid-day_Meal_SMC_Observation-Aug2019&appName=samiksha
+    * @apiUse successBody
+    * @apiUse errorBody
+    * @apiParamExample {json} Response:
+    {
+      "message": "Observation Link fetched successfully",
+      "status": 200,
+      "result": {
+        "link": 
+            "https://apps.shikshalokam.org/samiksha/create-observation/38cd93bdb87489c3890fe0ab00e7d406"
+      }
+
+    }
+
+    /**
+   * Get Observation Solution Sharing Link.
+   * @method
+   * @name getObservationSolutionLink
+   * @param {Object} req -request Data.
+   * @param {String} req.query.observationsolutionId - observation solution externalId.
+   * @param {String} req.query.appName - app Name.
+   * @returns {JSON} 
+   */
+
+    async getObservationSolutionLink(req) {
+
+        return new Promise(async (resolve, reject) => {
+
+            try {
+
+                let ObservationSolutionDetails = await observationsHelper.getObservationLink(req.query.observationsolutionId, req.query.appName);
+                return resolve({
+                    message: messageConstants.apiResponses.OBSERVATION_LINK_FETCHED,
+                    result: ObservationSolutionDetails
+                });
+
+            }catch (error) {
+        
+                return reject({
+                    status: error.status || httpStatusCode.internal_server_error.status,
+                    message: error.message || httpStatusCode.internal_server_error.message,
+                    errorObject: error
+                });
+            }
+
+        });
+
+    }   
+
+  
   
 };

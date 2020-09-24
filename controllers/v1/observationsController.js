@@ -1830,7 +1830,6 @@ module.exports = class Observations extends Abstract {
                 }
 
                 let ObservationSolutionDetails = await observationsHelper.getObservationLink(req.query.observationsolutionId, req.query.appName);
-                console.log(ObservationSolutionDetails,"sol")
                 return resolve({
                     message: messageConstants.apiResponses.OBSERVATION_LINK_FETCHED,
                     result: ObservationSolutionDetails
@@ -1883,10 +1882,7 @@ module.exports = class Observations extends Abstract {
                     req.userDetails.userId
                 );
 
-                return resolve({
-                    message: messageConstants.apiResponses.OBSERVATION_LINK_VERIFIED,
-                    result: result
-                });
+                return(resolve(result))
 
             } catch (error) {
 
