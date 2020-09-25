@@ -249,7 +249,6 @@ module.exports = class SolutionsHelper {
             if (themes[pointerToTheme][themeKey] !== "") {
 
               let themesSplittedArray = themes[pointerToTheme][themeKey].split("###");
-
               if (themeKey !== "criteriaInternalId") {
                 if (themesSplittedArray.length < 2) {
                   csvObject["status"] = messageConstants.apiResponses.MISSING_NAME_EXTERNALID;
@@ -1124,5 +1123,155 @@ module.exports = class SolutionsHelper {
         }
       })
     }
+
+    /**
+     * Delete Solution.
+     * @method
+     * @name checkAndDeleteSolution
+     * @param {String} solutionId - solution External id.
+     * @param {String} userId - UserId.
+     * @returns {Object} Delete Solution .
+     */
+
+    static checkAndDeleteSolution(
+      solutionId,
+      userId
+    ) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          
+          let solutionData = 
+          await database.models.solutions.findOneAndUpdate({
+              externalId: solutionId,
+              isAPrivateProgram: false,
+              author : userId,
+          },{
+            $set : {
+              isDeleted : true,
+              deleted : true
+            }
+          });
+
+          if(solutionData){
+            var reponseMessage = messageConstants.apiResponses.SOLUTION_DELETED;
+            var result = solutionData._id;
+          }else{
+              var reponseMessage = messageConstants.apiResponses.SOLUTION_CANT_DELETE;
+              var result = {};
+          }
+
+          return resolve({
+              message: reponseMessage,
+              result: result
+          });
+
+        } catch(error) {
+          return reject(error);
+        }
+      })
+    }
+
+    /**
+     * Move To Trash.
+     * @method
+     * @name moveToTrashSolution
+     * @param {String} solutionId - solution External id.
+     * @param {String} userId - UserId.
+     * @returns {Object} Solution .
+     */
+
+    static moveToTrashSolution(
+      solutionId,
+      userId
+    ) {
+      return new Promise(async (resolve, reject) => {
+        try {
+
+          if(!solutionId) {
+            throw messageConstants.apiResponses.SOLUTION_ID_REQUIRED;
+          }
+
+          let solutionData = await database.models.solutions.findOneAndUpdate({
+              externalId: solutionId,
+              isAPrivateProgram: false,
+              author : userId,
+          },{
+            $set : {
+              status : messageConstants.common.INACTIVE_STATUS,
+            }
+          });
+
+          if(solutionData){
+            var reponseMessage = messageConstants.apiResponses.SOLUTION_MOVED_TO_TRASH;
+            var result = solutionData._id;
+          }else{
+            var reponseMessage = messageConstants.apiResponses.SOLUTION_CANT_DELETE;
+            var result = {};
+          }
+
+          return resolve({
+              message: reponseMessage,
+              result: result
+          });
+
+        } catch(error) {
+          return reject(error);
+        }
+      })
+    }
+
+     /**
+     * Restore From Trash.
+     * @method
+     * @name restoreFromTrashSolution
+     * @param {String} solutionId - solution External id.
+     * @param {String} userId - UserId.
+     * @returns {Object} Solution .
+     */
+
+    static restoreFromTrashSolution(
+      solutionId,
+      userId
+    ) {
+      return new Promise(async (resolve, reject) => {
+        try {
+
+          if(!solutionId) {
+            throw messageConstants.apiResponses.SOLUTION_ID_REQUIRED;
+          }
+
+          let solutionData = await database.models.solutions.findOneAndUpdate({
+              externalId: solutionId,
+              isAPrivateProgram: false,
+              author : userId,
+          },{
+            $set : {
+              status : messageConstants.common.ACTIVE_STATUS,
+            }
+          });
+
+          if(solutionData){
+            var reponseMessage = messageConstants.apiResponses.SOLUTION_RESTORED_FROM_TRASH;
+            var result = solutionData._id;
+          }else{
+            var reponseMessage = messageConstants.apiResponses.SOLUTION_CANT_DELETE;
+            var result = {};
+          }
+
+          return resolve({
+              message: reponseMessage,
+              result: result
+          });
+
+        } catch(error) {
+          return reject(error);
+        }
+      })
+    }
+
+    
+    
+
+     
   
 };

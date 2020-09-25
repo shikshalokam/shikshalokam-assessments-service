@@ -8,6 +8,7 @@
 // Dependencies
 const csv = require("csvtojson");
 const solutionsHelper = require(MODULES_BASE_PATH + "/solutions/helper");
+const observationHelper = require(MODULES_BASE_PATH + "/observations/helper");
 const criteriaHelper = require(MODULES_BASE_PATH + "/criteria/helper");
 const questionsHelper = require(MODULES_BASE_PATH + "/questions/helper");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
@@ -1291,8 +1292,131 @@ module.exports = class Solutions extends Abstract {
 
         });
 
-    }   
+    } 
 
-  
+   /**
+  * @api {get} /assessment/api/v1/solutions/deleteSolution?solutionId:solutionExternalId Delete solution .
+  * @apiVersion 1.0.0
+  * @apiName Delete Solution.
+  * @apiGroup Solutions
+  * @apiHeader {String} X-authenticated-user-token Authenticity token
+  * @apiParam {String} solutionId Solution External ID.
+  * @apiSampleRequest /assessment/api/v1/solutions/deleteSolution?solutionId=AFRICA-ME-TEST-FRAMEWORK
+  * @apiUse successBody
+  * @apiUse errorBody
+  * 
+  */
+
+   /**
+   * Delete Solution.
+   * @method
+   * @name deleteSolution
+   * @param {Object} req - requested data.
+   * @param {String} req.query.solutionId - solutiion external id.
+   * @returns {JSON} consists of solution id.
+   */
+
+  async deleteSolution(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        if (!(req.query.solutionId)) {
+          throw messageConstants.apiResponses.SOLUTION_ID_REQUIRED;
+        }
+
+       let checkSolution = await solutionsHelper.checkAndDeleteSolution(req.query.solutionId,req.userDetails.userId);
+        return resolve(checkSolution)
+      
+      } catch (error) {
+        return reject({
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,
+          errorObject: error
+        });
+      }
+    });
+  }
+
+  /**
+  * @api {get} /assessment/api/v1/solutions/moveToTrash?solutionId:solutionExternalId Solution Remove From Library .
+  * @apiVersion 1.0.0
+  * @apiName Solution Move To Trash .
+  * @apiGroup Solutions
+  * @apiHeader {String} X-authenticated-user-token Authenticity token
+  * @apiParam {String} solutionId Solution External ID.
+  * @apiSampleRequest /assessment/api/v1/solutions/moveToTrash?solutionId=AFRICA-ME-TEST-FRAMEWORK
+  * @apiUse successBody
+  * @apiUse errorBody
+  * 
+  */
+
+   /**
+   * Solution Move To Trash.
+   * @method
+   * @name moveToTrash
+   * @param {String} req.query.solutionId - solutiion external id.
+   * @returns {JSON} consists of solution id.
+   */
+
+  async moveToTrash(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        
+
+       let trashSolution = await solutionsHelper.moveToTrashSolution(req.query.solutionId,req.userDetails.userId);
+        return resolve(trashSolution)
+      
+      } catch (error) {
+        return reject({
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,
+          errorObject: error
+        });
+      }
+    });
+  }
+
+   /**
+  * @api {get} /assessment/api/v1/solutions/restoreFromTrash?solutionId:solutionExternalId Solution Remove From Library .
+  * @apiVersion 1.0.0
+  * @apiName Solution Restore From Trash.
+  * @apiGroup Solutions
+  * @apiHeader {String} X-authenticated-user-token Authenticity token
+  * @apiParam {String} solutionId Solution External ID.
+  * @apiSampleRequest /assessment/api/v1/solutions/restoreFromTrash?solutionId=AFRICA-ME-TEST-FRAMEWORK
+  * @apiUse successBody
+  * @apiUse errorBody
+  * 
+  */
+
+   /**
+   * Solution Restore From Trash.
+   * @method
+   * @name restoreFromTrash
+   * @param {String} req.query.solutionId - solutiion external id.
+   * @returns {JSON} consists of solution id.
+   */
+
+  async restoreFromTrash(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        
+
+       let restoreolution = await solutionsHelper.restoreFromTrashSolution(req.query.solutionId,req.userDetails.userId);
+        return resolve(restoreolution)
+      
+      } catch (error) {
+        return reject({
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,
+          errorObject: error
+        });
+      }
+    });
+  }
+
+
   
 };
