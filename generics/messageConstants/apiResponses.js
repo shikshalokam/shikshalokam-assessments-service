@@ -45,6 +45,7 @@ module.exports = {
 "SOLUTION_CANT_DELETE" : "Solution not found or Solution is private.",
 "SOLUTION_MOVED_TO_TRASH" : "Your solution has been moved to Trash.",
 "SOLUTION_RESTORED_FROM_TRASH" : "Solution restored successfully.",
+"SOLUTION_TRASH_LIST_FETCHED" : "Trash Solution fetched successfully.",
 "CRITERIA_FILE_NOT_FOUND" : "Csv file for criterias should be selected",
 "CRITERIA_INSERTED" : "Criterias inserted successfully.",
 "CRITERIA_RATING" : "Crtieria rating completed successfully",

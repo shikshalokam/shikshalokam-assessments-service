@@ -1338,7 +1338,7 @@ module.exports = class Solutions extends Abstract {
   }
 
   /**
-  * @api {get} /assessment/api/v1/solutions/moveToTrash?solutionId:solutionExternalId Solution Remove From Library .
+  * @api {get} /assessment/api/v1/solutions/moveToTrash?solutionId:solutionExternalId Solution Move to Trash .
   * @apiVersion 1.0.0
   * @apiName Solution Move To Trash .
   * @apiGroup Solutions
@@ -1378,7 +1378,7 @@ module.exports = class Solutions extends Abstract {
   }
 
    /**
-  * @api {get} /assessment/api/v1/solutions/restoreFromTrash?solutionId:solutionExternalId Solution Remove From Library .
+  * @api {get} /assessment/api/v1/solutions/restoreFromTrash?solutionId:solutionExternalId Solution Restore FRom Trash .
   * @apiVersion 1.0.0
   * @apiName Solution Restore From Trash.
   * @apiGroup Solutions
@@ -1402,10 +1402,44 @@ module.exports = class Solutions extends Abstract {
     return new Promise(async (resolve, reject) => {
       try {
 
-        
+       let restoreSolution = await solutionsHelper.restoreFromTrashSolution(req.query.solutionId,req.userDetails.userId);
+        return resolve(restoreSolution)
+      
+      } catch (error) {
+        return reject({
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,
+          errorObject: error
+        });
+      }
+    });
+  }
 
-       let restoreolution = await solutionsHelper.restoreFromTrashSolution(req.query.solutionId,req.userDetails.userId);
-        return resolve(restoreolution)
+  /**
+  * @api {get} /assessment/api/v1/solutions/trashList Solution Trash List .
+  * @apiVersion 1.0.0
+  * @apiName Solution Trash List.
+  * @apiGroup Solutions
+  * @apiHeader {String} X-authenticated-user-token Authenticity token
+  * @apiSampleRequest /assessment/api/v1/solutions/trashList
+  * @apiUse successBody
+  * @apiUse errorBody
+  * 
+  */
+
+   /**
+   * Solution Trash List
+   * @method
+   * @name trashList
+   * @returns {JSON} Trash List 
+   */
+
+  async trashList(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+       let trashData = await solutionsHelper.solutionTrashList(req.userDetails.userId);
+        return resolve(trashData)
       
       } catch (error) {
         return reject({
