@@ -1451,6 +1451,49 @@ module.exports = class Solutions extends Abstract {
     });
   }
 
+/**
+  * @api {get} /assessment/api/v1/solutions/removeFromHomeScreen?solutionId:solutionExternalId Solution Remove From Library .
+  * @apiVersion 1.0.0
+  * @apiName Solution Remove From Home screen .
+  * @apiGroup Solutions
+  * @apiHeader {String} X-authenticated-user-token Authenticity token
+  * @apiParam {String} solutionId Solution External ID.
+  * @apiSampleRequest /assessment/api/v1/solutions/removeFromHomeScreen?solutionId=AFRICA-ME-TEST-FRAMEWORK
+  * @apiUse successBody
+  * @apiUse errorBody
+  * 
+  */
+
+   /**
+   * Solution Remove From Home screen.
+   * @method
+   * @name removeFromHomeScreen
+   * @param {Object} req - requested data.
+   * @param {String} req.query.solutionId - solutiion external id.
+   * @returns {JSON} consists of solution id.
+   */
+
+  async removeFromHomeScreen(req) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        if (!(req.query.solutionId)) {
+          throw messageConstants.apiResponses.SOLUTION_ID_REQUIRED;
+        }
+
+       let removeSolution = await solutionsHelper.removeSolution(req.query.solutionId,req.userDetails.userId);
+        return resolve(removeSolution)
+      
+      } catch (error) {
+        return reject({
+          status: error.status || httpStatusCode.internal_server_error.status,
+          message: error.message || httpStatusCode.internal_server_error.message,
+          errorObject: error
+        });
+      }
+    });
+  } 
+
 
   
 };

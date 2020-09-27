@@ -44,6 +44,7 @@ module.exports = {
 "SOLUTION_DELETED" : "Solution deleted successfully.",
 "SOLUTION_CANT_DELETE" : "Solution not found or Solution is private.",
 "SOLUTION_MOVED_TO_TRASH" : "Your solution has been moved to Trash.",
+"SOLUTION_REMOVED_FROM_HOME_SCREEN" : "Your solution has been removed.",
 "SOLUTION_RESTORED_FROM_TRASH" : "Solution restored successfully.",
 "SOLUTION_TRASH_LIST_FETCHED" : "Trash Solution fetched successfully.",
 "CRITERIA_FILE_NOT_FOUND" : "Csv file for criterias should be selected",

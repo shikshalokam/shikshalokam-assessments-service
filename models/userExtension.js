@@ -25,6 +25,7 @@ module.exports = {
       isDeleted: {
         type: Boolean,
         default: false
-      }
+      },
+      removedFromHomeScreen: Array,
     }
   }
