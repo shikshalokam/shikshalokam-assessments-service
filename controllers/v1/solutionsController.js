@@ -11,6 +11,7 @@ const solutionsHelper = require(MODULES_BASE_PATH + "/solutions/helper");
 const criteriaHelper = require(MODULES_BASE_PATH + "/criteria/helper");
 const questionsHelper = require(MODULES_BASE_PATH + "/questions/helper");
 const FileStream = require(ROOT_PATH + "/generics/fileStream");
+const observationsHelper = require(MODULES_BASE_PATH + "/observations/helper");
 
 /**
     * Solutions
@@ -1257,7 +1258,7 @@ module.exports = class Solutions extends Abstract {
       }
 
     }
-
+    */
     /**
    * Get Observation Solution Sharing Link.
    * @method
@@ -1274,11 +1275,8 @@ module.exports = class Solutions extends Abstract {
 
             try {
 
-                let ObservationSolutionDetails = await observationsHelper.getObservationLink(req.query.observationsolutionId, req.query.appName);
-                return resolve({
-                    message: messageConstants.apiResponses.OBSERVATION_LINK_FETCHED,
-                    result: ObservationSolutionDetails
-                });
+                let observationSolutionDetails = await observationsHelper.getObservationLink(req.query.observationsolutionId, req.query.appName);
+                return resolve(observationSolutionDetails)
 
             }catch (error) {
         

@@ -1066,7 +1066,7 @@ module.exports = class ObservationsHelper {
         return new Promise(async (resolve, reject) => {
             try {
 
-                if (!observationsolutionId || observationsolutionId == "" || !appName || appName == "") {
+                if (!observationSolutionId || observationSolutionId == "" || !appName || appName == "") {
                     throw messageConstants.apiResponses.INVALID_PARAMETER;
                 }
 
@@ -1081,8 +1081,11 @@ module.exports = class ObservationsHelper {
                             "link"
                     ]);
 
-                if(!observationData) {
-                    throw new Error(messageConstants.apiResponses.OBSERVATION_NOT_FOUND);
+                if(!observationData || observationData == "") {
+                    return resolve({
+                        message: messageConstants.apiResponses.OBSERVATION_NOT_FOUND,
+                        result: {}
+                    });
                 }
 
                 let appDetails = await kendraService.getAppDetails(appName);
@@ -1092,7 +1095,11 @@ module.exports = class ObservationsHelper {
                 }
                 
                 link = process.env.OBSERVATION_SHARE_URL_ENDPOINT+observationData[0].link;
-                return resolve({link})
+                return resolve({
+                    message: messageConstants.apiResponses.OBSERVATION_LINK_FETCHED,
+                    result: {"link" :link}
+                });
+               
                 
             }
             catch (error) {
