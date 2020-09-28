@@ -1119,14 +1119,13 @@ module.exports = class ObservationsHelper {
         return new Promise(async (resolve, reject) => {
 
             try {
-
-                if( requestingUserAuthToken == "" ) {
-                    throw new Error(messageConstants.apiResponses.REQUIRED_USER_AUTH_TOKEN);
-                }
                 
                 let link = data.link;
                 if(!link || link == "" ) {
-                    throw new Error(messageConstants.apiResponses.LINK_REQUIRED_CHECK);
+                    return resolve({
+                        message: messageConstants.apiResponses.LINK_REQUIRED_CHECK,
+                        result: []
+                    });
                 }
 
                 let observationSolutionData = await solutionHelper.solutionDocuments({
