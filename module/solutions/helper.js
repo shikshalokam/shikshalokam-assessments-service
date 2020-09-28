@@ -1139,6 +1139,13 @@ module.exports = class SolutionsHelper {
     ) {
       return new Promise(async (resolve, reject) => {
         try {
+
+          if (!solutionId) {
+            return resolve({
+                message: messageConstants.apiResponses.SOLUTION_ID_REQUIRED,
+                result: result
+            });
+          }
           
           let solutionData = 
           await database.models.solutions.findOneAndUpdate({
@@ -1188,21 +1195,22 @@ module.exports = class SolutionsHelper {
         try {
 
           if(!solutionId) {
-            throw messageConstants.apiResponses.SOLUTION_ID_REQUIRED;
+            return resolve({
+                message: messageConstants.apiResponses.SOLUTION_ID_REQUIRED,
+                result: result
+            });
           }
 
           let solutionData = await database.models.solutions.findOneAndUpdate({
               externalId: solutionId,
               isAPrivateProgram: false,
               author : userId,
-              deleted:true
+              isDeleted:true
           },{
             $set : {
               status : messageConstants.common.INACTIVE_STATUS,
             }
           });
-
-          console.log(solutionData,"llllllll")
 
           if(solutionData){
             var reponseMessage = messageConstants.apiResponses.SOLUTION_MOVED_TO_TRASH;
@@ -1240,7 +1248,10 @@ module.exports = class SolutionsHelper {
         try {
 
           if(!solutionId) {
-            throw messageConstants.apiResponses.SOLUTION_ID_REQUIRED;
+            return resolve({
+                message: messageConstants.apiResponses.SOLUTION_ID_REQUIRED,
+                result: result
+            });
           }
 
           let solutionData = await database.models.solutions.findOneAndUpdate({
@@ -1326,6 +1337,13 @@ module.exports = class SolutionsHelper {
     ) {
       return new Promise(async (resolve, reject) => {
         try {
+
+          if(!solutionId) {
+            return resolve({
+                message: messageConstants.apiResponses.SOLUTION_ID_REQUIRED,
+                result: result
+            });
+          }
           
           let solutionData = await this.solutionDocuments({
             externalId: solutionId

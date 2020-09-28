@@ -1302,7 +1302,12 @@ module.exports = class Solutions extends Abstract {
   * @apiSampleRequest /assessment/api/v1/solutions/deleteSolution?solutionId=AFRICA-ME-TEST-FRAMEWORK
   * @apiUse successBody
   * @apiUse errorBody
-  * 
+  * @apiParamExample {json} Response:
+  * {
+      "message": "Solution deleted successfully.",
+      "status": 200,
+      "result": "5f64601df5f6e432fe0f0575"
+    }
   */
 
    /**
@@ -1318,11 +1323,7 @@ module.exports = class Solutions extends Abstract {
     return new Promise(async (resolve, reject) => {
       try {
 
-        if (!(req.query.solutionId)) {
-          throw messageConstants.apiResponses.SOLUTION_ID_REQUIRED;
-        }
-
-       let checkSolution = await solutionsHelper.checkAndDeleteSolution(req.query.solutionId,req.userDetails.userId);
+        let checkSolution = await solutionsHelper.checkAndDeleteSolution(req.query.solutionId,req.userDetails.userId);
         return resolve(checkSolution)
       
       } catch (error) {
@@ -1345,7 +1346,12 @@ module.exports = class Solutions extends Abstract {
   * @apiSampleRequest /assessment/api/v1/solutions/moveToTrash?solutionId=AFRICA-ME-TEST-FRAMEWORK
   * @apiUse successBody
   * @apiUse errorBody
-  * 
+  * @apiParamExample {json} Response:
+  * {
+      "message": "Your solution has been moved to Trash.",
+      "status": 200,
+      "result": "5f64601df5f6e432fe0f0575"
+    }
   */
 
    /**
@@ -1359,8 +1365,6 @@ module.exports = class Solutions extends Abstract {
   async moveToTrash(req) {
     return new Promise(async (resolve, reject) => {
       try {
-
-        
 
        let trashSolution = await solutionsHelper.moveToTrashSolution(req.query.solutionId,req.userDetails.userId);
         return resolve(trashSolution)
@@ -1385,7 +1389,12 @@ module.exports = class Solutions extends Abstract {
   * @apiSampleRequest /assessment/api/v1/solutions/restoreFromTrash?solutionId=AFRICA-ME-TEST-FRAMEWORK
   * @apiUse successBody
   * @apiUse errorBody
-  * 
+  * @apiParamExample {json} Response:
+  * {
+      "message": "Solution restored successfully.",
+      "status": 200,
+      "result": "5f64601df5f6e432fe0f0575"
+    }
   */
 
    /**
@@ -1424,21 +1433,22 @@ module.exports = class Solutions extends Abstract {
   * @apiUse errorBody
   * @apiParamExample {json} Response:
   * {
-    "message": "Trash Solution fetched successfully.",
-    "status": 200,
-    "result": [
-        {
-            "_id": "5f64601df5f6e432fe0f0575",
-            "externalId": "AFRICA-ME-TEST-FRAMEWORK",
-            "name": "AFRICA-ME-TEST-FRAMEWORK"
-        },
-        {
-            "_id": "5f64651f916c13367d8ff83f",
-            "externalId": "PRIYANKA-3-FRAMWORK-OBSERVATION-1",
-            "name": "Priyanka Observation solution"
-        }
-    ]
-}
+      "message": "Trash Solution fetched successfully.",
+      "status": 200,
+      "result": [
+          {
+              "_id": "5f64601df5f6e432fe0f0575",
+              "externalId": "AFRICA-ME-TEST-FRAMEWORK",
+              "name": "AFRICA-ME-TEST-FRAMEWORK"
+          },
+          {
+              "_id": "5f64651f916c13367d8ff83f",
+              "externalId": "PRIYANKA-3-FRAMWORK-OBSERVATION-1",
+              "name": "Priyanka Observation solution"
+          }
+      ]
+    }
+  */
 
    /**
    * Solution Trash List
@@ -1474,7 +1484,12 @@ module.exports = class Solutions extends Abstract {
   * @apiSampleRequest /assessment/api/v1/solutions/removeFromHomeScreen?solutionId=AFRICA-ME-TEST-FRAMEWORK
   * @apiUse successBody
   * @apiUse errorBody
-  * 
+  * @apiParamExample {json} Response:
+  * {
+      "message": "Your solution has been removed.",
+      "status": 200,
+      "result": "5f64601df5f6e432fe0f0575"
+    }
   */
 
    /**
@@ -1489,10 +1504,6 @@ module.exports = class Solutions extends Abstract {
   async removeFromHomeScreen(req) {
     return new Promise(async (resolve, reject) => {
       try {
-
-        if (!(req.query.solutionId)) {
-          throw messageConstants.apiResponses.SOLUTION_ID_REQUIRED;
-        }
 
        let removeSolution = await solutionsHelper.removeSolution(req.query.solutionId,req.userDetails.userId);
         return resolve(removeSolution)
