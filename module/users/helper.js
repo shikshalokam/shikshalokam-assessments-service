@@ -234,6 +234,7 @@ module.exports = class UserHelper {
 
                 }
 
+                console.log(solutionsData,"llllllll")
                 return resolve({
                     entityAssessors : assessorsData,
                     observations : observationsData,
@@ -760,7 +761,8 @@ function _solutionInformation(program,solution) {
         description : solution.description,
         type : solution.type,
         subType : solution.subType,
-        allowMultipleAssessemts : solution.allowMultipleAssessemts ? solution.allowMultipleAssessemts : false 
+        allowMultipleAssessemts : solution.allowMultipleAssessemts ? solution.allowMultipleAssessemts : false,
+        showInHomeScreen : solution.showInHomeScreen ? solution.showInHomeScreen : false 
     }
 }
 
