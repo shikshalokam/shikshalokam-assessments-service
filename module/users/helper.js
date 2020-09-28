@@ -234,7 +234,6 @@ module.exports = class UserHelper {
 
                 }
 
-                console.log(solutionsData,"llllllll")
                 return resolve({
                     entityAssessors : assessorsData,
                     observations : observationsData,
