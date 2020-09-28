@@ -1195,11 +1195,14 @@ module.exports = class SolutionsHelper {
               externalId: solutionId,
               isAPrivateProgram: false,
               author : userId,
+              deleted:true
           },{
             $set : {
               status : messageConstants.common.INACTIVE_STATUS,
             }
           });
+
+          console.log(solutionData,"llllllll")
 
           if(solutionData){
             var reponseMessage = messageConstants.apiResponses.SOLUTION_MOVED_TO_TRASH;

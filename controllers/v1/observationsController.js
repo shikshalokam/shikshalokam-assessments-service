@@ -1829,10 +1829,10 @@ module.exports = class Observations extends Abstract {
                     throw messageConstants.apiResponses.INVALID_PARAMETER;
                 }
 
-                let ObservationSolutionDetails = await observationsHelper.getObservationLink(req.query.observationsolutionId, req.query.appName);
+                let observationSolutionDetails = await observationsHelper.getObservationLink(req.query.observationsolutionId, req.query.appName);
                 return resolve({
                     message: messageConstants.apiResponses.OBSERVATION_LINK_FETCHED,
-                    result: ObservationSolutionDetails
+                    result: observationSolutionDetails
                 });
 
             }catch (error) {
@@ -1849,7 +1849,7 @@ module.exports = class Observations extends Abstract {
     }   
 
       /**
-     * @api {post} /assessment/api/v1/observations/getDetailsFromLink Verify Observation Link And get details
+     * @api {post} /assessment/api/v1/observations/verifyLink Verify Observation Link And get details
      * @apiVersion 1.0.0
      * @apiName Verify Observation Link
      * @apiGroup Observations
@@ -1866,12 +1866,12 @@ module.exports = class Observations extends Abstract {
     /**
     * Verify Observation Link.
     * @method
-    * @name getDetailsFromLink
+    * @name verifyLink
     * @param {Object} req -request Data.
     * @returns {JSON} - bservation data.
     */
 
-    getDetailsFromLink(req) {
+    verifyLink(req) {
         return new Promise(async (resolve, reject) => {
  
             try {
