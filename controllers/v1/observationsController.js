@@ -1795,16 +1795,16 @@ module.exports = class Observations extends Abstract {
                 });
             }
         });
+    }
 
-
-      /**
-     * @api {post} /assessment/api/v1/observations/verifyLink Verify Observation Link And get details
-     * @apiVersion 1.0.0
+     /**
+  * @api {get} /assessment/api/v1/observations/verifyLink Verify Observation Link And get details
+  * @apiVersion 1.0.0
      * @apiName Verify Observation Link
      * @apiGroup Observations
      * @apiParamExample {json} Request-Body:
      * {
-     *	    "data": {
+     *      "data": {
      *          "link":  "https://apps.shikshalokam.org/samiksha/create-observation/38cd93bdb87489c3890fe0ab00e7d406",
      *      }
      * }
@@ -1846,8 +1846,8 @@ module.exports = class Observations extends Abstract {
         ]
     }
     */
-     
-    /**
+
+   /**
     * Verify Observation Link.
     * @method
     * @name verifyLink
@@ -1855,7 +1855,7 @@ module.exports = class Observations extends Abstract {
     * @returns {JSON} - bservation data.
     */
 
-    verifyLink(req) {
+   async verifyLink(req) {
         return new Promise(async (resolve, reject) => {
  
             try {
