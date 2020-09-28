@@ -1269,6 +1269,93 @@ module.exports = class SolutionsHelper {
       })
     }
 
+    /**
+     * Restore From Trash.
+     * @method
+     * @name solutionTrashList
+     * @param {String} userId - UserId.
+     * @returns {Object} Solution .
+     */
+
+    static solutionTrashList(
+      userId
+    ) {
+      return new Promise(async (resolve, reject) => {
+        try {
+
+          let trashData = await this.solutionDocuments({
+                        author : userId,
+                        isAPrivateProgram : false,
+                        status : messageConstants.common.INACTIVE_STATUS
+                    },["name","externalId"]);
+
+          if(trashData){
+            var reponseMessage = messageConstants.apiResponses.SOLUTION_TRASH_LIST_FETCHED;
+            var result = trashData;
+          }else{
+            var reponseMessage = messageConstants.apiResponses.SOLUTION_CANT_DELETE;
+            var result = {};
+          }
+
+          return resolve({
+              message: reponseMessage,
+              result: result
+          });
+
+        } catch(error) {
+          return reject(error);
+        }
+      })
+    }
+
+  /**
+     * Remove From Home Screen.
+     * @method
+     * @name removeSolution
+     * @param {String} solutionId - solution External id.
+     * @param {String} userId - UserId.
+     * @returns {Object} Delete Solution .
+     */
+
+    static removeSolution(
+      solutionId,
+      userId
+    ) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          
+          let solutionData = await this.solutionDocuments({
+            externalId: solutionId
+          },["_id","externalId"]);
+
+          if(solutionData){
+
+            var removedOne = solutionData[0].externalId;
+            let addRemovedToUser = await database.models.userExtension.updateOne({
+              userId: userId
+            },{
+                $addToSet: { removedFromHomeScreen: removedOne  } 
+            });
+  
+            var reponseMessage = messageConstants.apiResponses.SOLUTION_REMOVED_FROM_HOME_SCREEN;
+            var result = solutionData[0]._id;
+
+          }else{
+              var reponseMessage = messageConstants.apiResponses.SOLUTION_CANT_DELETE;
+              var result = {};
+          }
+
+          return resolve({
+              message: reponseMessage,
+              result: result
+          });
+
+        } catch(error) {
+          return reject(error);
+        }
+      })
+    }
+
     
     
 

@@ -1424,8 +1424,23 @@ module.exports = class Solutions extends Abstract {
   * @apiSampleRequest /assessment/api/v1/solutions/trashList
   * @apiUse successBody
   * @apiUse errorBody
-  * 
-  */
+  * @apiParamExample {json} Response:
+  * {
+    "message": "Trash Solution fetched successfully.",
+    "status": 200,
+    "result": [
+        {
+            "_id": "5f64601df5f6e432fe0f0575",
+            "externalId": "AFRICA-ME-TEST-FRAMEWORK",
+            "name": "AFRICA-ME-TEST-FRAMEWORK"
+        },
+        {
+            "_id": "5f64651f916c13367d8ff83f",
+            "externalId": "PRIYANKA-3-FRAMWORK-OBSERVATION-1",
+            "name": "Priyanka Observation solution"
+        }
+    ]
+}
 
    /**
    * Solution Trash List

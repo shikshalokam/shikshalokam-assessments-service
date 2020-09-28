@@ -191,7 +191,22 @@ module.exports = class UserHelper {
                         ...ac,
                         [solution._id.toString()]: solution
                     }), {});
+          
+                for (var i in solutionsData) {
 
+                    var removedId = solutionsData[i].externalId;
+                    var checkRemoved =  await database.models.userExtension.findOne({
+                        userId : userId,
+                        removedFromHomeScreen: {$exists: true, $in: [removedId]},
+                    }).count();
+
+                    if(checkRemoved > 0){
+                        solutionsData[i].showInHomeScreen = false;
+                    }else{
+                        solutionsData[i].showInHomeScreen = true;
+                    }
+                }
+        
                 let entitiesData = {};
 
                 if( entityIds.length > 0 ) {
