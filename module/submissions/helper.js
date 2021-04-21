@@ -512,7 +512,6 @@ module.exports = class SubmissionsHelper {
                         let submissionAllowed = await this.isAllowed(
                             req.params._id,
                             req.body.evidence.externalId,
-                            req.userDetails.userId,
                             modelName
                         );
 
@@ -1933,12 +1932,11 @@ module.exports = class SubmissionsHelper {
    * @name isAllowed
    * @param {String} submissionId - submission id.
    * @param {String} evidenceId - evidence method id.
-   * @param {String} userId - Logged in user id.
    * @param {String} modelName - submission model name.
    * @returns {JSON} Submissions allowed or not.
    */
 
-    static isAllowed(submissionId = "", evidenceId = "", userId = "",modelName) {
+    static isAllowed(submissionId, evidenceId,modelName) {
         return new Promise(async (resolve, reject) => {
             try {
     
