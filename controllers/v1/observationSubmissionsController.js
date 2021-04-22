@@ -514,6 +514,14 @@ module.exports = class ObservationSubmissions extends Abstract {
           if (isSubmissionAllowed.data.allowed && isSubmissionAllowed.data.allowed == false) {
              throw new Error(messageConstants.apiResponses.MULTIPLE_SUBMISSIONS_NOT_ALLOWED)
           }
+
+          if( req.headers.deviceid ) {
+            req.body.evidence["deviceId"] = req.headers.deviceid;
+          }
+
+          if( req.headers["user-agent"] ) {
+            req.body.evidence["userAgent"] = req.headers["user-agent"];
+          }
   
           let response = await submissionsHelper.createEvidencesInSubmission(req, "observationSubmissions", false);
   
@@ -1358,7 +1366,7 @@ module.exports = class ObservationSubmissions extends Abstract {
                 req.body.title
               );
 
-            } else if( req.body.evidences ) {
+            } else if( req.body.evidence ) {
               
               let isSubmissionAllowed = await observationSubmissionsHelper.isAllowed
               (
@@ -1374,7 +1382,7 @@ module.exports = class ObservationSubmissions extends Abstract {
                 throw new Error(messageConstants.apiResponses.MULTIPLE_SUBMISSIONS_NOT_ALLOWED);
               }
               
-              let response = await submissionsHelper.createEvidencesInSubmission(req, "observationSubmissions", false);
+              response = await submissionsHelper.createEvidencesInSubmission(req, "observationSubmissions", false);
               
               if (response.result.status && response.result.status === "completed") {
                 await observationSubmissionsHelper.pushCompletedObservationSubmissionForReporting(req.params._id);
