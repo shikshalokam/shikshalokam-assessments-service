@@ -28,7 +28,12 @@ module.exports = (req) => {
         },
         getSurvey : function () {
             req.checkBody('role').exists().withMessage("required user role");
-        }
+        },
+
+        getLink: function () {
+            req.checkParams('_id').exists().withMessage("required survey solutionId");
+            req.checkQuery('appName').exists().withMessage("required app name");
+        },
     }
 
     if (surveysValidator[req.params.method]) surveysValidator[req.params.method]();
