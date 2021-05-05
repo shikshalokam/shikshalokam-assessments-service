@@ -1610,18 +1610,26 @@ module.exports = class SurveysHelper {
     * @returns {Object}
    */
 
-   static userAssigned( userId,pageSize,pageNo,search = "",filter) {
+   static userAssigned( userId,pageSize,pageNo,search = "",filter, surveyReportPage = "") {
     return new Promise(async (resolve, reject) => {
         try {
-            
-            let surveySolutions = await surveySubmissionsHelper.surveySolutions(
-                userId,
-                pageNo,
-                pageSize,
-                search,
-                filter
-            );
 
+            let surveySolutions = {};
+            if (surveyReportPage && surveyReportPage == "false") {
+                surveySolutions.success =  false;
+                surveySolutions.data = {};
+
+            } else {
+                surveySolutions = await surveySubmissionsHelper.surveySolutions(
+                    userId,
+                    pageNo,
+                    pageSize,
+                    search,
+                    filter,
+                    surveyReportPage
+                ); 
+            }
+            
             let totalCount = 0;
             let mergedData = [];
             
@@ -1644,7 +1652,8 @@ module.exports = class SurveysHelper {
                 pageNo,
                 pageSize,
                 search,
-                filter
+                filter,
+                surveyReportPage
             )
             
             if( surveySubmissions.success && surveySubmissions.data.data.length > 0 ) {

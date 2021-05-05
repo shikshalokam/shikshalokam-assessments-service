@@ -427,7 +427,7 @@ module.exports = class SurveySubmissionsHelper {
     * @returns {Json} - survey list.
     */
 
-    static surveyList(userId = "", pageNo, pageSize, search,filter) {
+    static surveyList(userId = "", pageNo, pageSize, search,filter, surveyReportPage = "") {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -457,6 +457,10 @@ module.exports = class SurveySubmissionsHelper {
                     } else if ( filter === messageConstants.common.ASSIGN_TO_ME ) {
                         matchQuery["$match"]["isAPrivateProgram"] = false;
                     }
+                }
+
+                if(surveyReportPage && surveyReportPage == "false"){
+                    matchQuery["$match"]["status"] = { $ne: messageConstants.common.SUBMISSION_STATUS_COMPLETED }
                 }
 
                 let surveySubmissions = await database.models.surveySubmissions.aggregate
@@ -541,21 +545,30 @@ module.exports = class SurveySubmissionsHelper {
     * @returns {Json} - survey list.
     */
 
-    static surveySolutions(userId, pageNo, pageSize, search,filter = "") {
+    static surveySolutions(userId, pageNo, pageSize, search,filter = "", surveyReportPage = "") {
     return new Promise(async (resolve, reject) => {
         try {
 
             if (userId == "") {
                 throw new Error(messageConstants.apiResponses.USER_ID_REQUIRED_CHECK)
             }
-            
-            let solutionMatchQuery = {
-                "$match": {
-                    "author": userId,
+
+            let solutionMatchQuery = {};
+            solutionMatchQuery["$match"] = {
                     "type": messageConstants.common.SURVEY,
                     "isReusable": false,
                     "isDeleted": false
-                }
+            };
+
+            if (surveyReportPage && surveyReportPage == "true") {
+                solutionMatchQuery["$match"]["status"] = messageConstants.common.SUBMISSION_STATUS_COMPLETED;
+
+            } else if (surveyReportPage && surveyReportPage == "false") {
+                solutionMatchQuery["$match"]["status"] = { $ne: messageConstants.common.SUBMISSION_STATUS_COMPLETED }
+                solutionMatchQuery["$match"]["author"] = userId;
+
+            } else {
+                solutionMatchQuery["$match"]["author"] = userId;
             }
 
             if (search !== "") {
