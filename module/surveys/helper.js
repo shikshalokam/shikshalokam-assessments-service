@@ -1614,19 +1614,20 @@ module.exports = class SurveysHelper {
     return new Promise(async (resolve, reject) => {
         try {
 
-            let surveySolutions = {};
-            if (surveyReportPage && surveyReportPage == "false") {
-                surveySolutions.success =  false;
-                surveySolutions.data = {};
+            let surveySolutions = {
+                success : false
+            };
 
-            } else {
+            surveyReportPage = gen.utils.convertStringToBoolean(surveyReportPage);
+            
+            if ( surveyReportPage === "" || surveyReportPage ) {
+                
                 surveySolutions = await surveySubmissionsHelper.surveySolutions(
                     userId,
                     pageNo,
                     pageSize,
                     search,
-                    filter,
-                    surveyReportPage
+                    filter
                 ); 
             }
             
