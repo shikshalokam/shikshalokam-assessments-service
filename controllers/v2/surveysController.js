@@ -17,12 +17,12 @@ module.exports = class Surveys extends v1Survey{
 
 
     /**
-    * @api {post} /assessment/api/v2/surveys/details/:surveyId?solutionId=:solutionId
+    * @api {post} /assessment/api/v2/surveys/details/:surveyId?solutionId=:solutionId&surveyHomePage=true
     * Survey details.
     * @apiVersion 2.0.0
     * @apiGroup Surveys
     * @apiHeader {String} X-authenticated-user-token Authenticity token
-    * @apiSampleRequest /assessment/api/v2/surveys/details/5de8a220c210d4700813e695?solutionId=5f5b38ec45365677f64b2843
+    * @apiSampleRequest /assessment/api/v2/surveys/details/5de8a220c210d4700813e695?solutionId=5f5b38ec45365677f64b2843&surveyHomePage=true
     * @apiParamExample {json}  Request-Body:
     * {
     *   "role" : "HM",
@@ -226,7 +226,8 @@ module.exports = class Surveys extends v1Survey{
                 surveyId,
                 req.query.solutionId,
                 req.userDetails.userId,
-                req.rspObj.userToken
+                req.rspObj.userToken,
+                req.query.surveyHomePage
             );
 
             return resolve({

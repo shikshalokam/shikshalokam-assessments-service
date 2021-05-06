@@ -1204,7 +1204,7 @@ module.exports = class SurveysHelper {
       * @returns {Bollean} survey is valid or not.
       */
 
-    static validateSurvey(surveyId, userId) {
+    static validateSurvey(surveyId, userId,surveyHomePage) {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -1234,18 +1234,21 @@ module.exports = class SurveysHelper {
 
                     submissionId = surveySubmissionDocument[0]._id;
 
-                    if (surveySubmissionDocument[0].status == messageConstants.common.SUBMISSION_STATUS_COMPLETED) {
-                        return resolve({
-                            success: false,
-                            message: messageConstants.apiResponses.MULTIPLE_SUBMISSIONS_NOT_ALLOWED,
-                            data: {
-                                status: surveySubmissionDocument[0].status
-                            }
-                        })
-                    }
+                    if( !surveyHomePage ) {
 
-                    if (new Date() > new Date(surveySubmissionDocument[0].surveyInformation.endDate)) {
-                        throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
+                        if (surveySubmissionDocument[0].status == messageConstants.common.SUBMISSION_STATUS_COMPLETED) {
+                            return resolve({
+                                success: false,
+                                message: messageConstants.apiResponses.MULTIPLE_SUBMISSIONS_NOT_ALLOWED,
+                                data: {
+                                    status: surveySubmissionDocument[0].status
+                                }
+                            })
+                        }
+    
+                        if (new Date() > new Date(surveySubmissionDocument[0].surveyInformation.endDate)) {
+                            throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
+                        }
                     }
                 }
 
@@ -1474,7 +1477,7 @@ module.exports = class SurveysHelper {
       * @returns {JSON} - returns survey solution, program and questions.
     */
 
-   static detailsV2(bodyData, surveyId = "", solutionId= "",userId= "", token= "") {
+   static detailsV2(bodyData, surveyId = "", solutionId= "",userId= "", token= "",surveyHomePage = "") {
     return new Promise(async (resolve, reject) => {
         try {
 
@@ -1559,10 +1562,13 @@ module.exports = class SurveysHelper {
                 }
             }
 
+            surveyHomePage = gen.utils.convertStringToBoolean(surveyHomePage);
+
             let validateSurvey = await this.validateSurvey
             (
                 surveyId,
-                userId
+                userId,
+                surveyHomePage
             )
 
             if (!validateSurvey.success) {
@@ -1619,7 +1625,7 @@ module.exports = class SurveysHelper {
             };
 
             surveyReportPage = gen.utils.convertStringToBoolean(surveyReportPage);
-            
+
             if ( surveyReportPage === "" || surveyReportPage ) {
                 
                 surveySolutions = await surveySubmissionsHelper.surveySolutions(
