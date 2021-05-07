@@ -7,22 +7,22 @@
 
 // Dependencies
 const surveysHelper = require(MODULES_BASE_PATH + "/surveys/helper");
-const v1Survey = require(ROOT_PATH + "/controllers/v1/surveysController");
+const v2Survey = require(ROOT_PATH + "/controllers/v2/surveysController");
 
 /**
     * Surveys
     * @class
 */
-module.exports = class Surveys extends v1Survey{
+module.exports = class Surveys extends v2Survey {
 
 
     /**
-    * @api {post} /assessment/api/v2/surveys/details/:surveyId?solutionId=:solutionId
+    * @api {post} /assessment/api/v3/surveys/details/:surveyId?solutionId=:solutionId
     * Survey details.
     * @apiVersion 2.0.0
     * @apiGroup Surveys
     * @apiHeader {String} X-authenticated-user-token Authenticity token
-    * @apiSampleRequest /assessment/api/v2/surveys/details/5de8a220c210d4700813e695?solutionId=5f5b38ec45365677f64b2843
+    * @apiSampleRequest /assessment/api/v3/surveys/details/5de8a220c210d4700813e695?solutionId=5f5b38ec45365677f64b2843
     * @apiParamExample {json}  Request-Body:
     * {
     *   "role" : "HM",
@@ -220,7 +220,7 @@ module.exports = class Surveys extends v1Survey{
 
             let surveyId = req.params._id ? req.params._id : "";
            
-            let surveyDetails = await surveysHelper.detailsV2
+            let surveyDetails = await surveysHelper.detailsV3
             (   
                 req.body,
                 surveyId,

@@ -1016,8 +1016,17 @@ module.exports = class SurveysHelper {
                 
                 if (submissionId !== "") {
                     assessment.submissionId = submissionId;
-                }
-                else {
+
+                    let surveySubmissionDocument = 
+                    await surveySubmissionsHelper.surveySubmissionDocuments(
+                        {
+                            _id : submissionId
+                        },["evidences"]
+                    );
+
+                    submissionDocumentEvidences = surveySubmissionDocument[0].evidences;
+
+                } else {
                     let submissionDocument = {
                         solutionId: solutionDocument._id,
                         solutionExternalId: solutionDocument.externalId,
@@ -1094,7 +1103,6 @@ module.exports = class SurveysHelper {
             }
         })
     }
-
 
     /**
      * Fetch user organisation details.
@@ -1204,7 +1212,7 @@ module.exports = class SurveysHelper {
       * @returns {Bollean} survey is valid or not.
       */
 
-    static validateSurvey(surveyId, userId,surveyHomePage) {
+    static validateSurvey(surveyId, userId,validateSurveySubmission = true) {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -1234,8 +1242,8 @@ module.exports = class SurveysHelper {
 
                     submissionId = surveySubmissionDocument[0]._id;
 
-                    if( !surveyHomePage ) {
-
+                    if( validateSurveySubmission ) {
+                        
                         if (surveySubmissionDocument[0].status == messageConstants.common.SUBMISSION_STATUS_COMPLETED) {
                             return resolve({
                                 success: false,
@@ -1477,7 +1485,74 @@ module.exports = class SurveysHelper {
       * @returns {JSON} - returns survey solution, program and questions.
     */
 
-   static detailsV2(bodyData, surveyId = "", solutionId= "",userId= "", token= "",surveyHomePage = "") {
+   static detailsV2(bodyData, surveyId = "", solutionId= "",userId= "", token= "") {
+    return new Promise(async (resolve, reject) => {
+        try {
+
+            let surveyData = await this.common(
+                bodyData,
+                surveyId,
+                solutionId,
+                userId,
+                token
+            );
+
+            if( !surveyData.success ) {
+                return resolve(surveyDetails);
+            }
+
+            let validateSurvey = await this.validateSurvey
+            (
+                surveyData.data,
+                userId
+            )
+
+            if (!validateSurvey.success) {
+                return resolve(validateSurvey);
+            }
+            
+            let surveyDetails = await this.details
+            (
+                surveyData.data,
+                userId,
+                validateSurvey.data.submissionId,
+                bodyData
+            );
+
+            if (!surveyDetails.success) {
+                return resolve(surveyDetails);
+            }
+
+            return resolve({
+                success: true,
+                message: surveyDetails.message,
+                data: surveyDetails.data
+            });
+
+        }
+        catch (error) {
+            return resolve({
+                success: false,
+                message: error.message,
+                data: false
+            });
+        }
+    })
+   }
+
+      /**
+      * survey details common.
+      * @method
+      * @name common
+      * @param {Object} bodyData - Request body data.
+      * @param  {String} surveyId - surveyId.
+      * @param {String} solutionId - solutionId
+      * @param {String} userId - logged in userId
+      * @param {String} token - logged in user token
+      * @returns {JSON} - returns survey solution, program and questions.
+    */
+
+   static common(bodyData, surveyId = "", solutionId= "",userId= "", token= "") {
     return new Promise(async (resolve, reject) => {
         try {
 
@@ -1521,8 +1596,7 @@ module.exports = class SurveysHelper {
                
                 if (surveyDocument.length > 0) {
                     surveyId = surveyDocument[0]._id;
-                }
-                else {
+                } else {
 
                     let solutionData = await kendraService.solutionDetailsBasedOnRoleAndLocation
                     (
@@ -1562,13 +1636,51 @@ module.exports = class SurveysHelper {
                 }
             }
 
-            surveyHomePage = gen.utils.convertStringToBoolean(surveyHomePage);
+            return resolve({
+                success: true,
+                data: surveyId
+            });
+
+        }
+        catch (error) {
+            return resolve({
+                success: false,
+                message: error.message,
+                data: false
+            });
+        }
+    })
+   }
+
+    /**
+      * survey details.
+      * @method
+      * @name detailsV3
+      * @param {Object} bodyData - Request body data.
+      * @param  {String} surveyId - surveyId.
+      * @param {String} solutionId - solutionId
+      * @param {String} userId - logged in userId
+      * @param {String} token - logged in user token
+      * @returns {JSON} - returns survey solution, program and questions.
+    */
+
+   static detailsV3(bodyData, surveyId = "", solutionId= "",userId= "", token= "") {
+    return new Promise(async (resolve, reject) => {
+        try {
+
+            let surveyData = await this.common(
+                bodyData,
+                surveyId,
+                solutionId,
+                userId,
+                token
+            );
 
             let validateSurvey = await this.validateSurvey
             (
-                surveyId,
+                surveyData.data,
                 userId,
-                surveyHomePage
+                false
             )
 
             if (!validateSurvey.success) {
@@ -1577,7 +1689,7 @@ module.exports = class SurveysHelper {
             
             let surveyDetails = await this.details
             (
-                surveyId,
+                surveyData.data,
                 userId,
                 validateSurvey.data.submissionId,
                 bodyData
@@ -1689,9 +1801,8 @@ module.exports = class SurveysHelper {
                 message : error.message,
                 data : []
             });
-        }
-    })
-  }
+        }})
+    }
     
    /**
       * Get survey solution link.
@@ -1743,5 +1854,5 @@ module.exports = class SurveysHelper {
             }
         })
     }
-    
+
 }
