@@ -17,7 +17,7 @@ module.exports = class Surveys extends v1Survey{
 
 
     /**
-    * @api {post} /assessment/api/v2/surveys/details/:surveyId?solutionId=:solutionId
+    * @api {post} /assessment/api/v2/surveys/details/:surveyId?solutionId=:solutionId Get the survey details by link or Survey Id
     * Survey details.
     * @apiVersion 2.0.0
     * @apiGroup Surveys
@@ -218,21 +218,48 @@ module.exports = class Surveys extends v1Survey{
     return new Promise(async (resolve, reject) => {
         try {
 
-            let surveyId = req.params._id ? req.params._id : "";
-           
-            let surveyDetails = await surveysHelper.detailsV2
-            (   
-                req.body,
-                surveyId,
-                req.query.solutionId,
-                req.userDetails.userId,
-                req.rspObj.userToken
-            );
+            let validateSurveyId = gen.utils.isValidMongoId(req.params._id);
 
-            return resolve({
-                message: surveyDetails.message,
-                result: surveyDetails.data
-            });
+            if(validateSurveyId){
+
+                let validateSolutionId = gen.utils.isValidMongoId(req.query.solutionId);
+
+                if (!validateSolutionId) {
+                    throw new Error(messageConstants.apiResponses.SOLUTION_ID_REQUIRED)
+                }
+
+                let surveyId = req.params._id ? req.params._id : "";
+       
+                let surveyDetails = await surveysHelper.detailsV2
+                (   
+                    req.body,
+                    surveyId,
+                    req.query.solutionId,
+                    req.userDetails.userId,
+                    req.rspObj.userToken
+                );
+
+                return resolve({
+                    message: surveyDetails.message,
+                    result: surveyDetails.data
+                });
+                
+            } else {
+
+                let bodyData = req.body ? req.body : {};
+
+                let surveyDetails = await surveysHelper.getDetailsByLink(
+                    req.params._id,
+                    req.userDetails.userId,
+                    req.rspObj.userToken,
+                    bodyData
+                );
+
+                return resolve({
+                    message: surveyDetails.message,
+                    result: surveyDetails.data
+                });
+            }
 
         } catch (error) {
             return reject({
