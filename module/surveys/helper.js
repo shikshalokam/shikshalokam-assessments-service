@@ -1016,8 +1016,17 @@ module.exports = class SurveysHelper {
                 
                 if (submissionId !== "") {
                     assessment.submissionId = submissionId;
-                }
-                else {
+
+                    let surveySubmissionDocument = 
+                    await surveySubmissionsHelper.surveySubmissionDocuments(
+                        {
+                            _id : submissionId
+                        },["evidences"]
+                    );
+
+                    submissionDocumentEvidences = surveySubmissionDocument[0].evidences;
+
+                } else {
                     let submissionDocument = {
                         solutionId: solutionDocument._id,
                         solutionExternalId: solutionDocument.externalId,
@@ -1094,7 +1103,6 @@ module.exports = class SurveysHelper {
             }
         })
     }
-
 
     /**
      * Fetch user organisation details.
@@ -1204,7 +1212,7 @@ module.exports = class SurveysHelper {
       * @returns {Bollean} survey is valid or not.
       */
 
-    static validateSurvey(surveyId, userId) {
+    static validateSurvey(surveyId, userId,validateSurveySubmission = true) {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -1234,18 +1242,21 @@ module.exports = class SurveysHelper {
 
                     submissionId = surveySubmissionDocument[0]._id;
 
-                    if (surveySubmissionDocument[0].status == messageConstants.common.SUBMISSION_STATUS_COMPLETED) {
-                        return resolve({
-                            success: false,
-                            message: messageConstants.apiResponses.MULTIPLE_SUBMISSIONS_NOT_ALLOWED,
-                            data: {
-                                status: surveySubmissionDocument[0].status
-                            }
-                        })
-                    }
-
-                    if (new Date() > new Date(surveySubmissionDocument[0].surveyInformation.endDate)) {
-                        throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
+                    if( validateSurveySubmission ) {
+                        
+                        if (surveySubmissionDocument[0].status == messageConstants.common.SUBMISSION_STATUS_COMPLETED) {
+                            return resolve({
+                                success: false,
+                                message: messageConstants.apiResponses.MULTIPLE_SUBMISSIONS_NOT_ALLOWED,
+                                data: {
+                                    status: surveySubmissionDocument[0].status
+                                }
+                            })
+                        }
+    
+                        if (new Date() > new Date(surveySubmissionDocument[0].surveyInformation.endDate)) {
+                            throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
+                        }
                     }
                 }
 
@@ -1478,6 +1489,73 @@ module.exports = class SurveysHelper {
     return new Promise(async (resolve, reject) => {
         try {
 
+            let surveyData = await this.findOrCreateSurvey(
+                bodyData,
+                surveyId,
+                solutionId,
+                userId,
+                token
+            );
+
+            if( !surveyData.success ) {
+                return resolve(surveyDetails);
+            }
+
+            let validateSurvey = await this.validateSurvey
+            (
+                surveyData.data,
+                userId
+            )
+
+            if (!validateSurvey.success) {
+                return resolve(validateSurvey);
+            }
+            
+            let surveyDetails = await this.details
+            (
+                surveyData.data,
+                userId,
+                validateSurvey.data.submissionId,
+                bodyData
+            );
+
+            if (!surveyDetails.success) {
+                return resolve(surveyDetails);
+            }
+
+            return resolve({
+                success: true,
+                message: surveyDetails.message,
+                data: surveyDetails.data
+            });
+
+        }
+        catch (error) {
+            return resolve({
+                success: false,
+                message: error.message,
+                data: false
+            });
+        }
+    })
+   }
+
+      /**
+      * Find or create survey based on targeted data.
+      * @method
+      * @name findOrCreateSurvey
+      * @param {Object} bodyData - Request body data.
+      * @param  {String} surveyId - surveyId.
+      * @param {String} solutionId - solutionId
+      * @param {String} userId - logged in userId
+      * @param {String} token - logged in user token
+      * @returns {JSON} - returns survey solution, program and questions.
+    */
+
+   static findOrCreateSurvey(bodyData, surveyId = "", solutionId= "",userId= "", token= "") {
+    return new Promise(async (resolve, reject) => {
+        try {
+
             if (userId == "") {
                 throw new Error(messageConstants.apiResponses.USER_ID_REQUIRED_CHECK)
             }
@@ -1518,8 +1596,7 @@ module.exports = class SurveysHelper {
                
                 if (surveyDocument.length > 0) {
                     surveyId = surveyDocument[0]._id;
-                }
-                else {
+                } else {
 
                     let solutionData = await kendraService.solutionDetailsBasedOnRoleAndLocation
                     (
@@ -1559,10 +1636,51 @@ module.exports = class SurveysHelper {
                 }
             }
 
+            return resolve({
+                success: true,
+                data: surveyId
+            });
+
+        }
+        catch (error) {
+            return resolve({
+                success: false,
+                message: error.message,
+                data: false
+            });
+        }
+    })
+   }
+
+    /**
+      * survey details.
+      * @method
+      * @name detailsV3
+      * @param {Object} bodyData - Request body data.
+      * @param  {String} surveyId - surveyId.
+      * @param {String} solutionId - solutionId
+      * @param {String} userId - logged in userId
+      * @param {String} token - logged in user token
+      * @returns {JSON} - returns survey solution, program and questions.
+    */
+
+   static detailsV3(bodyData, surveyId = "", solutionId= "",userId= "", token= "") {
+    return new Promise(async (resolve, reject) => {
+        try {
+
+            let surveyData = await this.findOrCreateSurvey(
+                bodyData,
+                surveyId,
+                solutionId,
+                userId,
+                token
+            );
+
             let validateSurvey = await this.validateSurvey
             (
-                surveyId,
-                userId
+                surveyData.data,
+                userId,
+                false
             )
 
             if (!validateSurvey.success) {
@@ -1571,7 +1689,7 @@ module.exports = class SurveysHelper {
             
             let surveyDetails = await this.details
             (
-                surveyId,
+                surveyData.data,
                 userId,
                 validateSurvey.data.submissionId,
                 bodyData
@@ -1610,18 +1728,27 @@ module.exports = class SurveysHelper {
     * @returns {Object}
    */
 
-   static userAssigned( userId,pageSize,pageNo,search = "",filter) {
+   static userAssigned( userId,pageSize,pageNo,search = "",filter, surveyReportPage = "") {
     return new Promise(async (resolve, reject) => {
         try {
-            
-            let surveySolutions = await surveySubmissionsHelper.surveySolutions(
-                userId,
-                pageNo,
-                pageSize,
-                search,
-                filter
-            );
 
+            let surveySolutions = {
+                success : false
+            };
+
+            surveyReportPage = gen.utils.convertStringToBoolean(surveyReportPage);
+
+            if ( surveyReportPage === "" || surveyReportPage ) {
+                
+                surveySolutions = await surveySubmissionsHelper.surveySolutions(
+                    userId,
+                    pageNo,
+                    pageSize,
+                    search,
+                    filter
+                ); 
+            }
+            
             let totalCount = 0;
             let mergedData = [];
             
@@ -1644,7 +1771,8 @@ module.exports = class SurveysHelper {
                 pageNo,
                 pageSize,
                 search,
-                filter
+                filter,
+                surveyReportPage
             )
             
             if( surveySubmissions.success && surveySubmissions.data.data.length > 0 ) {
@@ -1673,9 +1801,8 @@ module.exports = class SurveysHelper {
                 message : error.message,
                 data : []
             });
-        }
-    })
-  }
+        }})
+    }
     
    /**
       * Get survey solution link.
@@ -1727,5 +1854,5 @@ module.exports = class SurveysHelper {
             }
         })
     }
-    
+
 }
