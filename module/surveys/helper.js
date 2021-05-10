@@ -1489,7 +1489,7 @@ module.exports = class SurveysHelper {
     return new Promise(async (resolve, reject) => {
         try {
 
-            let surveyData = await this.common(
+            let surveyData = await this.findOrCreateSurvey(
                 bodyData,
                 surveyId,
                 solutionId,
@@ -1541,9 +1541,9 @@ module.exports = class SurveysHelper {
    }
 
       /**
-      * survey details common.
+      * Find or create survey based on targeted data.
       * @method
-      * @name common
+      * @name findOrCreateSurvey
       * @param {Object} bodyData - Request body data.
       * @param  {String} surveyId - surveyId.
       * @param {String} solutionId - solutionId
@@ -1552,7 +1552,7 @@ module.exports = class SurveysHelper {
       * @returns {JSON} - returns survey solution, program and questions.
     */
 
-   static common(bodyData, surveyId = "", solutionId= "",userId= "", token= "") {
+   static findOrCreateSurvey(bodyData, surveyId = "", solutionId= "",userId= "", token= "") {
     return new Promise(async (resolve, reject) => {
         try {
 
@@ -1668,7 +1668,7 @@ module.exports = class SurveysHelper {
     return new Promise(async (resolve, reject) => {
         try {
 
-            let surveyData = await this.common(
+            let surveyData = await this.findOrCreateSurvey(
                 bodyData,
                 surveyId,
                 solutionId,
