@@ -487,7 +487,8 @@ module.exports = class SubmissionsHelper {
                         if (answerArray.isAGeneralQuestionResponse) { delete answerArray.isAGeneralQuestionResponse; }
 
 
-                        evidencesStatusToBeChanged['isSubmitted'] = true;
+                        evidencesStatusToBeChanged['isSubmitted'] = 
+                        req.body.evidence.status && req.body.evidence.status === messageConstants.common.DRAFT ? false : true;
                         evidencesStatusToBeChanged['notApplicable'] = req.body.evidence.notApplicable;
                         evidencesStatusToBeChanged['startTime'] = req.body.evidence.startTime;
                         evidencesStatusToBeChanged['endTime'] = req.body.evidence.endTime;
