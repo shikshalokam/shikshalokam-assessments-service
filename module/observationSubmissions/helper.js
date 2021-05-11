@@ -514,7 +514,7 @@ module.exports = class ObservationSubmissionsHelper {
                             status = evidence.submissions.length > 1 ? messageConstants.common.SUBMISSION_STATUS_DRAFT :
                              messageConstants.common.SUBMISSION_STATUS_IN_PROGRESS;
                         } else if(evidence.isSubmitted == true ){ 
-                            status = messageConstants.common.SUBMISSION_STATUS_COMPLETED; 
+                            status = messageConstants.common.DRAFT; 
                         } 
                         domains.push({ 
                             name: evidence.name,

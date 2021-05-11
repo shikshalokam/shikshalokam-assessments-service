@@ -27,7 +27,6 @@ module.exports = {
     SUBMISSION_STATUS_COMPLETED : "completed",
     SUBMISSION_STATUS_STARTED : "started",
     SUBMISSION_STATUS_IN_PROGRESS : "inprogess",
-    SUBMISSION_STATUS_DRAFT : "draft",
     IMAGE_FORMATS : ["png","jpg","jpeg","svg"],
     VIDEO_FORMATS : ["webm","mpg","mp2","mpeg", "mpe","mpv","ogg","mp4","m4p","m4v","avi","wmv"],
     DOCUMENT_FORMATS : ["txt","csv","pdf","doc","docx","odt","ppt","pptx","html","rtf","htm","xls","xlsx","xla"],
