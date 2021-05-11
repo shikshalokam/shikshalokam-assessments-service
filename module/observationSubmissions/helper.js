@@ -511,10 +511,10 @@ module.exports = class ObservationSubmissionsHelper {
                         
                         let status; 
                         if(evidence.isSubmitted == false ){ 
-                            status = evidence.submissions.length > 1 ? messageConstants.common.SUBMISSION_STATUS_DRAFT :
-                             messageConstants.common.SUBMISSION_STATUS_IN_PROGRESS;
+                             status = evidence.submissions.length >= 1 ? messageConstants.common.DRAFT :
+                             messageConstants.common.SUBMISSION_STATUS_NOT_STARTED;
                         } else if(evidence.isSubmitted == true ){ 
-                            status = messageConstants.common.DRAFT; 
+                            status = messageConstants.common.SUBMISSION_STATUS_COMPLETED; 
                         } 
                         domains.push({ 
                             name: evidence.name,
