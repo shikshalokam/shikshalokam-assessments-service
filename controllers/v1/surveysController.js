@@ -976,7 +976,6 @@ module.exports = class Surveys extends Abstract {
         })
     }
 
-
     /**
     * @api {get} /assessment/api/v1/surveys/getLink/{{surveySolutionId}}?appName:appName 
     * @apiVersion 1.0.0

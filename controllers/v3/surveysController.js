@@ -342,16 +342,31 @@ module.exports = class Surveys extends v2Survey {
     return new Promise(async (resolve, reject) => {
         try {
 
-            let surveyId = req.params._id ? req.params._id : "";
-           
-            let surveyDetails = await surveysHelper.detailsV3
-            (   
-                req.body,
-                surveyId,
-                req.query.solutionId,
-                req.userDetails.userId,
-                req.rspObj.userToken
-            );
+            let validateSurveyId = gen.utils.isValidMongoId(req.params._id);
+            let surveyDetails = {};
+
+            if( validateSurveyId || req.query.solutionId ) {
+                
+                let surveyId = req.params._id ? req.params._id : "";
+
+                surveyDetails = await surveysHelper.detailsV3
+                (   
+                    req.body,
+                    surveyId,
+                    req.query.solutionId,
+                    req.userDetails.userId,
+                    req.rspObj.userToken
+                );
+            } else {
+
+                surveyDetails = await surveysHelper.getDetailsByLink(
+                    req.params._id,
+                    req.userDetails.userId,
+                    req.rspObj.userToken,
+                    req.body,
+                    messageConstants.common.VERSION_3
+                );
+            }
 
             return resolve({
                 message: surveyDetails.message,

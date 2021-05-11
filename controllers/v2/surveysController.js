@@ -222,17 +222,13 @@ module.exports = class Surveys extends v1Survey{
 
             let validateSurveyId = gen.utils.isValidMongoId(req.params._id);
 
-            if(validateSurveyId){
+            let surveyDetails = {};
 
-                let validateSolutionId = gen.utils.isValidMongoId(req.query.solutionId);
-
-                if (!validateSolutionId) {
-                    throw new Error(messageConstants.apiResponses.SOLUTION_ID_REQUIRED)
-                }
+            if( validateSurveyId || req.query.solutionId ) {
 
                 let surveyId = req.params._id ? req.params._id : "";
        
-                let surveyDetails = await surveysHelper.detailsV2
+                surveyDetails = await surveysHelper.detailsV2
                 (   
                     req.body,
                     surveyId,
@@ -240,28 +236,23 @@ module.exports = class Surveys extends v1Survey{
                     req.userDetails.userId,
                     req.rspObj.userToken
                 );
-
-                return resolve({
-                    message: surveyDetails.message,
-                    result: surveyDetails.data
-                });
                 
             } else {
 
                 let bodyData = req.body ? req.body : {};
 
-                let surveyDetails = await surveysHelper.getDetailsByLink(
+                surveyDetails = await surveysHelper.getDetailsByLink(
                     req.params._id,
                     req.userDetails.userId,
                     req.rspObj.userToken,
                     bodyData
                 );
-
-                return resolve({
-                    message: surveyDetails.message,
-                    result: surveyDetails.data
-                });
             }
+
+            return resolve({
+                message: surveyDetails.message,
+                result: surveyDetails.data
+            });
 
         } catch (error) {
             return reject({

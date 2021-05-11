@@ -695,7 +695,7 @@ module.exports = class SurveysHelper {
      * @returns {JSON} - returns survey solution,program and question details.
      */
 
-    static getDetailsByLink(link= "", userId= "", token= "", roleInformation= {}) {
+    static getDetailsByLink(link= "", userId= "", token= "", roleInformation= {},version = "") {
         return new Promise(async (resolve, reject) => {
             try {
 
@@ -734,17 +734,20 @@ module.exports = class SurveysHelper {
                     throw new Error(messageConstants.apiResponses.SOLUTION_NOT_FOUND)
                 }
 
-                if (new Date() > new Date(solutionDocument[0].endDate)) {
-
-                    if (solutionDocument[0].status == messageConstants.common.ACTIVE_STATUS) {
-                        await solutionsHelper.updateSolutionDocument
-                        (
-                            { link : link },
-                            { $set : { status: messageConstants.common.INACTIVE_STATUS } }
-                        )
-                    }
+                if ( version === "" ) {
                     
-                    throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
+                    if (new Date() > new Date(solutionDocument[0].endDate)) {
+
+                        if (solutionDocument[0].status == messageConstants.common.ACTIVE_STATUS) {
+                            await solutionsHelper.updateSolutionDocument
+                            (
+                                { link : link },
+                                { $set : { status: messageConstants.common.INACTIVE_STATUS } }
+                            )
+                        }
+                        
+                        throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
+                    }
                 }
  
                 let surveyDocument = await this.surveyDocuments
@@ -790,7 +793,8 @@ module.exports = class SurveysHelper {
                 let validateSurvey = await this.validateSurvey
                 (
                     surveyId,
-                    userId
+                    userId,
+                    version && version === messageConstants.common.VERSION_3 ? false : true
                 )
     
                 if (!validateSurvey.success) {
@@ -1498,7 +1502,7 @@ module.exports = class SurveysHelper {
             );
 
             if( !surveyData.success ) {
-                return resolve(surveyDetails);
+                return resolve(surveyData);
             }
 
             let validateSurvey = await this.validateSurvey
@@ -1801,9 +1805,10 @@ module.exports = class SurveysHelper {
                 message : error.message,
                 data : []
             });
-        }})
-    }
-    
+        }
+    })
+  }
+
    /**
       * Get survey solution link.
       * @method
