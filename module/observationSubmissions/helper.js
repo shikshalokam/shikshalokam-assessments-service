@@ -474,7 +474,11 @@ module.exports = class ObservationSubmissionsHelper {
                 "observationId",
                 "scoringSystem",
                 "isRubricDriven",
-                "criteriaLevelReport"
+                "criteriaLevelReport",
+                "evidencesStatus.name", 
+                "evidencesStatus.externalId", 
+                "evidencesStatus.isSubmitted", 
+                "evidencesStatus.submissions"
             ];
 
             let result = await this.observationSubmissionsDocument
@@ -501,6 +505,26 @@ module.exports = class ObservationSubmissionsHelper {
 
                 resultedData.submissionDate = resultedData.completedDate ? resultedData.completedDate : "";
                 resultedData.ratingCompletedAt = resultedData.ratingCompletedAt ? resultedData.ratingCompletedAt : "";
+
+                let domains = []; if(resultedData.evidencesStatus){ 
+                    resultedData.evidencesStatus.map(evidence=>{ 
+                        
+                        let status; 
+                        if(evidence.isSubmitted == false ){ 
+                             status = evidence.submissions.length >= 1 ? messageConstants.common.DRAFT :
+                             messageConstants.common.SUBMISSION_STATUS_NOT_STARTED;
+                        } else if(evidence.isSubmitted == true ){ 
+                            status = messageConstants.common.SUBMISSION_STATUS_COMPLETED; 
+                        } 
+                        domains.push({ 
+                            name: evidence.name,
+                            code: evidence.externalId, 
+                            status: status 
+                        }) 
+                    }); 
+                }
+                resultedData['domains'] =domains; 
+                delete resultedData.evidencesStatus;
 
                 delete resultedData.observationInformation;
                 return _.omit(resultedData,["completedDate"]);
