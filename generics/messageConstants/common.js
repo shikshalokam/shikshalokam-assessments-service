@@ -54,5 +54,6 @@ module.exports = {
     ASSIGN_TO_ME : "assignedToMe",
     CREATED_BY_ME : "createdByMe",
     ALL_ROLES : "all",
-    VERSION_3 : "v3"
+    VERSION_3 : "v3",
+    DRAFT : "draft"
 }
