@@ -50,6 +50,8 @@ module.exports = {
       index: true
     },
     project : Object,
-    referenceFrom : String
+    referenceFrom : String,
+    language: Array,
+    region: String
   }
 };
