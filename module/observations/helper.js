@@ -1629,9 +1629,7 @@ module.exports = class ObservationsHelper {
                         "name" : 1, 
                         "description" : 1,
                         "solutionId" : 1,
-                        "programId" : 1,
-                        "language" : 1,
-                        "region" : 1
+                        "programId" : 1
                     }
                 };
 
@@ -1662,6 +1660,27 @@ module.exports = class ObservationsHelper {
 
                 let result =
                 await database.models.observations.aggregate(aggregateData);
+
+                if( result[0].data.length > 0 ) {
+                    
+                    let solutionIds = [];
+
+                    result[0].data.forEach(resultedData => {
+                        solutionIds.push(resultedData.solutionId);
+                    });
+
+                    let solutionDocuments = 
+                    await solutionHelper.solutionDocuments({
+                        _id: { $in : solutionIds }
+                    },["language","region"]);
+
+                    solutionDocuments.forEach(solutionDocument => {
+                        let solution = result[0].data.find(resultData => resultData.solutionId.toString() === solutionDocument._id.toString());
+                        solution["language"] = solutionDocument.language;
+                        solution["region"] = solutionDocument.region ? solutionDocument.region : "";
+                    });
+
+                }
 
                 return resolve({
                     success: true,

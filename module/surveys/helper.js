@@ -1680,6 +1680,10 @@ module.exports = class SurveysHelper {
                 token
             );
 
+            if( !surveyData.success ) {
+                return resolve(surveyData);
+            }
+
             let validateSurvey = await this.validateSurvey
             (
                 surveyData.data,
