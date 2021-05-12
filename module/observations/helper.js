@@ -1629,7 +1629,9 @@ module.exports = class ObservationsHelper {
                         "name" : 1, 
                         "description" : 1,
                         "solutionId" : 1,
-                        "programId" : 1
+                        "programId" : 1,
+                        "language" : 1,
+                        "region" : 1
                     }
                 };
 

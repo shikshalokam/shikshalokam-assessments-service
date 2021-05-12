@@ -340,7 +340,7 @@ module.exports = class Observations extends v1Observation {
      * @apiHeader {String} X-authenticated-user-token Authenticity token
      * @apiParam {String} entityId Entity ID.
      * @apiParam {Int} submissionNumber Submission Number.
-     * @apiSampleRequest /assessment/api/v2/observations/assessment/5d286eace3cee10152de9efa?entityId=5d286b05eb569501488516c4&submissionNumber=1&ecmMethod=)B
+     * @apiSampleRequest /assessment/api/v2/observations/assessment/5d286eace3cee10152de9efa?entityId=5d286b05eb569501488516c4&submissionNumber=1&ecmMethod=OB
      * @apiParamExample {json} Request:
      * {
      *  "role" : "HM",
@@ -731,10 +731,10 @@ module.exports = class Observations extends v1Observation {
                     submissionDocument.userRoleInformation = req.body;
                 }
 
-                 if( solutionDocument.referenceFrom === messageConstants.common.PROJECT ) {
-        submissionDocument["referenceFrom"] = messageConstants.common.PROJECT;
-        submissionDocument["project"] = solutionDocument.project;
-      }
+                if( solutionDocument.referenceFrom === messageConstants.common.PROJECT ) {
+                    submissionDocument["referenceFrom"] = messageConstants.common.PROJECT;
+                    submissionDocument["project"] = solutionDocument.project;
+                }
                 
                 let assessment = {};
 
@@ -849,14 +849,16 @@ module.exports = class Observations extends v1Observation {
 
                 if( req.query.ecmMethod && req.query.ecmMethod !== "" ) {
                     
-                    if(evidenceMethodArray[req.query.ecmMethod]){
-                        let selectedEvidence = evidenceMethodArray[req.query.ecmMethod]
-                        evidenceMethodArray  = [];
-                        evidenceMethodArray.push(selectedEvidence);
+                    if( evidenceMethodArray[req.query.ecmMethod] ) {
+                        
+                        evidenceMethodArray = {
+                            [req.query.ecmMethod] : evidenceMethodArray[req.query.ecmMethod]
+                        };
+                        
                     } else {
                         return resolve({ 
                             status: httpStatusCode.bad_request.status, 
-                            message: messageConstants.apiResponses.OBSERVATION_SUBMISSSION_NOT_FOUND
+                            message: messageConstants.apiResponses.ECM_NOT_EXIST
                         });
                     }
                 }
