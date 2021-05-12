@@ -498,7 +498,7 @@ module.exports = class ObservationSubmissionsHelper {
                 })
             }
 
-            result = result.map(resultedData=>{
+            result = result.map(resultedData => {
                 resultedData.observationName =  
                 resultedData.observationInformation && resultedData.observationInformation.name ? 
                 resultedData.observationInformation.name : "";
@@ -506,25 +506,27 @@ module.exports = class ObservationSubmissionsHelper {
                 resultedData.submissionDate = resultedData.completedDate ? resultedData.completedDate : "";
                 resultedData.ratingCompletedAt = resultedData.ratingCompletedAt ? resultedData.ratingCompletedAt : "";
 
-                let domains = []; if(resultedData.evidencesStatus){ 
-                    resultedData.evidencesStatus.map(evidence=>{ 
+                let evidencesStatus = []; 
+
+                resultedData.evidencesStatus.map(evidence=>{ 
                         
-                        let status; 
-                        if(evidence.isSubmitted == false ){ 
-                             status = evidence.submissions.length >= 1 ? messageConstants.common.DRAFT :
-                             messageConstants.common.SUBMISSION_STATUS_NOT_STARTED;
-                        } else if(evidence.isSubmitted == true ){ 
-                            status = messageConstants.common.SUBMISSION_STATUS_COMPLETED; 
-                        } 
-                        domains.push({ 
-                            name: evidence.name,
-                            code: evidence.externalId, 
-                            status: status 
-                        }) 
-                    }); 
-                }
-                resultedData['domains'] =domains; 
-                delete resultedData.evidencesStatus;
+                    let evidenceStatus = {
+                        name : evidence.name,
+                        code : evidence.externalId,
+                        status : messageConstants.common.SUBMISSION_STATUS_COMPLETED
+                    };
+
+                    if( !evidence.isSubmitted ){ 
+                        evidenceStatus["status"] = 
+                        evidence.submissions.length > 0 ? 
+                        messageConstants.common.DRAFT :
+                        messageConstants.common.SUBMISSION_STATUS_NOT_STARTED;
+                    }
+
+                    evidencesStatus.push(evidenceStatus);
+                }); 
+                
+                resultedData['evidencesStatus'] = evidencesStatus; 
 
                 delete resultedData.observationInformation;
                 return _.omit(resultedData,["completedDate"]);
