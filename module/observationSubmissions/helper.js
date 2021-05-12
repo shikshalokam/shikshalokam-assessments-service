@@ -506,8 +506,7 @@ module.exports = class ObservationSubmissionsHelper {
                 resultedData.submissionDate = resultedData.completedDate ? resultedData.completedDate : "";
                 resultedData.ratingCompletedAt = resultedData.ratingCompletedAt ? resultedData.ratingCompletedAt : "";
 
-                let evidencesStatus = []; 
-
+                resultedData.evidencesStatus = 
                 resultedData.evidencesStatus.map(evidence=>{ 
                         
                     let evidenceStatus = {
@@ -523,10 +522,8 @@ module.exports = class ObservationSubmissionsHelper {
                         messageConstants.common.SUBMISSION_STATUS_NOT_STARTED;
                     }
 
-                    evidencesStatus.push(evidenceStatus);
+                    return evidenceStatus;
                 }); 
-                
-                resultedData['evidencesStatus'] = evidencesStatus; 
 
                 delete resultedData.observationInformation;
                 return _.omit(resultedData,["completedDate"]);

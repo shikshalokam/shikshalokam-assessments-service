@@ -849,8 +849,12 @@ module.exports = class Observations extends v1Observation {
 
                 if( req.query.ecmMethod && req.query.ecmMethod !== "" ) {
                     
-                    if(evidenceMethodArray[req.query.ecmMethod]){
-                        evidenceMethodArray = evidenceMethodArray[req.query.ecmMethod];
+                    if( evidenceMethodArray[req.query.ecmMethod] ) {
+                        
+                        evidenceMethodArray = {
+                            [req.query.ecmMethod] : evidenceMethodArray[req.query.ecmMethod]
+                        };
+                        
                     } else {
                         return resolve({ 
                             status: httpStatusCode.bad_request.status, 
