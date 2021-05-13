@@ -492,21 +492,32 @@ module.exports = class SubmissionsHelper {
                         evidencesStatusToBeChanged['startTime'] = req.body.evidence.startTime;
                         evidencesStatusToBeChanged['endTime'] = req.body.evidence.endTime;
                         evidencesStatusToBeChanged['hasConflicts'] = false;
-                        evidencesStatusToBeChanged['submissions'].push(_.omit(req.body.evidence, "answers"));
+                        evidencesStatusToBeChanged['submissions'].push(_.omit(req.body.evidence, ["answers","status"]));
 
                         updateObject.$push = {
                             ["evidences." + req.body.evidence.externalId + ".submissions"]: req.body.evidence
                         };
                         updateObject.$set = {
                             answers: _.assignIn(submissionDocument.answers, answerArray),
-                            ["evidences." + req.body.evidence.externalId + ".isSubmitted"]: true,
+                            ["evidences." + req.body.evidence.externalId + ".isSubmitted"] : true,
                             ["evidences." + req.body.evidence.externalId + ".notApplicable"]: req.body.evidence.notApplicable,
                             ["evidences." + req.body.evidence.externalId + ".startTime"]: req.body.evidence.startTime,
                             ["evidences." + req.body.evidence.externalId + ".endTime"]: req.body.evidence.endTime,
                             ["evidences." + req.body.evidence.externalId + ".hasConflicts"]: false,
-                            evidencesStatus: submissionDocument.evidencesStatus,
                             status: (submissionDocument.status === "started") ? "inprogress" : submissionDocument.status
                         };
+
+                        if( 
+                            req.body.evidence.status && 
+                            req.body.evidence.status === messageConstants.common.DRAFT 
+                        ) {
+                            evidencesStatusToBeChanged['isSubmitted'] = false;
+                            updateObject["$set"]["evidences." + req.body.evidence.externalId + ".isSubmitted"] = false;
+                            delete req.body.evidence.status;
+                        }
+
+                        updateObject["$set"]["evidencesStatus"] = submissionDocument.evidencesStatus;
+
                     } else {
 
                         let submissionAllowed = await this.isAllowed(
