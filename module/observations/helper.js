@@ -1661,6 +1661,27 @@ module.exports = class ObservationsHelper {
                 let result =
                 await database.models.observations.aggregate(aggregateData);
 
+                if( result[0].data.length > 0 ) {
+                    
+                    let solutionIds = [];
+
+                    result[0].data.forEach(resultedData => {
+                        solutionIds.push(resultedData.solutionId);
+                    });
+
+                    let solutionDocuments = 
+                    await solutionHelper.solutionDocuments({
+                        _id: { $in : solutionIds }
+                    },["language","creator"]);
+
+                    solutionDocuments.forEach(solutionDocument => {
+                        let solution = result[0].data.find(resultData => resultData.solutionId.toString() === solutionDocument._id.toString());
+                        solution["language"] = solutionDocument.language;
+                        solution["creator"] = solutionDocument.creator ? solutionDocument.creator : "";
+                    });
+
+                }
+
                 return resolve({
                     success: true,
                     message: messageConstants.apiResponses.USER_ASSIGNED_OBSERVATION_FETCHED,
