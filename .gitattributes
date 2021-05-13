@@ -1,9 +1,0 @@
-config/index.js merge=ours
-controllers/v1/userOrganisationsController.js merge=ours
-module/userOrganisations/helper.js merge=ours
-models/userOrganisations.js merge=ours
-module/shikshalokam/helper.js merge=ours
-module/shikshalokam/helper.js merge=ours
-module/solutions/helper.js merge=ours
-migrations/20200827163426-upload-app-details.js merge=ours
-
