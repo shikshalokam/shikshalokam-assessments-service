@@ -5,4 +5,5 @@ models/userOrganisations.js merge=ours
 module/shikshalokam/helper.js merge=ours
 module/shikshalokam/helper.js merge=ours
 module/solutions/helper.js merge=ours
+migrations/20200827163426-upload-app-details.js merge=ours
 
