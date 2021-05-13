@@ -607,6 +607,16 @@ module.exports = class Observations extends v1Observation {
                     });
                 }
 
+                
+                if( req.query.ecmMethod && req.query.ecmMethod !== "" ) {
+                    if(!solutionDocument.evidenceMethods[req.query.ecmMethod] ) {
+                        return resolve({ 
+                            status: httpStatusCode.bad_request.status, 
+                            message: messageConstants.apiResponses.ECM_NOT_EXIST
+                        });
+                    }
+                }
+
                 let programQueryObject = {
                     _id: observationDocument.programId,
                     status: "active",
@@ -848,18 +858,10 @@ module.exports = class Observations extends v1Observation {
                 assessment.submissionId = submissionDoc.result._id;
 
                 if( req.query.ecmMethod && req.query.ecmMethod !== "" ) {
-                    
                     if( evidenceMethodArray[req.query.ecmMethod] ) {
-                        
                         evidenceMethodArray = {
                             [req.query.ecmMethod] : evidenceMethodArray[req.query.ecmMethod]
                         };
-                        
-                    } else {
-                        return resolve({ 
-                            status: httpStatusCode.bad_request.status, 
-                            message: messageConstants.apiResponses.ECM_NOT_EXIST
-                        });
                     }
                 }
 
