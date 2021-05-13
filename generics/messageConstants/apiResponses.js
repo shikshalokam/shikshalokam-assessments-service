@@ -356,5 +356,7 @@ module.exports = {
     "THEMES_NOT_FOUND":"Themes Not Found",
     "USER_ASSIGNED_OBSERVATION_FETCHED" : "List of user assigned observations",
     "USER_ASSIGNED_SURVEY_FETCHED" : "List of user assigned surveys",
-    "SURVEY_LINK_GENERATED" : "Survey solution link generated successfully"
+    "SURVEY_LINK_GENERATED" : "Survey solution link generated successfully",
+    "SUBMISSION_NOT_ALLOWED" : "Submission not allowed",
+    "SUBMISSION_ALLOWED" : "Submission is allowed"
 }
