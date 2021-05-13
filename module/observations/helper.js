@@ -1672,12 +1672,12 @@ module.exports = class ObservationsHelper {
                     let solutionDocuments = 
                     await solutionHelper.solutionDocuments({
                         _id: { $in : solutionIds }
-                    },["language","region"]);
+                    },["language","creator"]);
 
                     solutionDocuments.forEach(solutionDocument => {
                         let solution = result[0].data.find(resultData => resultData.solutionId.toString() === solutionDocument._id.toString());
                         solution["language"] = solutionDocument.language;
-                        solution["region"] = solutionDocument.region ? solutionDocument.region : "";
+                        solution["creator"] = solutionDocument.creator ? solutionDocument.creator : "";
                     });
 
                 }

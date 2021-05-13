@@ -128,7 +128,6 @@ module.exports = {
     criteriaLevelReport : {
       default : false,
       type : Boolean
-    },
-    region: String
+    }
   }
 };
