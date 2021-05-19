@@ -266,6 +266,7 @@ module.exports = class UserExtensionHelper {
                         if (userRole.role && !userRoleMap[userRole.role]) {
                             userRole["_SYSTEM_ID"] = "";
                             userRole.status = messageConstants.apiResponses.INVALID_ROLE_CODE;
+                            userRolesUploadedData.push(userRole);
                             continue;
                         }
 
@@ -279,6 +280,7 @@ module.exports = class UserExtensionHelper {
                             userRole["_SYSTEM_ID"] = "";
                             userRole.status = messageConstants.apiResponses.INVALID_ROLE_CODE;
                             delete userRoleMap[userRole.platform_role].isAPlatformRole;
+                            userRolesUploadedData.push(userRole);
                             continue;
                         }
 
@@ -315,15 +317,16 @@ module.exports = class UserExtensionHelper {
                                 };
                             }
                         
-                            let entityDetails = await database.models.entities.findOne(
+                            const entityDetails = await entitiesHelper.entityDocuments(
                                 entityQueryObject,
-                                {
-                                    _id: 1
-                                }
+                                ["_id"]
                             );
 
-                            if (!entityDetails || !entityDetails._id) {
-                                throw messageConstants.apiResponses.INVALID_ENTITY_ID;
+                            if (!entityDetails.length > 0) {
+                                userRole["_SYSTEM_ID"] = "";
+                                userRole.status = messageConstants.apiResponses.INVALID_ENTITY_ID;
+                                userRolesUploadedData.push(userRole);
+                                continue;
                             }
 
                         }
@@ -338,7 +341,10 @@ module.exports = class UserExtensionHelper {
                             },["_id"]);
 
                             if ( !programDocuments.length > 0 ) {
-                                throw messageConstants.apiResponses.PROGRAM_NOT_FOUND;
+                                userRole["_SYSTEM_ID"] = "";
+                                userRole.status = messageConstants.apiResponses.PROGRAM_NOT_FOUND;
+                                userRolesUploadedData.push(userRole);
+                                continue;
                             }
 
                             programIds = programDocuments.map(program => {
