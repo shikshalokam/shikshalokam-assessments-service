@@ -333,11 +333,10 @@ module.exports = class UserExtensionHelper {
 
                         let programIds = [];
 
-                        if (userRole.programs) {
-                            const programExternalIds = userRole.programs.split(",");
+                        if (userRole.programs && userRole.programs.length > 0) {
                             const programDocuments = 
                             await programsHelper.list({
-                                externalId : { $in : programExternalIds } 
+                                externalId : { $in : userRole.programs } 
                             },["_id"]);
 
                             if ( !programDocuments.length > 0 ) {
