@@ -94,7 +94,7 @@ module.exports = class AssessmentsHelper {
                             submissionDocEvidences[evidence.externalId].submissions.forEach(submission => {
 
                                 if (submission.isValid) {
-                                    submissionsObjects[evidence.externalId] = submission;                                
+                                    submissionsObjects[evidence.externalId] = submission;                         
                                 }
                             });
                         }
