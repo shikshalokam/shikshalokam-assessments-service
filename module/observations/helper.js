@@ -1604,6 +1604,7 @@ module.exports = class ObservationsHelper {
                     $match : {
                         createdBy : userId,
                         deleted : false,
+                        referenceFrom: {$ne: messageConstants.common.PROJECT}
                     }
                 };
 
