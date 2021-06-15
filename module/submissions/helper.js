@@ -447,6 +447,14 @@ module.exports = class SubmissionsHelper {
                     req.body.evidence.submissionDate = new Date();
 
                     let evidencesStatusToBeChanged = submissionDocument.evidencesStatus.find(singleEvidenceStatus => singleEvidenceStatus.externalId == req.body.evidence.externalId);
+                    let draftStatusCheck = submissionDocument.evidencesStatus.some(
+                        singleEvidenceStatus => 
+                        singleEvidenceStatus.externalId !== req.body.evidence.externalId &&
+                        singleEvidenceStatus.isSubmitted === false && 
+                        singleEvidenceStatus.submissions.length > 0
+                    );
+
+
                     if (submissionDocument.evidences[req.body.evidence.externalId].isSubmitted === false) {
                         runUpdateQuery = true;
                         req.body.evidence.isValid = true;
@@ -507,10 +515,15 @@ module.exports = class SubmissionsHelper {
                             status: (submissionDocument.status === "started") ? "inprogress" : submissionDocument.status
                         };
 
+                        if (draftStatusCheck) {
+                            updateObject["$set"]["status"] = "draft";
+                        }
+
                         if( 
                             req.body.evidence.status && 
                             req.body.evidence.status === messageConstants.common.DRAFT 
                         ) {
+                            updateObject["$set"]["status"] = "draft";
                             evidencesStatusToBeChanged['isSubmitted'] = false;
                             updateObject["$set"]["evidences." + req.body.evidence.externalId + ".isSubmitted"] = false;
                             delete req.body.evidence.status;
