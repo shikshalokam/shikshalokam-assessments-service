@@ -494,17 +494,6 @@ module.exports = class SubmissionsHelper {
 
                         if (answerArray.isAGeneralQuestionResponse) { delete answerArray.isAGeneralQuestionResponse; }
 
-
-                        evidencesStatusToBeChanged['isSubmitted'] = true;
-                        evidencesStatusToBeChanged['notApplicable'] = req.body.evidence.notApplicable;
-                        evidencesStatusToBeChanged['startTime'] = req.body.evidence.startTime;
-                        evidencesStatusToBeChanged['endTime'] = req.body.evidence.endTime;
-                        evidencesStatusToBeChanged['hasConflicts'] = false;
-                        evidencesStatusToBeChanged['submissions'].push(_.omit(req.body.evidence, ["answers","status"]));
-
-                        updateObject.$push = {
-                            ["evidences." + req.body.evidence.externalId + ".submissions"]: req.body.evidence
-                        };
                         updateObject.$set = {
                             answers: _.assignIn(submissionDocument.answers, answerArray),
                             ["evidences." + req.body.evidence.externalId + ".isSubmitted"] : true,
@@ -512,8 +501,24 @@ module.exports = class SubmissionsHelper {
                             ["evidences." + req.body.evidence.externalId + ".startTime"]: req.body.evidence.startTime,
                             ["evidences." + req.body.evidence.externalId + ".endTime"]: req.body.evidence.endTime,
                             ["evidences." + req.body.evidence.externalId + ".hasConflicts"]: false,
-                            status: (submissionDocument.status === "started") ? "inprogress" : submissionDocument.status
+                            status: (submissionDocument.status === "started" || submissionDocument.status === "draft") ? "inprogress" : submissionDocument.status
                         };
+
+                        if (!evidencesStatusToBeChanged.isSubmitted) {
+                            evidencesStatusToBeChanged['submissions'] = [];
+                            updateObject["$set"]["evidences." + req.body.evidence.externalId + ".submissions"] = [req.body.evidence];
+                        } else {
+                            updateObject.$push = {
+                                ["evidences." + req.body.evidence.externalId + ".submissions"]: req.body.evidence
+                            };
+                        }
+
+                        evidencesStatusToBeChanged['isSubmitted'] = true;
+                        evidencesStatusToBeChanged['notApplicable'] = req.body.evidence.notApplicable;
+                        evidencesStatusToBeChanged['startTime'] = req.body.evidence.startTime;
+                        evidencesStatusToBeChanged['endTime'] = req.body.evidence.endTime;
+                        evidencesStatusToBeChanged['hasConflicts'] = false;
+                        evidencesStatusToBeChanged['submissions'].push(_.omit(req.body.evidence, ["answers","status"]));
 
                         if (draftStatusCheck) {
                             updateObject["$set"]["status"] = "draft";
