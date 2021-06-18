@@ -511,6 +511,9 @@ module.exports = class SurveysHelper {
                 )
                  
                 if (surveyDocument.success && surveyDocument.data._id !== "") {
+
+                    await this.details(surveyDocument.data._id,userId);
+
                     await this.sendUserNotifications(userId, {
                         solutionType: solution.type,
                         solutionId: solution._id.toString(),
