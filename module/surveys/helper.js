@@ -511,6 +511,9 @@ module.exports = class SurveysHelper {
                 )
                  
                 if (surveyDocument.success && surveyDocument.data._id !== "") {
+
+                    await this.details(surveyDocument.data._id,userId);
+
                     await this.sendUserNotifications(userId, {
                         solutionType: solution.type,
                         solutionId: solution._id.toString(),
@@ -885,16 +888,6 @@ module.exports = class SurveysHelper {
                 }
 
                 solutionDocument = solutionDocument[0];
-                
-                if (solutionDocument.author == userId) {
-                    return resolve({
-                        success: false,
-                        message: messageConstants.apiResponses.CREATOR_CAN_NOT_SUBMIT_SURVEY,
-                        data: {
-                            isCreator : true
-                        }
-                    })
-                }
                 
                 let programDocument = [];
 
@@ -1578,16 +1571,6 @@ module.exports = class SurveysHelper {
                   author: userId },
                 ["_id"]
             )
-
-            if (solutionDocument.length > 0) {
-                return resolve({
-                    success: false,
-                    message: messageConstants.apiResponses.CREATOR_CAN_NOT_SUBMIT_SURVEY,
-                    data: {
-                        isCreator : true
-                    }
-                })
-            }
 
             if (surveyId == "") {
 

@@ -790,7 +790,7 @@ module.exports = class ObservationSubmissionsHelper {
         let submissionDocument = await database.models.observationSubmissions.deleteOne(
           {
             "_id": submissionId,
-            status: "started",
+            status: {$in: ["started","draft"]},
             createdBy: userId
           }
         );
@@ -1095,7 +1095,6 @@ module.exports = class ObservationSubmissionsHelper {
         }
     })
 }   
-
 
 };
 
