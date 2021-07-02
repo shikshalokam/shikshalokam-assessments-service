@@ -1060,23 +1060,32 @@ module.exports = class ObservationSubmissionsHelper {
             })
 
             result.data = [];
-           
+
             Object.keys(submissionDocuments).forEach(solution => {
                 let solutionObject = submissionDocuments[solution][0];
                
                 solutionObject.entities = [];
 
-                let latestSubmission = submissionDocuments[solution][0];
-                
-                if (entities[latestSubmission.entityId]) {
-                    solutionObject.entities.push(entities[latestSubmission.entityId]);
-                }
+                submissionDocuments[solution].forEach( singleSubmission => {
 
-                if (solutionMap[latestSubmission.solutionId]) {
-                    solutionObject.programName = solutionMap[latestSubmission.solutionId]["programName"];
-                    solutionObject.name = solutionMap[latestSubmission.solutionId]["name"];
-                    solutionObject.allowMultipleAssessemts = solutionMap[latestSubmission.solutionId]["allowMultipleAssessemts"];
-                }
+                    let findEntities = solutionObject.entities.findIndex(entity => entity._id.toString() === singleSubmission.entityId.toString());
+
+                    if (findEntities < 0) {
+                        if (entities[singleSubmission.entityId]) {
+                            solutionObject.entities.push(entities[singleSubmission.entityId]);
+                        }
+                    }
+
+                    if (new Date(singleSubmission.completedDate) > new Date(solutionObject.completedDate)) {
+                        solutionObject.completedDate = singleSubmission.completedDate;
+                    }
+
+                    if (solutionMap[singleSubmission.solutionId]) {
+                        solutionObject.programName = solutionMap[singleSubmission.solutionId]["programName"];
+                        solutionObject.name = solutionMap[singleSubmission.solutionId]["name"];
+                        solutionObject.allowMultipleAssessemts = solutionMap[singleSubmission.solutionId]["allowMultipleAssessemts"];
+                    }
+                })
                
                 delete solutionObject.entityId;
                 delete solutionObject._id;
