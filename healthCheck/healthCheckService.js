@@ -57,7 +57,6 @@ let health_check = async function(req,res) {
     checks.push(checkResult("KENDRA_SERVICE",kendraServiceStatus));
     checks.push(checkResult("IMPROVEMENT_SERVICE",improvementHealthCheckStatus));
     checks.push(checkResult("ELASTIC_SEARCH",elasticSearchConnection));
-    checks.push(checkResult("ELASTIC_SEARCH",elasticSearchConnection));
 
     let checkServices = checks.filter( check => check.healthy === false);
 
