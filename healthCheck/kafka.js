@@ -20,7 +20,8 @@ function health_check() {
         producer.on("error", function (err) {
             return resolve(false);
         })
-        producer.on('ready', function () {
+        producer.on('ready', function () {  
+            client.close();
             return resolve(true);
         });
     })

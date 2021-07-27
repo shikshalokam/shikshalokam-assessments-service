@@ -16,7 +16,9 @@ function health_check() {
         db.on("error", function () {
             return resolve(false)
         });
-        db.once("open", function() {
+
+        db.once("open", function() { 
+            mongoose.connection.close(function () {});
             return resolve(true);    
         });
     })
