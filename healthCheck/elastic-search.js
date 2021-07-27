@@ -19,8 +19,10 @@ function health_check() {
           elasticSearchClient.ping({
           }, function (error) {
             if (error) {
+                elasticSearchClient.close();
                 return resolve(false);
             } else {
+                elasticSearchClient.close();    
                 return resolve(true);
             }
           });
