@@ -18,7 +18,7 @@ function health_check() {
         });
 
         db.once("open", function() { 
-            mongoose.connection.close(function () {});
+            db.close(function () {});
             return resolve(true);    
         });
     })
