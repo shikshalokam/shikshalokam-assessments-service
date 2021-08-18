@@ -500,6 +500,7 @@ module.exports = class SubmissionsHelper {
                             ["evidences." + req.body.evidence.externalId + ".notApplicable"]: req.body.evidence.notApplicable,
                             ["evidences." + req.body.evidence.externalId + ".startTime"]: req.body.evidence.startTime,
                             ["evidences." + req.body.evidence.externalId + ".endTime"]: req.body.evidence.endTime,
+                            ["evidences." + req.body.evidence.externalId + ".remarks"]: req.body.evidence.remarks,
                             ["evidences." + req.body.evidence.externalId + ".hasConflicts"]: false,
                             status: (submissionDocument.status === "started" || submissionDocument.status === "draft") ? "inprogress" : submissionDocument.status
                         };
@@ -517,6 +518,7 @@ module.exports = class SubmissionsHelper {
                         evidencesStatusToBeChanged['notApplicable'] = req.body.evidence.notApplicable;
                         evidencesStatusToBeChanged['startTime'] = req.body.evidence.startTime;
                         evidencesStatusToBeChanged['endTime'] = req.body.evidence.endTime;
+                        evidencesStatusToBeChanged['remarks'] = req.body.evidence.remarks;
                         evidencesStatusToBeChanged['hasConflicts'] = false;
                         evidencesStatusToBeChanged['submissions'].push(_.omit(req.body.evidence, ["answers","status"]));
 
@@ -535,6 +537,7 @@ module.exports = class SubmissionsHelper {
                         }
 
                         updateObject["$set"]["evidencesStatus"] = submissionDocument.evidencesStatus;
+                        updateObject["$set"]["evidences." + req.body.evidence.externalId + ".remarks"] = req.body.evidence.remarks;
 
                     } else {
 
