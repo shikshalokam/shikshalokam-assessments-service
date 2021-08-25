@@ -1189,7 +1189,8 @@ module.exports = class SurveysHelper {
                 "sections",
                 "captureGpsLocationAtQuestionLevel",
                 "enableQuestionReadOut",
-                "author"
+                "author",
+                "endDate"
               ])
         })
     }
