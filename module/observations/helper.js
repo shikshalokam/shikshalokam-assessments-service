@@ -1914,6 +1914,7 @@ module.exports = class ObservationsHelper {
                     _id : observationData[0].solutionId
                 },[
                     "allowMultipleAssessemts",
+                    "license"
                 ]);
             }
 
@@ -1924,7 +1925,8 @@ module.exports = class ObservationsHelper {
                     "allowMultipleAssessemts" : solutionData[0].allowMultipleAssessemts,
                     _id : observationId,
                     "entities" : entitiesList.data.entities,
-                    entityType : entitiesList.data.entityType
+                    entityType : entitiesList.data.entityType,
+                    "license" :  solutionData[0].license
                 }
             });
 

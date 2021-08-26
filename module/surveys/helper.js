@@ -888,6 +888,40 @@ module.exports = class SurveysHelper {
                 }
 
                 solutionDocument = solutionDocument[0];
+
+                let endDateCheckRequired = true;
+
+                if ( submissionId != "" ) {
+                    let submissionDocument = await surveySubmissionsHelper.surveySubmissionDocuments(
+                        {
+                            _id: submissionId
+                        },
+                        [
+                            "status"
+                        ]
+                    );
+
+                    if(submissionDocument && submissionDocument.length > 0){
+                        if ( submissionDocument[0].status == messageConstants.common.SUBMISSION_STATUS_COMPLETED ){
+                            endDateCheckRequired = false;
+                        }
+                    }
+                }
+
+                if (endDateCheckRequired) {
+
+                    if (new Date() > new Date(solutionDocument.endDate)) {
+                        if (solutionDocument.status == messageConstants.common.ACTIVE_STATUS) {
+                            await solutionHelper.updateSolutionDocument
+                            (
+                                { _id : solutionDocument._id },
+                                { $set : { status: messageConstants.common.INACTIVE_STATUS } }
+                            )
+                        }
+
+                        throw new Error(messageConstants.apiResponses.LINK_IS_EXPIRED)
+                    }
+                }
                 
                 let programDocument = [];
 
@@ -1173,7 +1207,8 @@ module.exports = class SurveysHelper {
                 "sections",
                 "captureGpsLocationAtQuestionLevel",
                 "enableQuestionReadOut",
-                "author"
+                "author",
+                "endDate"
               ])
         })
     }
